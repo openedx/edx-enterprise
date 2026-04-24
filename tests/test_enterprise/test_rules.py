@@ -14,6 +14,9 @@ from enterprise.constants import (
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
     ENTERPRISE_LEARNER_ROLE,
+    ENTERPRISE_OPERATOR_ROLE,
+    MANAGE_ENTERPRISE_CUSTOMER_ADMINS_PERMISSION,
+    SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
 )
 from enterprise.models import EnterpriseFeatureRole, EnterpriseFeatureUserRoleAssignment
 from test_utils import TEST_UUID, APITest, factories
@@ -65,3 +68,21 @@ class TestEnterpriseRBACPermissions(APITest):
     def test_access_denied(self, permission, get_current_request_mock):
         get_current_request_mock.return_value = self.get_request_with_jwt_cookie()
         assert not self.user.has_perm(permission, TEST_UUID)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @ddt.data(
+        ENTERPRISE_ADMIN_ROLE,
+        SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
+    )
+    def test_manage_enterprise_customer_admins_has_implicit_access(self, enterprise_role, get_current_request_mock):
+        get_current_request_mock.return_value = self.get_request_with_jwt_cookie(enterprise_role, TEST_UUID)
+        assert self.user.has_perm(MANAGE_ENTERPRISE_CUSTOMER_ADMINS_PERMISSION, TEST_UUID)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @ddt.data(
+        ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+        ENTERPRISE_OPERATOR_ROLE,
+    )
+    def test_manage_enterprise_customer_admins_access_denied(self, enterprise_role, get_current_request_mock):
+        get_current_request_mock.return_value = self.get_request_with_jwt_cookie(enterprise_role, TEST_UUID)
+        assert not self.user.has_perm(MANAGE_ENTERPRISE_CUSTOMER_ADMINS_PERMISSION, TEST_UUID)

@@ -19,6 +19,7 @@ from enterprise.api.v1.views.enterprise_customer_admin import EnterpriseCustomer
 from enterprise.constants import (
     ACTIVE_ADMIN_ROLE_TYPE,
     ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     PENDING_ADMIN_ROLE_TYPE,
@@ -362,6 +363,8 @@ class TestDeleteAdminEndpoint(APITest):
             },
         )
         self.list_url = reverse('enterprise-customer-admin-list')
+        self.request_factory = APIRequestFactory()
+        self.delete_view = EnterpriseCustomerAdminViewSet.as_view({'delete': 'delete_admin'})
 
     # --- Tests for role='admin' (active admin deletion) ---
 
@@ -410,6 +413,23 @@ class TestDeleteAdminEndpoint(APITest):
         response = self.client.delete(f'{invalid_url}?role={ACTIVE_ADMIN_ROLE_TYPE}')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('id must be a valid integer', response.data['error'])
+
+    def test_delete_admin_missing_enterprise_uuid_returns_400(self):
+        """
+        Test that missing enterprise_customer_uuid in the URL/path returns 400.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+        request = self.request_factory.delete(f'{self.delete_url}?role={ACTIVE_ADMIN_ROLE_TYPE}')
+        force_authenticate(request, user=self.user)
+        request.COOKIES.update({key: morsel.value for key, morsel in self.client.cookies.items()})
+
+        response = self.delete_view(
+            request,
+            id=str(self.enterprise_customer_user.id),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Missing enterprise_customer_uuid.')
 
     def test_soft_delete_success(self):
         """
@@ -694,15 +714,35 @@ class TestDeleteAdminEndpoint(APITest):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_delete_admin_allowed_for_provisioning_admin_role(self):
+        """
+        Test that users with the provisioning admin role can soft delete admins.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        response = self.client.delete(f'{self.delete_url}?role={ACTIVE_ADMIN_ROLE_TYPE}')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_delete_admin_allowed_for_enterprise_admin_role(self):
+        """
+        Test that users with the enterprise_admin role can soft delete admins.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        response = self.client.delete(f'{self.delete_url}?role={ACTIVE_ADMIN_ROLE_TYPE}')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     @ddt.data(
-        ENTERPRISE_ADMIN_ROLE,
+        ENTERPRISE_DASHBOARD_ADMIN_ROLE,
         ENTERPRISE_LEARNER_ROLE,
         ENTERPRISE_OPERATOR_ROLE,
         SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
     )
     def test_delete_admin_forbidden_roles(self, role):
         """
-        Test that roles other than provisioning admin cannot soft delete.
+        Test that roles other than provisioning/enterprise admin cannot soft delete.
         """
         self.set_jwt_cookie(role, ALL_ACCESS_CONTEXT)
 
@@ -870,6 +910,17 @@ class TestDeleteAdminEndpoint(APITest):
         response = self.client.delete(f'{self.delete_url}?role={ACTIVE_ADMIN_ROLE_TYPE}')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    @mock.patch.object(EnterpriseCustomerAdminViewSet, '_delete_active_admin')
+    def test_delete_active_admin_database_error_returns_500(self, mock_delete_active_admin):
+        """Test that active-admin database errors return a controlled 500 response."""
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+        mock_delete_active_admin.side_effect = DatabaseError('db error')
+
+        response = self.client.delete(f'{self.delete_url}?role={ACTIVE_ADMIN_ROLE_TYPE}')
+
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data['error'], 'Failed to delete admin due to a database error')
 
     def test_delete_admin_soft_deleted_ecu_not_processed(self):
         """
@@ -1126,15 +1177,65 @@ class TestDeleteAdminEndpoint(APITest):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    @mock.patch.object(EnterpriseCustomerAdminViewSet, '_delete_pending_admin')
+    def test_delete_pending_admin_database_error_returns_500(self, mock_delete_pending_admin):
+        """Test that pending-admin database errors return a controlled 500 response."""
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+        mock_delete_pending_admin.side_effect = DatabaseError('db error')
+
+        pending_admin = PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_email='pending@example.com'
+        )
+
+        url = reverse(
+            'enterprise-customer-delete-admin',
+            kwargs={
+                'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
+                'id': str(pending_admin.id),
+            },
+        )
+
+        response = self.client.delete(f'{url}?role={PENDING_ADMIN_ROLE_TYPE}')
+
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(
+            response.data['error'],
+            'Failed to delete pending admin invitation due to a database error',
+        )
+
+    def test_delete_pending_admin_allowed_for_enterprise_admin_role(self):
+        """
+        Test that enterprise admin can delete pending admins.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        pending_admin = PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_email='pending@example.com'
+        )
+
+        url = reverse(
+            'enterprise-customer-delete-admin',
+            kwargs={
+                'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
+                'id': str(pending_admin.id),
+            },
+        )
+
+        response = self.client.delete(f'{url}?role={PENDING_ADMIN_ROLE_TYPE}')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     @ddt.data(
-        ENTERPRISE_ADMIN_ROLE,
+        ENTERPRISE_DASHBOARD_ADMIN_ROLE,
         ENTERPRISE_LEARNER_ROLE,
         ENTERPRISE_OPERATOR_ROLE,
         SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
     )
     def test_delete_pending_admin_forbidden_roles(self, role):
         """
-        Test that roles other than provisioning admin cannot delete pending admins.
+        Test that roles other than provisioning/enterprise admin cannot delete pending admins.
         """
         self.set_jwt_cookie(role, ALL_ACCESS_CONTEXT)
 
@@ -1276,6 +1377,58 @@ class TestInviteAdminsEndpoint(APITest):
         response = self._post_invite(data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_invite_admins_allowed_for_provisioning_admin_role(self):
+        """Test that users with the provisioning admin role can invite admins."""
+        self.set_jwt_admin()
+        data = {'emails': ['provisioning-admin-access@example.com']}
+        response = self._post_invite(data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['email'], 'provisioning-admin-access@example.com')
+
+    def test_invite_admins_allowed_for_enterprise_admin_role(self):
+        """Test that users with the enterprise_admin role can invite admins."""
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+        data = {'emails': ['enterprise-admin-access@example.com']}
+        response = self._post_invite(data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['email'], 'enterprise-admin-access@example.com')
+
+    def test_invite_admins_allowed_for_enterprise_admin_role_scoped_context(self):
+        """Test enterprise_admin role with matching enterprise context can invite admins."""
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(self.enterprise_customer.uuid))
+        data = {'emails': ['enterprise-admin-scoped@example.com']}
+        response = self._post_invite(data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['email'], 'enterprise-admin-scoped@example.com')
+
+    def test_invite_admins_forbidden_for_enterprise_admin_role_non_matching_context(self):
+        """Test enterprise_admin role with non-matching enterprise context is forbidden."""
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(uuid4()))
+        data = {'emails': ['enterprise-admin-nonmatching@example.com']}
+        response = self._post_invite(data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_invite_admins_allowed_for_provisioning_admin_role_scoped_context(self):
+        """Test provisioning admin role with matching enterprise context can invite admins."""
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, str(self.enterprise_customer.uuid))
+        data = {'emails': ['provisioning-admin-scoped@example.com']}
+        response = self._post_invite(data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['email'], 'provisioning-admin-scoped@example.com')
+
+    @ddt.data(
+        ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+        ENTERPRISE_LEARNER_ROLE,
+        ENTERPRISE_OPERATOR_ROLE,
+        SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
+    )
+    def test_invite_admins_forbidden_roles(self, role):
+        """Test that roles other than provisioning/enterprise admin cannot invite admins."""
+        self.set_jwt_cookie(role, ALL_ACCESS_CONTEXT)
+        data = {'emails': ['forbidden@example.com']}
+        response = self._post_invite(data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_invite_admins_url_route_accepts_post(self):
         """Test invite URL resolves to POST invite action and does not return 405."""
         self.set_jwt_admin()
@@ -1303,6 +1456,23 @@ class TestInviteAdminsEndpoint(APITest):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], 'enterprise_customer_uuid must be a valid UUID.')
+
+    def test_invite_admins_missing_enterprise_uuid_returns_400(self):
+        """Test missing enterprise_customer_uuid in the URL/path returns 400."""
+        self.set_jwt_admin()
+
+        request = self.request_factory.post(
+            self.invite_url,
+            {'emails': ['newadmin@example.com']},
+            format='json',
+        )
+        force_authenticate(request, user=self.user)
+        request.COOKIES.update({key: morsel.value for key, morsel in self.client.cookies.items()})
+
+        response = self.invite_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Missing enterprise_customer_uuid.')
 
     def test_invite_admins_invalid_email_format(self):
         """Test that invalid email formats are rejected."""

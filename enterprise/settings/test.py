@@ -418,3 +418,10 @@ ADMIN_INVITE_REMINDER_BATCH_SIZE = 500
 
 ENTERPRISE_CUSTOMER_SUCCESS_EMAIL = 'customersuccess@edx.org'
 ENTERPRISE_INTEGRATIONS_EMAIL = 'enterprise-integrations@edx.org'
+
+# When False, fetching SAML metadata from RFC 1918 private IP ranges is blocked
+# as a defense against SSRF. Set True only for deployments where the SAML IdP
+# is on the same private network as the Open edX server. Loopback and link-local
+# addresses (including cloud metadata endpoints like 169.254.169.254) are always
+# blocked regardless of this setting.
+SAML_METADATA_URL_ALLOW_PRIVATE_IPS = False
