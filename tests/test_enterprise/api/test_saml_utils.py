@@ -2,10 +2,10 @@
 Tests for enterprise.api.v1.views.saml_utils — utility functions migrated from
 openedx-platform's third_party_auth/utils.py.
 """
-import ddt
-import pytest
 from unittest.mock import MagicMock, patch
 
+import ddt
+import pytest
 from lxml import etree
 from requests.exceptions import HTTPError, SSLError
 
