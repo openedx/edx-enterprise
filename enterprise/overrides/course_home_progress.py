@@ -26,6 +26,6 @@ def enterprise_obfuscated_username(prev_fn, request, student):  # pylint: disabl
     """
     # Deferred import — will be replaced with internal path in epic 17.
     from openedx.features.enterprise_support.utils import (  # pylint: disable=import-outside-toplevel,import-error
-        get_enterprise_learner_generic_name
+        get_enterprise_learner_generic_name,
     )
     return get_enterprise_learner_generic_name(request) or None

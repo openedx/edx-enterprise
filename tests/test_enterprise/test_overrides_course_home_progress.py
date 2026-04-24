@@ -4,7 +4,6 @@ Tests for enterprise.overrides.course_home_progress pluggable override.
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-
 ENTERPRISE_SUPPORT_UTILS_PATH = 'openedx.features.enterprise_support.utils'
 
 
