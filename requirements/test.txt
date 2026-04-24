@@ -21,10 +21,6 @@ asgiref==3.11.1
     #   -r requirements/test-master.txt
     #   django
     #   django-countries
-asn1crypto==1.5.1
-    # via
-    #   -r requirements/test-master.txt
-    #   snowflake-connector-python
 attrs==26.1.0
     # via
     #   -r requirements/test-master.txt
@@ -40,29 +36,18 @@ billiard==4.2.4
     #   celery
 bleach==6.3.0
     # via -r requirements/test-master.txt
-boto3==1.42.84
-    # via
-    #   -r requirements/test-master.txt
-    #   snowflake-connector-python
-botocore==1.42.84
-    # via
-    #   -r requirements/test-master.txt
-    #   boto3
-    #   s3transfer
-    #   snowflake-connector-python
 cachecontrol==0.14.4
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
 celery==5.6.3
     # via -r requirements/test-master.txt
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   -r requirements/test-master.txt
     #   httpcore
     #   httpx
     #   requests
-    #   snowflake-connector-python
 cffi==2.0.0
     # via
     #   -r requirements/test-master.txt
@@ -74,8 +59,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/test-master.txt
     #   requests
-    #   snowflake-connector-python
-click==8.3.2
+click==8.3.3
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -111,8 +95,6 @@ cryptography==45.0.7
     #   paramiko
     #   pgpy
     #   pyjwt
-    #   pyopenssl
-    #   snowflake-connector-python
 ddt==1.3.1
     # via -r requirements/test.in
 defusedxml==0.7.1
@@ -253,9 +235,9 @@ edx-opaque-keys[django]==4.0.0
     #   openedx-filters
 edx-rbac==3.0.0
     # via -r requirements/test-master.txt
-edx-rest-api-client==6.2.0
+edx-rest-api-client==7.0.0
     # via -r requirements/test-master.txt
-edx-toggles==5.4.1
+edx-toggles==6.0.0
     # via -r requirements/test-master.txt
 factory-boy==3.3.3
     # via
@@ -267,24 +249,20 @@ fastavro==1.12.1
     # via
     #   -r requirements/test-master.txt
     #   openedx-events
-filelock==3.25.2
-    # via
-    #   -r requirements/test-master.txt
-    #   snowflake-connector-python
-firebase-admin==7.3.0
+firebase-admin==7.4.0
     # via
     #   -r requirements/test-master.txt
     #   edx-ace
 freezegun==1.5.5
     # via -r requirements/test.in
-google-api-core[grpc]==2.30.2
+google-api-core[grpc]==2.30.3
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.49.1
+google-auth==2.49.2
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -296,7 +274,7 @@ google-cloud-core==2.5.1
     #   -r requirements/test-master.txt
     #   google-cloud-firestore
     #   google-cloud-storage
-google-cloud-firestore==2.26.0
+google-cloud-firestore==2.27.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
@@ -352,20 +330,19 @@ hyperframe==6.1.0
     # via
     #   -r requirements/test-master.txt
     #   h2
-idna==3.11
+idna==3.13
     # via
     #   -r requirements/test-master.txt
     #   anyio
     #   httpx
     #   requests
-    #   snowflake-connector-python
 inflection==0.5.1
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
 iniconfig==2.3.0
     # via pytest
-invoke==3.0.2
+invoke==3.0.3
     # via
     #   -r requirements/test-master.txt
     #   paramiko
@@ -374,11 +351,6 @@ jinja2==3.1.6
     #   -r requirements/test-master.txt
     #   code-annotations
     #   diff-cover
-jmespath==1.1.0
-    # via
-    #   -r requirements/test-master.txt
-    #   boto3
-    #   botocore
 jsondiff==2.2.1
     # via -r requirements/test-master.txt
 jsonfield==3.2.0
@@ -413,17 +385,16 @@ oauthlib==3.3.1
     #   social-auth-core
 openedx-atlas==0.7.0
     # via -r requirements/test-master.txt
-openedx-events==11.1.1
+openedx-events==11.2.0
     # via -r requirements/test-master.txt
 openedx-filters==3.1.0
     # via -r requirements/test-master.txt
-packaging==26.0
+packaging==26.1
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
     #   kombu
     #   pytest
-    #   snowflake-connector-python
 paramiko==4.0.0
     # via -r requirements/test-master.txt
 path==16.11.0
@@ -436,10 +407,6 @@ pgpy==0.6.0
     # via -r requirements/test-master.txt
 pillow==12.2.0
     # via -r requirements/test-master.txt
-platformdirs==4.9.4
-    # via
-    #   -r requirements/test-master.txt
-    #   snowflake-connector-python
 pluggy==1.6.0
     # via
     #   diff-cover
@@ -490,7 +457,6 @@ pyjwt[crypto]==2.12.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   firebase-admin
-    #   snowflake-connector-python
     #   social-auth-core
 pymongo==4.4.0
     # via
@@ -501,10 +467,6 @@ pynacl==1.6.2
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   paramiko
-pyopenssl==25.3.0
-    # via
-    #   -r requirements/test-master.txt
-    #   snowflake-connector-python
 pytest==9.0.3
     # via
     #   pytest-cov
@@ -516,7 +478,6 @@ pytest-django==4.12.0
 python-dateutil==2.9.0.post0
     # via
     #   -r requirements/test-master.txt
-    #   botocore
     #   celery
     #   edx-ace
     #   freezegun
@@ -536,7 +497,6 @@ pytz==2026.1.post1
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
-    #   snowflake-connector-python
     #   tincan
 pyyaml==6.0.3
     # via
@@ -559,7 +519,6 @@ requests==2.33.1
     #   responses
     #   sailthru-client
     #   slumber
-    #   snowflake-connector-python
     #   social-auth-core
 requests-oauthlib==2.0.0
     # via
@@ -569,10 +528,6 @@ responses==0.26.0
     # via -r requirements/test.in
 rules==3.5
     # via -r requirements/test-master.txt
-s3transfer==0.16.0
-    # via
-    #   -r requirements/test-master.txt
-    #   boto3
 sailthru-client==2.2.3
     # via
     #   -r requirements/test-master.txt
@@ -581,7 +536,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-simplejson==3.20.2
+simplejson==4.1.0
     # via
     #   -r requirements/test-master.txt
     #   sailthru-client
@@ -594,18 +549,12 @@ six==1.17.0
     #   python-dateutil
 slumber==0.7.1
     # via -r requirements/test-master.txt
-snowflake-connector-python==4.3.0
-    # via -r requirements/test-master.txt
 social-auth-app-django==5.4.1
     # via -r requirements/test-master.txt
-social-auth-core==4.8.5
+social-auth-core==4.8.7
     # via
     #   -r requirements/test-master.txt
     #   social-auth-app-django
-sortedcontainers==2.4.0
-    # via
-    #   -r requirements/test-master.txt
-    #   snowflake-connector-python
 sqlparse==0.5.5
     # via
     #   -r requirements/test-master.txt
@@ -627,10 +576,6 @@ text-unidecode==1.3
     #   python-slugify
 tincan==1.0.0
     # via -r requirements/test-master.txt
-tomlkit==0.14.0
-    # via
-    #   -r requirements/test-master.txt
-    #   snowflake-connector-python
 typing-extensions==4.15.0
     # via
     #   -r requirements/test-master.txt
@@ -639,8 +584,6 @@ typing-extensions==4.15.0
     #   edx-opaque-keys
     #   grpcio
     #   jwcrypto
-    #   pyopenssl
-    #   snowflake-connector-python
 tzdata==2026.1
     # via
     #   -r requirements/test-master.txt
@@ -658,7 +601,6 @@ uritemplate==4.2.0
 urllib3==2.6.3
     # via
     #   -r requirements/test-master.txt
-    #   botocore
     #   requests
     #   responses
 vine==5.1.0
