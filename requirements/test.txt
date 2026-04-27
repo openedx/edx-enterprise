@@ -40,11 +40,11 @@ billiard==4.2.4
     #   celery
 bleach==6.3.0
     # via -r requirements/test-master.txt
-boto3==1.42.84
+boto3==1.42.94
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-botocore==1.42.84
+botocore==1.42.94
     # via
     #   -r requirements/test-master.txt
     #   boto3
@@ -56,7 +56,7 @@ cachecontrol==0.14.4
     #   firebase-admin
 celery==5.6.3
     # via -r requirements/test-master.txt
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   -r requirements/test-master.txt
     #   httpcore
@@ -75,7 +75,7 @@ charset-normalizer==3.4.7
     #   -r requirements/test-master.txt
     #   requests
     #   snowflake-connector-python
-click==8.3.2
+click==8.3.3
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -253,9 +253,9 @@ edx-opaque-keys[django]==4.0.0
     #   openedx-filters
 edx-rbac==3.0.0
     # via -r requirements/test-master.txt
-edx-rest-api-client==6.2.0
+edx-rest-api-client==7.0.0
     # via -r requirements/test-master.txt
-edx-toggles==5.4.1
+edx-toggles==6.0.0
     # via -r requirements/test-master.txt
 factory-boy==3.3.3
     # via
@@ -267,24 +267,24 @@ fastavro==1.12.1
     # via
     #   -r requirements/test-master.txt
     #   openedx-events
-filelock==3.25.2
+filelock==3.29.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-firebase-admin==7.3.0
+firebase-admin==7.4.0
     # via
     #   -r requirements/test-master.txt
     #   edx-ace
 freezegun==1.5.5
     # via -r requirements/test.in
-google-api-core[grpc]==2.30.2
+google-api-core[grpc]==2.30.3
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.49.1
+google-auth==2.49.2
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -296,7 +296,7 @@ google-cloud-core==2.5.1
     #   -r requirements/test-master.txt
     #   google-cloud-firestore
     #   google-cloud-storage
-google-cloud-firestore==2.26.0
+google-cloud-firestore==2.27.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
@@ -352,7 +352,7 @@ hyperframe==6.1.0
     # via
     #   -r requirements/test-master.txt
     #   h2
-idna==3.11
+idna==3.13
     # via
     #   -r requirements/test-master.txt
     #   anyio
@@ -365,7 +365,7 @@ inflection==0.5.1
     #   drf-yasg
 iniconfig==2.3.0
     # via pytest
-invoke==3.0.2
+invoke==3.0.3
     # via
     #   -r requirements/test-master.txt
     #   paramiko
@@ -413,11 +413,11 @@ oauthlib==3.3.1
     #   social-auth-core
 openedx-atlas==0.7.0
     # via -r requirements/test-master.txt
-openedx-events==11.1.1
+openedx-events==11.2.0
     # via -r requirements/test-master.txt
 openedx-filters==3.1.0
     # via -r requirements/test-master.txt
-packaging==26.0
+packaging==26.1
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
@@ -436,7 +436,7 @@ pgpy==0.6.0
     # via -r requirements/test-master.txt
 pillow==12.2.0
     # via -r requirements/test-master.txt
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
@@ -569,7 +569,7 @@ responses==0.26.0
     # via -r requirements/test.in
 rules==3.5
     # via -r requirements/test-master.txt
-s3transfer==0.16.0
+s3transfer==0.16.1
     # via
     #   -r requirements/test-master.txt
     #   boto3
@@ -581,7 +581,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-simplejson==3.20.2
+simplejson==4.1.0
     # via
     #   -r requirements/test-master.txt
     #   sailthru-client
@@ -598,7 +598,7 @@ snowflake-connector-python==4.3.0
     # via -r requirements/test-master.txt
 social-auth-app-django==5.4.1
     # via -r requirements/test-master.txt
-social-auth-core==4.8.5
+social-auth-core==4.8.7
     # via
     #   -r requirements/test-master.txt
     #   social-auth-app-django

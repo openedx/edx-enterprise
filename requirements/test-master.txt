@@ -42,11 +42,11 @@ bleach==6.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-boto3==1.42.84
+boto3==1.42.94
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-botocore==1.42.84
+botocore==1.42.94
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   boto3
@@ -60,7 +60,7 @@ celery==5.6.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   httpcore
@@ -77,7 +77,7 @@ charset-normalizer==3.4.7
     #   -c requirements/edx-platform-constraints.txt
     #   requests
     #   snowflake-connector-python
-click==8.3.2
+click==8.3.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   celery
@@ -121,7 +121,7 @@ defusedxml==0.7.1
     #   djangorestframework-xml
     #   python3-openid
     #   social-auth-core
-django==5.2.12
+django==5.2.13
     # via
     #   -c requirements/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
@@ -280,11 +280,11 @@ edx-rbac==3.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-edx-rest-api-client==6.2.0
+edx-rest-api-client==7.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-edx-toggles==5.4.1
+edx-toggles==6.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -292,22 +292,22 @@ fastavro==1.12.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   openedx-events
-filelock==3.25.2
+filelock==3.29.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-firebase-admin==7.3.0
+firebase-admin==7.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-ace
-google-api-core[grpc]==2.30.2
+google-api-core[grpc]==2.30.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.49.1
+google-auth==2.49.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
@@ -319,7 +319,7 @@ google-cloud-core==2.5.1
     #   -c requirements/edx-platform-constraints.txt
     #   google-cloud-firestore
     #   google-cloud-storage
-google-cloud-firestore==2.26.0
+google-cloud-firestore==2.27.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
@@ -375,7 +375,7 @@ hyperframe==6.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   h2
-idna==3.11
+idna==3.13
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   anyio
@@ -386,7 +386,7 @@ inflection==0.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   drf-yasg
-invoke==3.0.2
+invoke==3.0.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   paramiko
@@ -437,7 +437,7 @@ openedx-atlas==0.7.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-openedx-events==11.1.1
+openedx-events==11.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -445,7 +445,7 @@ openedx-filters==3.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-packaging==26.0
+packaging==26.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   drf-yasg
@@ -471,7 +471,7 @@ pillow==12.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
@@ -587,7 +587,7 @@ rules==3.5
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-s3transfer==0.16.0
+s3transfer==0.16.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   boto3
@@ -599,7 +599,7 @@ semantic-version==2.10.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
-simplejson==3.20.2
+simplejson==4.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   sailthru-client
@@ -622,7 +622,7 @@ social-auth-app-django==5.4.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-social-auth-core==4.8.5
+social-auth-core==4.8.7
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   social-auth-app-django

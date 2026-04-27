@@ -10,19 +10,19 @@ attrs==26.1.0
     # via
     #   outcome
     #   trio
-certifi==2026.2.25
+certifi==2026.4.22
     # via selenium
 cheroot==11.1.2
     # via cherrypy
 cherrypy==18.10.0
     # via jasmine
-click==8.3.2
+click==8.3.3
     # via typer
 glob2==0.7
     # via jasmine-core
 h11==0.16.0
     # via wsproto
-idna==3.11
+idna==3.13
     # via trio
 jaraco-classes==3.4.0
     # via -r requirements/js_test.in
@@ -97,7 +97,7 @@ trio==0.33.0
     #   trio-websocket
 trio-websocket==0.12.2
     # via selenium
-typer==0.24.1
+typer==0.25.0
     # via typer-slim
 typer-slim==0.24.0
     # via jaraco-text
