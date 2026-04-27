@@ -18,10 +18,13 @@ Unreleased
 
 * nothing unreleased
 
-
-[7.0.8] - 2026-04-24
+[8.0.1] - 2026-04-27
 ---------------------
 * feat: add DashboardContextEnricher pipeline step for student dashboard filter
+
+[8.0.0] - 2026-04-22
+---------------------
+* feat!: Drop management commands that dependend on the snowflake-connector
 
 [7.0.7] - 2026-04-24
 ---------------------
