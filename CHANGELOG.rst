@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.2] - 2026-04-27
+---------------------
+* feat: add ai pathways operator waffle flag
+
 [8.0.1] - 2026-04-27
 ---------------------
 * feat: add DashboardContextEnricher pipeline step for student dashboard filter
