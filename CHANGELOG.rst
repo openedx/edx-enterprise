@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.3] - 2026-04-30
+---------------------
+* feat: add pluggable override for course home progress username obfuscation
+
 [8.0.2] - 2026-04-27
 ---------------------
 * feat: add ai pathways operator waffle flag
