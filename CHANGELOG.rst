@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.3] - 2026-04-29
+---------------------
+* feat: adding the missing consent_required_courses injection
+
 [8.0.2] - 2026-04-27
 ---------------------
 * feat: add ai pathways operator waffle flag
