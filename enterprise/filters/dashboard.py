@@ -23,8 +23,7 @@ class DashboardContextEnricher(PipelineStep):
     """
     Enrich the student dashboard context with enterprise-specific data.
 
-    Injects: enterprise_message, consent_required_courses, is_enterprise_user, and
-    enterprise learner portal context keys.
+    Injects: enterprise_message, is_enterprise_user, and enterprise learner portal context keys.
     """
 
     def run_filter(self, context: dict[str, Any], template_name: str) -> dict[str, Any]:  # pylint: disable=arguments-differ
@@ -33,7 +32,7 @@ class DashboardContextEnricher(PipelineStep):
         """
         request = context.get('request')
         user = context.get('user')
-        course_enrollments = context.get('course_enrollment_pairs', [])
+        course_enrollments = context.get('course_enrollments', [])
 
         if user is None:
             return {'context': context, 'template_name': template_name}
