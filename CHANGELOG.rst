@@ -15,7 +15,92 @@ Change Log
 
 Unreleased
 ----------
+
 * nothing unreleased
+
+[8.0.2] - 2026-04-27
+---------------------
+* feat: add ai pathways operator waffle flag
+
+[8.0.1] - 2026-04-27
+---------------------
+* feat: add DashboardContextEnricher pipeline step for student dashboard filter
+
+[8.0.0] - 2026-04-22
+---------------------
+* feat!: Drop management commands that dependend on the snowflake-connector
+
+[7.0.7] - 2026-04-24
+---------------------
+* fix: update social media links for email compatibility
+
+[7.0.6] - 2026-04-22
+---------------------
+* fix: Block SSRF in SAML metadata URL fetching (GHSA-64cv-vxpr-j6vc)
+
+[7.0.5] - 2026-04-21
+---------------------
+* fix: restrict invite and delete enterprise admin endpoints to provisioning admin and enterprise admin roles only
+
+[7.0.4] - 2026-04-15
+---------------------
+* fix: [SAML Views] Accept an "enterprise_customer_uuid" query param (instead of "enterprise-id")
+
+[7.0.3] - 2026-04-15
+---------------------
+* feat: add migration for enable_academies default value change (ENT-11220)
+
+[7.0.2] - 2026-04-14
+---------------------
+* feat: enable academies by default for customers (ENT-11220)
+
+[7.0.1] - 2026-04-08
+---------------------
+* feat: add SAML provider admin API and migrate SAML utilities
+
+[7.0.0] - 2026-04-07
+---------------------
+* chore: drop Python 3.11 support
+
+[6.8.6] - 2026-04-07
+---------------------
+* fix: allow deletion of inactive enterprise admin users (ENT-11714)
+
+[6.8.5] - 2026-03-31
+---------------------
+* feat: add AccountSettingsEnterpriseReadOnlyFieldsStep pipeline step (ENT-11510)
+
+[6.8.4] - 2026-03-31
+--------------------
+* fix: hard delete customer admin records from API
+
+[6.8.3] - 2026-03-27
+---------------------
+* fix: Move settings reads out of AppConfig, into consumers
+
+[6.8.2] - 2026-03-26
+---------------------
+* feat: add admin invite reminder emails (ENT-11581)
+
+[6.8.1] - 2026-03-25
+---------------------
+* fix: also register enterprise and consent as CMS plugins (ENT-11663)
+
+[6.8.0] - 2026-03-24
+---------------------
+* feat: register enterprise and consent as openedx LMS plugins (ENT-11663)
+
+[6.7.0] - 2026-03-10
+---------------------
+* feat: Invite admin endpoints with validation  (ENT-11238)
+
+[6.6.9] - 2026-03-10
+---------------------
+* fix: handle duplicate enterprise group name validation error (ENT-11506)
+
+[6.6.8] - 2026-03-05
+---------------------
+* feat: moving retirement code to edx-enterprise
 
 [6.6.7] - 2026-03-04
 ---------------------

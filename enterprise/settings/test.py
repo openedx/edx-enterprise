@@ -385,6 +385,8 @@ ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
 EDX_BRAZE_API_SERVER = 'test-api-server'
 BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID = 'test-invitation-campaign-id'
 BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID = 'test-removal-campaign-id'
+BRAZE_ADMIN_INVITE_CAMPAIGN_ID = 'test-admin-invite-campaign-id'
+BRAZE_LEARNER_INVITE_CAMPAIGN_ID = 'test-learner-invite-campaign-id'
 
 STORAGES = {
     'default': {
@@ -394,3 +396,32 @@ STORAGES = {
         'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
     },
 }
+
+ENTERPRISE_ADMIN_PORTAL_BASE_URL = 'http://localhost:1991'
+
+# Admin invite reminder settings
+BRAZE_ADMIN_INVITE_CAMPAIGN_ID = os.environ.get('BRAZE_ADMIN_INVITE_CAMPAIGN_ID', 'test-admin-invite-campaign-id')
+BRAZE_LEARNER_INVITE_CAMPAIGN_ID = os.environ.get('BRAZE_LEARNER_INVITE_CAMPAIGN_ID', 'test-learner-invite-campaign-id')
+BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = os.environ.get(
+    'BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID', 'test-admin-invite-reminder-campaign-id'
+)
+BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = os.environ.get(
+    'BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_ID', 'test-learner-admin-invite-reminder-campaign-id'
+)
+ENTERPRISE_BRAZE_API_KEY = os.environ.get('ENTERPRISE_BRAZE_API_KEY', 'test-api-key')
+EDX_BRAZE_API_SERVER = os.environ.get('EDX_BRAZE_API_SERVER', 'test-api-server')
+
+ADMIN_INVITE_REMINDER_INITIAL_DELAY_DAYS = 7
+ADMIN_INVITE_REMINDER_CADENCE_DAYS = 3
+ADMIN_INVITE_REMINDER_MAX_COUNT = 1
+ADMIN_INVITE_REMINDER_BATCH_SIZE = 500
+
+ENTERPRISE_CUSTOMER_SUCCESS_EMAIL = 'customersuccess@edx.org'
+ENTERPRISE_INTEGRATIONS_EMAIL = 'enterprise-integrations@edx.org'
+
+# When False, fetching SAML metadata from RFC 1918 private IP ranges is blocked
+# as a defense against SSRF. Set True only for deployments where the SAML IdP
+# is on the same private network as the Open edX server. Loopback and link-local
+# addresses (including cloud metadata endpoints like 169.254.169.254) are always
+# blocked regardless of this setting.
+SAML_METADATA_URL_ALLOW_PRIVATE_IPS = False
