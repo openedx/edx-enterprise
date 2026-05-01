@@ -13,3 +13,6 @@ def plugin_settings(settings):  # pylint: disable=unused-argument
     Args:
         settings: The Django settings module being configured.
     """
+    settings.OVERRIDE_COURSE_HOME_PROGRESS_USERNAME = (
+        'enterprise.overrides.course_home_progress.enterprise_obfuscated_username'
+    )
