@@ -51,7 +51,7 @@ class TestDashboardContextEnricher(TestCase):
         context = {
             'request': request,
             'user': user,
-            'course_enrollment_pairs': enrollments,
+            'course_enrollments': enrollments,
         }
         template_name = 'student/dashboard.html'
 
@@ -113,11 +113,11 @@ class TestDashboardContextEnricher(TestCase):
         return_value={'enterprise_portal_url': 'https://portal.example.com'},
     )
     @patch(_CONSENT_PATH, return_value='')
-    def test_uses_empty_list_when_course_enrollment_pairs_missing(
+    def test_uses_empty_list_when_course_enrollments_missing(
         self, mock_consent, _mock_portal, _mock_is_enterprise
     ):
         """
-        When course_enrollment_pairs is not in context, an empty list is passed to
+        When course_enrollments is not in context, an empty list is passed to
         get_dashboard_consent_notification.
         """
         request = self._make_request()
@@ -125,7 +125,7 @@ class TestDashboardContextEnricher(TestCase):
         context = {
             'request': request,
             'user': user,
-            # no 'course_enrollment_pairs' key
+            # no 'course_enrollments' key
         }
         template_name = 'student/dashboard.html'
 
