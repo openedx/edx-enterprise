@@ -62,6 +62,21 @@ class TestEnterpriseObfuscatedUsername(TestCase):
         mock_fn.assert_called_once_with(request)
         self.assertIsNone(result)
 
+    def test_utility_unavailable_delegates_to_prev_fn(self):
+        """
+        When get_enterprise_learner_generic_name is None (import failed), should
+        call and return the result of prev_fn(request, student).
+        """
+        request = MagicMock()
+        student = MagicMock()
+        prev_fn = MagicMock(return_value='default-username')
+
+        with patch(f'{OVERRIDE_MODULE}.get_enterprise_learner_generic_name', None):
+            result = enterprise_obfuscated_username(prev_fn, request, student)
+
+        prev_fn.assert_called_once_with(request, student)
+        self.assertEqual(result, 'default-username')
+
     def test_prev_fn_is_not_called(self):
         """
         The override fully replaces the default implementation — prev_fn should not be called.
