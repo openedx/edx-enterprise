@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.4] - 2026-04-30
+---------------------
+* feat: add pluggable override for course home progress username obfuscation
+
 [8.0.3] - 2026-04-29
 ---------------------
 * feat: adding the missing consent_required_courses injection
