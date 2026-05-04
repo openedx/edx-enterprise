@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.4] - 2026-05-04
+---------------------
+* feat: mark unenrolled courses and filter out audit courses in admin enrollment viewset
+
 [8.0.3] - 2026-04-29
 ---------------------
 * feat: adding the missing consent_required_courses injection
