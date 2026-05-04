@@ -1059,7 +1059,21 @@ class TestGetExecEdCourseRunStatus(TestCase):
             start_date=self.now,
             end_date=self.now + datetime.timedelta(days=30)
         )
-        self.enterprise_enrollment = Mock(saved_for_later=False)
+        self.enterprise_enrollment = Mock(unenrolled=False, saved_for_later=False)
+
+    @patch('enterprise.api.v1.serializers.datetime')
+    def test_unenrolled_supersedes_all(self, mock_datetime):
+        """Test that unenrolled=True returns UNENROLLED regardless of other conditions."""
+        mock_datetime.datetime.now.return_value = self.now
+        self.enterprise_enrollment.unenrolled = True
+        self.enterprise_enrollment.saved_for_later = True
+        # pylint: disable=protected-access
+        status = self.serializer._get_exec_ed_course_run_status(
+            self.course_details,
+            {'is_passing': True},
+            self.enterprise_enrollment
+        )
+        assert status == CourseRunProgressStatuses.UNENROLLED
 
     @patch('enterprise.api.v1.serializers.datetime')
     def test_saved_for_later(self, mock_datetime):

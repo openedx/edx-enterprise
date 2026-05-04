@@ -534,7 +534,7 @@ class EnterpriseCourseEnrollmentAdminViewSerializer(serializers.ModelSerializer)
             status: one of (
                 CourseRunProgressStatuses.UNENROLLED,
                 CourseRunProgressStatuses.SAVED_FOR_LATER,
-                CourseRunProgressStatuses.COMPLETE,
+                CourseRunProgressStatuses.COMPLETED,
                 CourseRunProgressStatuses.IN_PROGRESS,
                 CourseRunProgressStatuses.UPCOMING,
             )
@@ -573,7 +573,7 @@ class EnterpriseCourseEnrollmentAdminViewSerializer(serializers.ModelSerializer)
             status: one of (
                 CourseRunProgressStatuses.UNENROLLED,
                 CourseRunProgressStatuses.SAVED_FOR_LATER,
-                CourseRunProgressStatuses.COMPLETE,
+                CourseRunProgressStatuses.COMPLETED,
                 CourseRunProgressStatuses.IN_PROGRESS,
                 CourseRunProgressStatuses.UPCOMING,
             )

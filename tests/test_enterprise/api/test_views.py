@@ -202,6 +202,11 @@ SERIALIZED_MOCK_SAVED_ENROLLMENT = {
     'is_enrollment_active': True,
     'course_run_status': 'saved_for_later',
 }
+SERIALIZED_MOCK_UNENROLLED_ENROLLMENT = {
+    'course_id': 'unenrolled-course',
+    'is_enrollment_active': False,
+    'course_run_status': 'unenrolled',
+}
 
 
 def create_mock_default_enterprise_enrollment_intention(
@@ -10299,6 +10304,7 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
                 SERIALIZED_MOCK_UPCOMING_ENROLLMENT,
                 SERIALIZED_MOCK_COMPLETED_ENROLLMENT,
                 SERIALIZED_MOCK_SAVED_ENROLLMENT,
+                SERIALIZED_MOCK_UNENROLLED_ENROLLMENT,
             ]
 
     def setUp(self):
@@ -10343,7 +10349,7 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
                                     'enterprise_uuid': self.enterprise_customer.uuid})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {
-            'count': 4,
+            'count': 5,
             'next': None,
             'previous': None,
             'results': {
@@ -10351,6 +10357,7 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
                 'upcoming': [SERIALIZED_MOCK_UPCOMING_ENROLLMENT],
                 'completed': [SERIALIZED_MOCK_COMPLETED_ENROLLMENT],
                 'saved_for_later': [SERIALIZED_MOCK_SAVED_ENROLLMENT],
+                'unenrolled': [SERIALIZED_MOCK_UNENROLLED_ENROLLMENT],
             }
         })
 
@@ -10371,11 +10378,13 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
         verified_enrollment = mock.MagicMock()
         verified_enrollment.course_enrollment = mock.MagicMock()
         verified_enrollment.mode = 'verified'
+        verified_enrollment.is_audit_enrollment = False
         verified_enrollment.course_id = 'course-v1:edX+Verified+2025'
 
         audit_enrollment = mock.MagicMock()
         audit_enrollment.course_enrollment = mock.MagicMock()
         audit_enrollment.mode = 'audit'
+        audit_enrollment.is_audit_enrollment = True
         audit_enrollment.course_id = 'course-v1:edX+Audit+2025'
 
         mock_objects.filter.return_value = [verified_enrollment, audit_enrollment]
@@ -10432,7 +10441,7 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
                                    {'lms_user_id': no_enrollments_user.id,
                                     'enterprise_uuid': self.enterprise_customer.uuid})
         self.assertEqual(response.json()['results'],
-                         {'in_progress': [], 'upcoming': [], 'completed': [], 'saved_for_later': []})
+                         {'in_progress': [], 'upcoming': [], 'completed': [], 'saved_for_later': [], 'unenrolled': []})
 
     def test_missing_parameters_cause_400(self):
         """
