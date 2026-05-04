@@ -10345,6 +10345,46 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
 
     @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
     @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.models.EnterpriseCourseEnrollment.objects')
+    def test_only_verified_mode_enrollments_are_returned(
+        self, mock_objects, mock_get_course_overviews, mock_serializer
+    ):
+        """
+        Ensure only enrollments with mode='verified' are passed to the serializer.
+        """
+        admin_user = UserFactory.create(is_active=True, is_staff=True)
+        admin_user.set_password("123")
+        admin_user.save()
+        self.client.login(username=admin_user.username, password="123")
+
+        verified_enrollment = mock.MagicMock()
+        verified_enrollment.course_enrollment = mock.MagicMock()
+        verified_enrollment.mode = 'verified'
+        verified_enrollment.course_id = 'course-v1:edX+Verified+2025'
+
+        audit_enrollment = mock.MagicMock()
+        audit_enrollment.course_enrollment = mock.MagicMock()
+        audit_enrollment.mode = 'audit'
+        audit_enrollment.course_id = 'course-v1:edX+Audit+2025'
+
+        mock_objects.filter.return_value = [verified_enrollment, audit_enrollment]
+        mock_get_course_overviews.return_value = {}
+        mock_serializer.return_value.data = []
+
+        response = self.client.get(self.url, {
+            'lms_user_id': self.user.id,
+            'enterprise_uuid': self.enterprise_customer.uuid,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        # Serializer should only receive the verified enrollment
+        call_args = mock_serializer.call_args
+        enrollments_passed = call_args[0][0]
+        self.assertEqual(len(enrollments_passed), 1)
+        self.assertEqual(enrollments_passed[0], verified_enrollment)
+
+    @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
     def test_view_unlinked_user_returns_401_not_found(self, mock_get_course_overviews, mock_serializer):
         """
         Ensure 401 is returned if the user does not belong to the enterprise.

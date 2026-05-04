@@ -286,6 +286,7 @@ class CourseRunProgressStatuses:
     UPCOMING = 'upcoming'
     COMPLETED = 'completed'
     SAVED_FOR_LATER = 'saved_for_later'
+    UNENROLLED = 'unenrolled'
 
 
 def get_service_usernames():

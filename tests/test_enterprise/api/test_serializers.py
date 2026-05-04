@@ -1123,6 +1123,81 @@ class TestGetExecEdCourseRunStatus(TestCase):
         assert status == CourseRunProgressStatuses.UPCOMING
 
 
+@mark.django_db
+class TestGetCourseRunStatus(TestCase):
+    """Unit tests for _get_course_run_status."""
+
+    def setUp(self):
+        """Set up test data."""
+        super().setUp()
+        self.serializer = EnterpriseCourseEnrollmentAdminViewSerializer()
+        self.course_overview = {'has_started': True, 'has_ended': False}
+        self.enterprise_enrollment = Mock(unenrolled=False, saved_for_later=False)
+
+    def test_unenrolled_supersedes_all(self):
+        """Test that unenrolled=True returns UNENROLLED regardless of other conditions."""
+        self.enterprise_enrollment.unenrolled = True
+        self.enterprise_enrollment.saved_for_later = True
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            {'has_started': True, 'has_ended': True},
+            {'is_passing': True},
+            self.enterprise_enrollment,
+        )
+        assert status == CourseRunProgressStatuses.UNENROLLED
+
+    def test_saved_for_later(self):
+        """Test that saved_for_later=True returns SAVED_FOR_LATER status."""
+        self.enterprise_enrollment.saved_for_later = True
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            self.course_overview,
+            {'is_passing': False},
+            self.enterprise_enrollment,
+        )
+        assert status == CourseRunProgressStatuses.SAVED_FOR_LATER
+
+    def test_completed_with_certificate(self):
+        """Test that a passing certificate returns COMPLETED status."""
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            self.course_overview,
+            {'is_passing': True},
+            self.enterprise_enrollment,
+        )
+        assert status == CourseRunProgressStatuses.COMPLETED
+
+    def test_completed_with_ended_course(self):
+        """Test that an ended course returns COMPLETED status."""
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            {'has_started': True, 'has_ended': True},
+            {'is_passing': False},
+            self.enterprise_enrollment,
+        )
+        assert status == CourseRunProgressStatuses.COMPLETED
+
+    def test_in_progress(self):
+        """Test that a started, non-ended course returns IN_PROGRESS status."""
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            self.course_overview,
+            {'is_passing': False},
+            self.enterprise_enrollment,
+        )
+        assert status == CourseRunProgressStatuses.IN_PROGRESS
+
+    def test_upcoming(self):
+        """Test that a course that hasn't started returns UPCOMING status."""
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            {'has_started': False, 'has_ended': False},
+            {'is_passing': False},
+            self.enterprise_enrollment,
+        )
+        assert status == CourseRunProgressStatuses.UPCOMING
+
+
 @ddt.ddt
 @mark.django_db
 class TestEnterpriseSSOUserInfoRequestSerializer(TestCase):

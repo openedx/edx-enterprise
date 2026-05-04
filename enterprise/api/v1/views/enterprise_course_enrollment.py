@@ -120,8 +120,8 @@ class EnterpriseCourseEnrollmentAdminViewSet(EnterpriseReadWriteModelViewSet):
     @action(detail=False, methods=['get'])
     def get_enterprise_course_enrollments(self, request):
         """
-        Endpoint to get enrollments for a learner by `lms_user_id` and `enterprise_uuid` viewed
-        by an admin of that enterprise.
+        Endpoint to get non-audit enrollments for a learner by `lms_user_id` and `enterprise_uuid`
+        viewed by an admin of that enterprise.
 
         Parameters:
         - `lms_user_id` (str): Filter results by the LMS user ID.
@@ -142,7 +142,10 @@ class EnterpriseCourseEnrollmentAdminViewSet(EnterpriseReadWriteModelViewSet):
         enterprise_enrollments = models.EnterpriseCourseEnrollment.objects.filter(
             enterprise_customer_user=enterprise_customer_user
         )
-        filtered_enterprise_enrollments = [record for record in enterprise_enrollments if record.course_enrollment]
+        filtered_enterprise_enrollments = [
+            record for record in enterprise_enrollments
+            if record.course_enrollment and not record.is_audit_enrollment
+        ]
         course_overviews = get_course_overviews([record.course_id for record in filtered_enterprise_enrollments])
         serialized_data = serializers.EnterpriseCourseEnrollmentAdminViewSerializer(
             filtered_enterprise_enrollments,
@@ -172,6 +175,7 @@ class EnterpriseCourseEnrollmentAdminViewSet(EnterpriseReadWriteModelViewSet):
             CourseRunProgressStatuses.UPCOMING: [],
             CourseRunProgressStatuses.COMPLETED: [],
             CourseRunProgressStatuses.SAVED_FOR_LATER: [],
+            CourseRunProgressStatuses.UNENROLLED: [],
         }
         for enrollment in course_enrollments:
             status = enrollment.get('course_run_status')
