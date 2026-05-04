@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-cachetools==7.0.5
+cachetools==7.0.6
     # via tox
 colorama==0.4.6
     # via tox

@@ -18,6 +18,22 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.3] - 2026-04-29
+---------------------
+* feat: adding the missing consent_required_courses injection
+
+[8.0.2] - 2026-04-27
+---------------------
+* feat: add ai pathways operator waffle flag
+
+[8.0.1] - 2026-04-27
+---------------------
+* feat: add DashboardContextEnricher pipeline step for student dashboard filter
+
+[8.0.0] - 2026-04-22
+---------------------
+* feat!: Drop management commands that dependend on the snowflake-connector
+
 [7.0.7] - 2026-04-24
 ---------------------
 * fix: update social media links for email compatibility
@@ -28,12 +44,10 @@ Unreleased
 
 [7.0.5] - 2026-04-21
 ---------------------
-
 * fix: restrict invite and delete enterprise admin endpoints to provisioning admin and enterprise admin roles only
 
 [7.0.4] - 2026-04-15
 ---------------------
-
 * fix: [SAML Views] Accept an "enterprise_customer_uuid" query param (instead of "enterprise-id")
 
 [7.0.3] - 2026-04-15

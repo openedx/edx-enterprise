@@ -21,10 +21,6 @@ asgiref==3.11.1
     #   -c requirements/edx-platform-constraints.txt
     #   django
     #   django-countries
-asn1crypto==1.5.1
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   snowflake-connector-python
 attrs==26.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -42,16 +38,6 @@ bleach==6.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-boto3==1.42.84
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   snowflake-connector-python
-botocore==1.42.84
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   boto3
-    #   s3transfer
-    #   snowflake-connector-python
 cachecontrol==0.14.4
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -60,13 +46,12 @@ celery==5.6.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   httpcore
     #   httpx
     #   requests
-    #   snowflake-connector-python
 cffi==2.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -76,8 +61,7 @@ charset-normalizer==3.4.7
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
-    #   snowflake-connector-python
-click==8.3.2
+click==8.3.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   celery
@@ -113,15 +97,13 @@ cryptography==45.0.7
     #   paramiko
     #   pgpy
     #   pyjwt
-    #   pyopenssl
-    #   snowflake-connector-python
 defusedxml==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   djangorestframework-xml
     #   python3-openid
     #   social-auth-core
-django==5.2.12
+django==5.2.13
     # via
     #   -c requirements/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
@@ -280,11 +262,11 @@ edx-rbac==3.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-edx-rest-api-client==6.2.0
+edx-rest-api-client==7.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-edx-toggles==5.4.1
+edx-toggles==6.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -292,22 +274,18 @@ fastavro==1.12.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   openedx-events
-filelock==3.25.2
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   snowflake-connector-python
-firebase-admin==7.3.0
+firebase-admin==7.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-ace
-google-api-core[grpc]==2.30.2
+google-api-core[grpc]==2.30.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.49.1
+google-auth==2.49.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
@@ -319,7 +297,7 @@ google-cloud-core==2.5.1
     #   -c requirements/edx-platform-constraints.txt
     #   google-cloud-firestore
     #   google-cloud-storage
-google-cloud-firestore==2.26.0
+google-cloud-firestore==2.27.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
@@ -375,18 +353,17 @@ hyperframe==6.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   h2
-idna==3.11
+idna==3.13
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   anyio
     #   httpx
     #   requests
-    #   snowflake-connector-python
 inflection==0.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   drf-yasg
-invoke==3.0.2
+invoke==3.0.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   paramiko
@@ -394,11 +371,6 @@ jinja2==3.1.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   code-annotations
-jmespath==1.1.0
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   boto3
-    #   botocore
 jsondiff==2.2.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -437,7 +409,7 @@ openedx-atlas==0.7.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-openedx-events==11.1.1
+openedx-events==11.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -445,12 +417,11 @@ openedx-filters==3.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-packaging==26.0
+packaging==26.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   drf-yasg
     #   kombu
-    #   snowflake-connector-python
 paramiko==4.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -471,10 +442,6 @@ pillow==12.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-platformdirs==4.9.4
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   snowflake-connector-python
 prompt-toolkit==3.0.52
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -516,7 +483,6 @@ pyjwt[crypto]==2.12.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   firebase-admin
-    #   snowflake-connector-python
     #   social-auth-core
 pymongo==4.4.0
     # via
@@ -527,15 +493,10 @@ pynacl==1.6.2
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
     #   paramiko
-pyopenssl==25.3.0
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   snowflake-connector-python
 python-dateutil==2.9.0.post0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-    #   botocore
     #   celery
     #   edx-ace
 python-ipware==3.0.0
@@ -555,7 +516,6 @@ pytz==2026.1.post1
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   drf-yasg
-    #   snowflake-connector-python
     #   tincan
 pyyaml==6.0.3
     # via
@@ -577,7 +537,6 @@ requests==2.33.1
     #   requests-oauthlib
     #   sailthru-client
     #   slumber
-    #   snowflake-connector-python
     #   social-auth-core
 requests-oauthlib==2.0.0
     # via
@@ -587,10 +546,6 @@ rules==3.5
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-s3transfer==0.16.0
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   boto3
 sailthru-client==2.2.3
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -599,7 +554,7 @@ semantic-version==2.10.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
-simplejson==3.20.2
+simplejson==4.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   sailthru-client
@@ -614,22 +569,14 @@ slumber==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-snowflake-connector-python==4.3.0
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   -r requirements/base.in
 social-auth-app-django==5.4.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-social-auth-core==4.8.5
+social-auth-core==4.8.7
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   social-auth-app-django
-sortedcontainers==2.4.0
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   snowflake-connector-python
 sqlparse==0.5.5
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -654,10 +601,6 @@ tincan==1.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-tomlkit==0.14.0
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   snowflake-connector-python
 typing-extensions==4.15.0
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -666,8 +609,6 @@ typing-extensions==4.15.0
     #   edx-opaque-keys
     #   grpcio
     #   jwcrypto
-    #   pyopenssl
-    #   snowflake-connector-python
 tzdata==2026.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -687,7 +628,6 @@ uritemplate==4.2.0
 urllib3==2.6.3
     # via
     #   -c requirements/edx-platform-constraints.txt
-    #   botocore
     #   requests
 vine==5.1.0
     # via
