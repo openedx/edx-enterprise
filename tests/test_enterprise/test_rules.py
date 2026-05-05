@@ -72,6 +72,7 @@ class TestEnterpriseRBACPermissions(APITest):
     @mock.patch('enterprise.rules.crum.get_current_request')
     @ddt.data(
         ENTERPRISE_ADMIN_ROLE,
+        ENTERPRISE_OPERATOR_ROLE,
         SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
     )
     def test_manage_enterprise_customer_admins_has_implicit_access(self, enterprise_role, get_current_request_mock):
@@ -81,7 +82,7 @@ class TestEnterpriseRBACPermissions(APITest):
     @mock.patch('enterprise.rules.crum.get_current_request')
     @ddt.data(
         ENTERPRISE_DASHBOARD_ADMIN_ROLE,
-        ENTERPRISE_OPERATOR_ROLE,
+        ENTERPRISE_LEARNER_ROLE,
     )
     def test_manage_enterprise_customer_admins_access_denied(self, enterprise_role, get_current_request_mock):
         get_current_request_mock.return_value = self.get_request_with_jwt_cookie(enterprise_role, TEST_UUID)
