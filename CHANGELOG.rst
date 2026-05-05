@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.4] - 2026-05-05
+---------------------
+* feat: extend manage enterprise customer admins permission to the enterprise_openedx_operator role
+
 [8.0.3] - 2026-04-29
 ---------------------
 * feat: adding the missing consent_required_courses injection
