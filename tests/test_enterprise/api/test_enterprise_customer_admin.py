@@ -737,7 +737,6 @@ class TestDeleteAdminEndpoint(APITest):
     @ddt.data(
         ENTERPRISE_DASHBOARD_ADMIN_ROLE,
         ENTERPRISE_LEARNER_ROLE,
-        ENTERPRISE_OPERATOR_ROLE,
         SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
     )
     def test_delete_admin_forbidden_roles(self, role):
@@ -1230,7 +1229,6 @@ class TestDeleteAdminEndpoint(APITest):
     @ddt.data(
         ENTERPRISE_DASHBOARD_ADMIN_ROLE,
         ENTERPRISE_LEARNER_ROLE,
-        ENTERPRISE_OPERATOR_ROLE,
         SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
     )
     def test_delete_pending_admin_forbidden_roles(self, role):
@@ -1419,7 +1417,6 @@ class TestInviteAdminsEndpoint(APITest):
     @ddt.data(
         ENTERPRISE_DASHBOARD_ADMIN_ROLE,
         ENTERPRISE_LEARNER_ROLE,
-        ENTERPRISE_OPERATOR_ROLE,
         SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
     )
     def test_invite_admins_forbidden_roles(self, role):
