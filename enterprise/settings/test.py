@@ -211,6 +211,13 @@ USE_TZ = True
 
 TIME_ZONE = 'UTC'
 
+# Business logic should be allowed to assume that FEATURES is set.  In a
+# running app, it's set by the platform, but in enterprise unit tests we'll
+# just seed one here.
+FEATURES = {
+    'ENABLE_ENTERPRISE_INTEGRATION': True,
+}
+
 MKTG_URLS = {}
 
 ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER = {

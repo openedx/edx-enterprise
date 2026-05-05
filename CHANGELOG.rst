@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.5] - 2026-05-04
+---------------------
+* feat: add TPA pipeline step and social auth disconnect handler
+
 [8.0.4] - 2026-05-05
 ---------------------
 * feat: extend manage enterprise customer admins permission to the enterprise_openedx_operator role
