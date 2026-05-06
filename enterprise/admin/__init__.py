@@ -776,8 +776,7 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         """
         Disable deletion for EnterpriseCourseEnrollment.
         """
-        features = getattr(settings, 'FEATURES', {})
-        return features.get(constants.ALLOW_ADMIN_ENTERPRISE_COURSE_ENROLLMENT_DELETION, False)
+        return getattr(settings, constants.ALLOW_ADMIN_ENTERPRISE_COURSE_ENROLLMENT_DELETION, False)
 
     def changelist_view(self, request, extra_context=None):
         """

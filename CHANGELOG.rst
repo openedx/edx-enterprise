@@ -18,9 +18,17 @@ Unreleased
 
 * nothing unreleased
 
-[8.0.5] - 2026-05-05
+[8.0.7] - 2026-05-06
 ---------------------
 * feat: add pluggable override for course home progress username obfuscation
+
+[8.0.6] - 2026-05-05
+---------------------
+* fix: gate plugin_settings on ENABLE_ENTERPRISE_INTEGRATION
+
+[8.0.5] - 2026-05-04
+---------------------
+* feat: add TPA pipeline step and social auth disconnect handler
 
 [8.0.4] - 2026-05-05
 ---------------------
