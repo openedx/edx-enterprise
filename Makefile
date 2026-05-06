@@ -222,6 +222,12 @@ dev.up.keycloak: ## start the Keycloak container for SAML IdP testing
 dev.stop.keycloak: ## stop the Keycloak container
 	docker compose stop keycloak
 
+dev.up.keycloak-stage: ## start the stage-targeted Keycloak container (mutually exclusive with keycloak)
+	docker compose up --detach keycloak-stage
+
+dev.stop.keycloak-stage: ## stop the stage-targeted Keycloak container
+	docker compose stop keycloak-stage
+
 dev.provision.keycloak: ## provision Keycloak SAML IdP and LMS TPA records for testing
 	docker compose run --rm keycloak-config-cli
 	docker exec -i --env-file keycloak-devstack.env edx.devstack.lms \
@@ -234,8 +240,25 @@ dev.provision.keycloak: ## provision Keycloak SAML IdP and LMS TPA records for t
 	@echo "(where VS Code / the browser runs), not inside the codespace."
 	@echo ""
 
+dev.provision.keycloak-stage: ## provision local Keycloak SAML IdP for use against stage LMS (courses.stage.edx.org)
+	docker compose run --rm keycloak-config-cli-stage
+	@echo ""
+	@echo "Local Keycloak realm imported with stage SP values."
+	@echo ""
+	@echo "Stage cannot reach your laptop, so the stage-side configuration"
+	@echo "(SAMLConfiguration, SAMLProviderConfig, SAMLProviderData, "
+	@echo "EnterpriseCustomerIdentityProvider, pre-linked learner) must be"
+	@echo "done manually via stage Django admin."
+	@echo ""
+	@echo "See docs/saml_testing_stage.rst for the step-by-step instructions."
+	@echo ""
+	@echo "Reminder: your browser machine needs this /etc/hosts entry:"
+	@echo "  127.0.0.1 edx.devstack.keycloak"
+	@echo ""
+
 .PHONY: clean clean.static compile_translations coverage docs dummy_translations extract_translations \
 	fake_translations help pull_translations push_translations requirements dev_requirements test upgrade validate isort \
 	isort-check static static.dev static.watch quality pylint pycodestyle pii_check pii_clean jasmine \
 	dev.pull dev.up dev.down dev.stop dev.makemigrations dev.shell dev.logs dev.restart-container dev.attach \
-	dev.up.keycloak dev.stop.keycloak dev.provision.keycloak
+	dev.up.keycloak dev.stop.keycloak dev.provision.keycloak \
+	dev.up.keycloak-stage dev.stop.keycloak-stage dev.provision.keycloak-stage

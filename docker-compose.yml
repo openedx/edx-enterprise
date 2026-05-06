@@ -46,9 +46,47 @@ services:
     profiles:
       - provision
 
+  # Variant of `keycloak` for SAML testing against the stage LMS.  Lives on
+  # the project's default network (it has no devstack LMS to talk to) but
+  # shares the host port 8080 and `edx.devstack.keycloak` DNS alias with the
+  # devstack variant so /etc/hosts and SAML client URLs do not need to
+  # differ -- only one of `keycloak` and `keycloak-stage` may run at a time.
+  # The volume is separate so re-provisioning one flow does not affect the
+  # other's realm state.
+  keycloak-stage:
+    container_name: "edx.local-stage.keycloak"
+    hostname: keycloak.local-stage.edx
+    image: quay.io/keycloak/keycloak:26.6
+    command: start-dev
+    networks:
+      default:
+        aliases:
+          - edx.devstack.keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_HOST: "0.0.0.0"
+    volumes:
+      - keycloak_stage_data:/opt/keycloak/data
+
+  keycloak-config-cli-stage:
+    image: adorsys/keycloak-config-cli:latest-26
+    env_file: keycloak-stage.env
+    volumes:
+      - ./keycloak-devstack.properties:/opt/keycloak-config-cli.properties:ro
+      - ./keycloak-devstack-realm.json:/config/keycloak-devstack-realm.json:ro
+    command: --spring.config.additional-location=/opt/keycloak-config-cli.properties
+    depends_on:
+      - keycloak-stage
+    profiles:
+      - provision
+
 networks:
   devstack_default:
     external: true
 
 volumes:
   keycloak_data:
+  keycloak_stage_data:
