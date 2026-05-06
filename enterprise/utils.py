@@ -22,6 +22,7 @@ from social_django.models import UserSocialAuth
 from django.apps import apps
 from django.conf import settings
 from django.contrib import auth
+from django.contrib.auth.models import AbstractUser
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
@@ -1719,7 +1720,7 @@ def get_idiff_list(list_a, list_b):
     return list(set(lower_list_a) - set(lower_list_b))
 
 
-def get_users_by_email(emails):
+def get_users_by_email(emails: list[str]) -> tuple[QuerySet, list[str]]:
     """
     Accept a list of emails, and separate them into users that exist on OpenEdX and users who don't.
 
@@ -1734,6 +1735,15 @@ def get_users_by_email(emails):
     present_emails = users.values_list('email', flat=True)
     unregistered_emails = get_idiff_list(emails, present_emails)
     return users, unregistered_emails
+
+
+def get_user_from_email(email: str) -> AbstractUser | None:
+    """
+    Return a single user matching the email, or None.
+    """
+    if email:
+        return User.objects.filter(email=email).first()
+    return None
 
 
 def is_user_enrolled(user, course_id, course_mode, enrollment_client=None):

@@ -18,6 +18,18 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.6] - 2026-05-05
+---------------------
+* fix: gate plugin_settings on ENABLE_ENTERPRISE_INTEGRATION
+
+[8.0.5] - 2026-05-04
+---------------------
+* feat: add TPA pipeline step and social auth disconnect handler
+
+[8.0.4] - 2026-05-05
+---------------------
+* feat: extend manage enterprise customer admins permission to the enterprise_openedx_operator role
+
 [8.0.3] - 2026-04-29
 ---------------------
 * feat: adding the missing consent_required_courses injection
