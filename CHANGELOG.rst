@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.6] - 2026-05-05
+---------------------
+* fix: gate plugin_settings on ENABLE_ENTERPRISE_INTEGRATION
+
 [8.0.5] - 2026-05-04
 ---------------------
 * feat: add TPA pipeline step and social auth disconnect handler

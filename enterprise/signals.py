@@ -552,6 +552,6 @@ def handle_social_auth_disconnect(
         saml_backend: the SAML auth backend instance.
         **kwargs: forward-compatible catch-all.
     """
-    if not settings.FEATURES.get('ENABLE_ENTERPRISE_INTEGRATION', False):
+    if not getattr(settings, 'ENABLE_ENTERPRISE_INTEGRATION', False):
         return
     _unlink_enterprise_user_from_idp(request, user, saml_backend.name)

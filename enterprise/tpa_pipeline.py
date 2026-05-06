@@ -50,7 +50,7 @@ def enterprise_associate_by_email(strategy, details, user=None, *args, **kwargs)
 
     ENT-11577: This step replaces the now-defunct ``associate_by_email_if_saml`` step from openedx-platform.
     """
-    if not getattr(settings, 'FEATURES', {}).get('ENABLE_ENTERPRISE_INTEGRATION', False):
+    if not getattr(settings, 'ENABLE_ENTERPRISE_INTEGRATION', False):
         return None
 
     def associate_by_email_if_enterprise_user(current_user, current_provider):
