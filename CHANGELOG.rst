@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.9] - 2026-05-07
+---------------------
+* fix: populate name in Invite Admin list view (ENT-11811)
+
 [8.0.8] - 2026-05-06
 ---------------------
 * feat: extra logging for enterprise email association pipeline step
