@@ -6,6 +6,7 @@ import os
 import re
 
 import pgpy
+from cryptography.exceptions import UnsupportedAlgorithm
 
 from django.apps import apps
 from django.conf import settings
@@ -81,6 +82,6 @@ def validate_pgp_key(pgp_key):
     """
     try:
         pgpy.PGPKey.from_blob(pgp_key)
-    except (ValueError, TypeError) as error:
+    except (ValueError, TypeError, UnsupportedAlgorithm) as error:
         # Raise validation error in case of ValueError or TypeError.
         raise ValidationError('Invalid PGP Key provided.') from error
