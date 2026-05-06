@@ -9,6 +9,7 @@ import os
 from os.path import abspath, dirname, join
 
 from celery import Celery
+from edx_django_utils.plugins import add_plugins
 
 from enterprise.constants import (
     DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE,
@@ -25,6 +26,8 @@ from enterprise.constants import (
     SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
 )
 
+############################ BASE LMS TEST SETTINGS ############################
+# Only non-enterprise settings live in this section.
 
 def here(*args):
     """
@@ -62,8 +65,11 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "waffle",
 
+    # Force install enterprise and consent.  This is automatically accomplished
+    # in prod via stevedore, but we need to do it manually here for unit tests.
     "enterprise",
     "consent",
+
     "integrated_channels.integrated_channel",
     "integrated_channels.cornerstone",
     "integrated_channels.degreed",
@@ -143,19 +149,6 @@ LMS_ROOT_URL = "http://lms.example.com"
 LMS_INTERNAL_ROOT_URL = "http://localhost:8000"
 LMS_ENROLLMENT_API_PATH = "/api/enrollment/v1/"
 ECOMMERCE_PUBLIC_URL_ROOT = "http://localhost:18130"
-ENTERPRISE_CATALOG_INTERNAL_ROOT_URL = "http://localhost:18160"
-
-ENTERPRISE_ENROLLMENT_API_URL = LMS_INTERNAL_ROOT_URL + LMS_ENROLLMENT_API_PATH
-
-ENTERPRISE_LEARNER_PORTAL_BASE_URL = 'http://localhost:8734'
-
-ENTERPRISE_PUBLIC_ENROLLMENT_API_URL = ENTERPRISE_ENROLLMENT_API_URL
-
-ENTERPRISE_API_CACHE_TIMEOUT = 60
-
-ENTERPRISE_SUPPORT_URL = "http://foo"
-
-ENTERPRISE_TAGLINE = "High-quality online learning opportunities from the world's best universities"
 
 OAUTH_ID_TOKEN_EXPIRATION = 60 * 60  # in seconds
 
@@ -186,22 +179,7 @@ TEST_SERVER = "http://testserver"
 ALLOWED_HOSTS = ["testserver.enterprise"]
 MEDIA_URL = "/"
 
-# Defines the usernames of service users who should be throttled
-# at a higher rate than normal users.
-ENTERPRISE_ALL_SERVICE_USERNAMES = [
-    'ecommerce_worker',
-    'enterprise_worker',
-    'license-manager_worker',
-    'enterprise-catalog_worker',
-    'enterprise-subsidy_worker',
-]
-
 ECOMMERCE_SERVICE_WORKER_USERNAME = 'ecommerce_worker'
-ENTERPRISE_SERVICE_WORKER_USERNAME = 'enterprise_worker'
-
-ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE = 512   # Enterprise logo image size limit in KB's
-
-ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES = ['audit', 'honor']
 
 # These are standard regexes for pulling out info like course_ids, usage_ids, etc.
 COURSE_KEY_PATTERN = r'(?P<course_key_string>[^/+]+(/|\+)[^/+]+(/|\+)[^/?]+)'
@@ -212,22 +190,6 @@ USE_TZ = True
 TIME_ZONE = 'UTC'
 
 MKTG_URLS = {}
-
-ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER = {
-    'content_type': 'course',
-    'partner': 'edx',
-    'level_type': [
-        'Introductory',
-        'Intermediate',
-        'Advanced'
-    ],
-    'availability': [
-        'Current',
-        'Starting Soon',
-        'Upcoming'
-    ],
-    'status': 'published'
-}
 
 SNOWFLAKE_SERVICE_USER = 'TEST@EDX.ORG'
 SNOWFLAKE_SERVICE_USER_PASSWORD = 'secret'
@@ -275,8 +237,6 @@ LOGGING = {
     },
 }
 
-################################### TRACKING ###################################
-
 LMS_SEGMENT_KEY = 'SOME_KEY'
 EVENT_TRACKING_ENABLED = True
 EVENT_TRACKING_BACKENDS = {
@@ -299,17 +259,12 @@ EVENT_TRACKING_BACKENDS = {
 }
 EVENT_TRACKING_PROCESSORS = []
 
-#################################### CELERY ####################################
-
+# Celery settings
 app = Celery('enterprise')
 app.conf.task_protocol = 1
 app.config_from_object('django.conf:settings')
-
 CELERY_ALWAYS_EAGER = True
-
 CLEAR_REQUEST_CACHE_ON_TASK_COMPLETION = False
-
-##### END CELERY #####
 
 JWT_AUTH = {
     'JWT_AUDIENCE': 'test-aud',
@@ -339,16 +294,8 @@ JWT_AUTH = {
 }
 
 
-INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT = {
-    'SAP': 1,
-}
-
 LANGUAGE_COOKIE_NAME = "openedx-language-preference"
 SHARED_COOKIE_DOMAIN = ''
-
-ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_PROVIDER_URL = f'{LMS_INTERNAL_ROOT_URL}/oauth2'
-ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_KEY = 'test_backend_oauth2_key'
-ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_SECRET = 'test_backend_oauth2_secret'
 
 ECOMMERCE_API_URL = 'https://ecommerce.example.com/api/v2/'
 
@@ -359,12 +306,117 @@ LOGIN_REDIRECT_WHITELIST = [
     'facebook.com'
 ]
 
-ENTERPRISE_MANUAL_REPORTING_CUSTOMER_UUIDS = ['12aacfee8ffa4cb3bed1059565a57f06',]
 EXEC_ED_LANDING_PAGE = 'https://www.edx-external.com/account'
-
 
 # disable indexing on history_date. Otherwise it will add new alter migrations.
 SIMPLE_HISTORY_DATE_INDEX = False
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
+
+# Enterprise-free social auth / TPA pipeline which is conditionally augmented by add_plugins() below.
+SOCIAL_AUTH_PIPELINE = [
+    'common.djangoapps.third_party_auth.pipeline.parse_query_params',
+    'social_core.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_uid',
+    'social_core.pipeline.social_auth.auth_allowed',
+    'social_core.pipeline.social_auth.social_user',
+    'common.djangoapps.third_party_auth.pipeline.associate_by_email_if_login_api',
+    'common.djangoapps.third_party_auth.pipeline.associate_by_email_if_oauth',
+    'common.djangoapps.third_party_auth.pipeline.get_username',
+    'common.djangoapps.third_party_auth.pipeline.set_pipeline_timeout',
+    'common.djangoapps.third_party_auth.pipeline.ensure_user_information',
+    'social_core.pipeline.user.create_user',
+    'social_core.pipeline.social_auth.associate_user',
+    'social_core.pipeline.social_auth.load_extra_data',
+    'social_core.pipeline.user.user_details',
+    'common.djangoapps.third_party_auth.pipeline.user_details_force_sync',
+    'common.djangoapps.third_party_auth.pipeline.set_id_verification_status',
+    'common.djangoapps.third_party_auth.pipeline.set_logged_in_cookies',
+    'common.djangoapps.third_party_auth.pipeline.login_analytics',
+    'common.djangoapps.third_party_auth.pipeline.ensure_redirect_url_is_safe',
+]
+
+# Force the enterprise integration to be enabled so that plugin_settings() will activate.
+ENABLE_ENTERPRISE_INTEGRATION = True
+
+##### END BASE LMS TEST SETTINGS #####
+
+########################### PLUGIN COMMON SETTINGS #############################
+
+# Apply plugin_settings() from every plugin registered in this repo's setup.py
+# entry points so that all tests automatically pick up the post-startup state
+# that openedx-platform sees in production.
+# Notes:
+#  - We apply the "common" settings_type which seeds most of the basic enterprise settings needed.
+#  - Must be applied **after** LMS settings but **before** enterprise-specific test overrides.
+add_plugins(__name__, 'lms.djangoapp', 'common')
+
+##### END PLUGIN COMMON SETTINGS #####
+
+###################### ENTERPRISE-SPECIFIC TEST OVERRIDES #######################
+
+ENTERPRISE_CATALOG_INTERNAL_ROOT_URL = "http://localhost:18160"
+
+ENTERPRISE_ENROLLMENT_API_URL = LMS_INTERNAL_ROOT_URL + LMS_ENROLLMENT_API_PATH
+
+ENTERPRISE_LEARNER_PORTAL_BASE_URL = 'http://localhost:8734'
+
+ENTERPRISE_PUBLIC_ENROLLMENT_API_URL = ENTERPRISE_ENROLLMENT_API_URL
+
+ENTERPRISE_API_CACHE_TIMEOUT = 60
+
+ENTERPRISE_SUPPORT_URL = "http://foo"
+
+ENTERPRISE_TAGLINE = "High-quality online learning opportunities from the world's best universities"
+
+ENTERPRISE_SERVICE_WORKER_USERNAME = 'enterprise_worker'
+
+ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE = 512   # Enterprise logo image size limit in KB's
+
+ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES = ['audit', 'honor']
+
+ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER = {
+    'content_type': 'course',
+    'partner': 'edx',
+    'level_type': [
+        'Introductory',
+        'Intermediate',
+        'Advanced'
+    ],
+    'availability': [
+        'Current',
+        'Starting Soon',
+        'Upcoming'
+    ],
+    'status': 'published'
+}
+
+# Defines the usernames of service users who should be throttled
+# at a higher rate than normal users.
+ENTERPRISE_ALL_SERVICE_USERNAMES = [
+    'ecommerce_worker',
+    'enterprise_worker',
+    'license-manager_worker',
+    'enterprise-catalog_worker',
+    'enterprise-subsidy_worker',
+]
+
+INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT = {
+    'SAP': 1,
+}
+
+ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_PROVIDER_URL = f'{LMS_INTERNAL_ROOT_URL}/oauth2'
+ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_KEY = 'test_backend_oauth2_key'
+ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_SECRET = 'test_backend_oauth2_secret'
+
+ENTERPRISE_MANUAL_REPORTING_CUSTOMER_UUIDS = ['12aacfee8ffa4cb3bed1059565a57f06',]
 
 CHAT_COMPLETION_API_V2 = 'https://example.com/chat/completion'
 ENTERPRISE_ANALYSIS_CLIENT_ID = 'test_client_id'
@@ -387,15 +439,6 @@ BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID = 'test-invitation-campaign-id'
 BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID = 'test-removal-campaign-id'
 BRAZE_ADMIN_INVITE_CAMPAIGN_ID = 'test-admin-invite-campaign-id'
 BRAZE_LEARNER_INVITE_CAMPAIGN_ID = 'test-learner-invite-campaign-id'
-
-STORAGES = {
-    'default': {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
-    },
-    'staticfiles': {
-        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
-    },
-}
 
 ENTERPRISE_ADMIN_PORTAL_BASE_URL = 'http://localhost:1991'
 
@@ -425,3 +468,5 @@ ENTERPRISE_INTEGRATIONS_EMAIL = 'enterprise-integrations@edx.org'
 # addresses (including cloud metadata endpoints like 169.254.169.254) are always
 # blocked regardless of this setting.
 SAML_METADATA_URL_ALLOW_PRIVATE_IPS = False
+
+##### END ENTERPRISE-SPECIFIC TEST OVERRIDES #####

@@ -38,6 +38,7 @@ paramiko
 path.py
 pillow
 python-dateutil
+python3-saml
 pytz
 requests
 rules
