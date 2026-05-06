@@ -5,9 +5,7 @@ import logging
 
 # Will be replaced with an internal path in ENT-11576.
 try:
-    from openedx.features.enterprise_support.utils import (  # pylint: disable=import-error
-        get_enterprise_learner_generic_name,
-    )
+    from openedx.features.enterprise_support.utils import get_enterprise_learner_generic_name
 except ImportError:
     get_enterprise_learner_generic_name = None
 

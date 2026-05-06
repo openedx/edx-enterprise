@@ -16,7 +16,7 @@ def plugin_settings(settings):
     # Skip injecting ANY default enterprise settings if the enterprise feature is entirely disabled.
     if not getattr(settings, 'ENABLE_ENTERPRISE_INTEGRATION', False):
         return
-    
+
     settings.OVERRIDE_COURSE_HOME_PROGRESS_USERNAME = (
         'enterprise.overrides.course_home_progress.enterprise_obfuscated_username'
     )
