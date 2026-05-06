@@ -1325,7 +1325,7 @@ class TestHandleSocialAuthDisconnect(unittest.TestCase):
     Tests for handle_social_auth_disconnect signal handler.
     """
 
-    @override_settings(FEATURES={'ENABLE_ENTERPRISE_INTEGRATION': True})
+    @override_settings(ENABLE_ENTERPRISE_INTEGRATION=True)
     @mock.patch(
         'enterprise.signals._unlink_enterprise_user_from_idp',
     )
@@ -1345,7 +1345,7 @@ class TestHandleSocialAuthDisconnect(unittest.TestCase):
         )
         mock_unlink.assert_called_once_with(request, user, saml_backend.name)
 
-    @override_settings(FEATURES={'ENABLE_ENTERPRISE_INTEGRATION': False})
+    @override_settings(ENABLE_ENTERPRISE_INTEGRATION=False)
     @mock.patch(
         'enterprise.signals._unlink_enterprise_user_from_idp',
     )

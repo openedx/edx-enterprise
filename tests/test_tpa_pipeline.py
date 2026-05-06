@@ -482,7 +482,7 @@ class TestEnterpriseAssociateByEmail(unittest.TestCase):
         mock_log.exception.assert_called_once()
         assert '[Multiple_SSO_SAML_Accounts_Association_to_User]' in mock_log.exception.call_args[0][0]
 
-    @override_settings(FEATURES={'ENABLE_ENTERPRISE_INTEGRATION': False})
+    @override_settings(ENABLE_ENTERPRISE_INTEGRATION=False)
     def test_returns_none_when_enterprise_disabled(self):
         """
         If ENABLE_ENTERPRISE_INTEGRATION is False, return None without

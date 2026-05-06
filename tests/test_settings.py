@@ -14,9 +14,12 @@ class TestPluginSettingsPipelineInjection(unittest.TestCase):
     Tests for SOCIAL_AUTH_PIPELINE step injection in plugin_settings().
     """
 
-    def _make_settings(self, pipeline=None):
+    def _make_settings(self, pipeline=None, enable_enterprise_integration=True):
         """Return a simple settings namespace with the given pipeline."""
-        return SimpleNamespace(SOCIAL_AUTH_PIPELINE=pipeline)
+        return SimpleNamespace(
+            SOCIAL_AUTH_PIPELINE=pipeline,
+            ENABLE_ENTERPRISE_INTEGRATION=enable_enterprise_integration,
+        )
 
     def _base_pipeline(self):
         """Return a minimal pipeline list resembling the platform default."""
@@ -111,9 +114,10 @@ class TestPluginSettingsPipelineInjection(unittest.TestCase):
 
     def test_no_pipeline_attribute(self):
         """
-        If settings has no SOCIAL_AUTH_PIPELINE, plugin_settings is a no-op.
+        If settings has no SOCIAL_AUTH_PIPELINE, plugin_settings is a no-op
+        (even with enterprise integration enabled).
         """
-        settings = SimpleNamespace()
+        settings = SimpleNamespace(ENABLE_ENTERPRISE_INTEGRATION=True)
         # Should not raise
         plugin_settings(settings)
 
@@ -124,3 +128,15 @@ class TestPluginSettingsPipelineInjection(unittest.TestCase):
         settings = self._make_settings(pipeline=None)
         # Should not raise
         plugin_settings(settings)
+
+    def test_no_op_when_enterprise_integration_disabled(self):
+        """
+        If ENABLE_ENTERPRISE_INTEGRATION is False, plugin_settings makes no
+        changes to SOCIAL_AUTH_PIPELINE.
+        """
+        pipeline = self._base_pipeline()
+        settings = self._make_settings(pipeline=pipeline, enable_enterprise_integration=False)
+        plugin_settings(settings)
+
+        assert 'enterprise.tpa_pipeline.enterprise_associate_by_email' not in pipeline
+        assert 'enterprise.tpa_pipeline.handle_enterprise_logistration' not in pipeline

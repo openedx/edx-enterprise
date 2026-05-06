@@ -8,11 +8,15 @@ def plugin_settings(settings):
     Override platform settings for the enterprise app.
 
     This is called by the Open edX plugin system during LMS/CMS startup. Add
-    any Django settings overrides here (e.g. ``settings.FEATURES['...'] = True``).
+    any Django settings overrides here (e.g. ``settings.SOME_FLAG = True``).
 
     Args:
         settings: The Django settings module being configured.
     """
+    # Skip injecting ANY default enterprise settings if the enterprise feature is entirely disabled.
+    if not getattr(settings, 'ENABLE_ENTERPRISE_INTEGRATION', False):
+        return
+
     pipeline = getattr(settings, 'SOCIAL_AUTH_PIPELINE', None)
     if pipeline is not None:
         email_step = 'enterprise.tpa_pipeline.enterprise_associate_by_email'
