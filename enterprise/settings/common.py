@@ -17,6 +17,10 @@ def plugin_settings(settings):
     if not getattr(settings, 'ENABLE_ENTERPRISE_INTEGRATION', False):
         return
 
+    settings.OVERRIDE_COURSE_HOME_PROGRESS_USERNAME = (
+        'enterprise.overrides.course_home_progress.enterprise_obfuscated_username'
+    )
+
     pipeline = getattr(settings, 'SOCIAL_AUTH_PIPELINE', None)
     if pipeline is not None:
         email_step = 'enterprise.tpa_pipeline.enterprise_associate_by_email'

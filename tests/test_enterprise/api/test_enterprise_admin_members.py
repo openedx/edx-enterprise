@@ -118,17 +118,50 @@ class TestEnterpriseAdminMembersViewSet(APITest):
         assert admin_result["invited_date"] is None
 
     def test_pending_admin_fields(self):
-        """Pending admin record contains expected fields and values."""
+        """Pending admin record contains expected fields and values.
+
+        When the invited email does not match any existing user profile,
+        ``name`` falls back to ``user_email`` so the column is never blank
+        in the admin list view (ENT-11811).
+        """
         response = self.client.get(self.url)
 
         pending_result = next(
             r for r in response.data["results"] if r["status"] == "Pending"
         )
         assert pending_result["id"] == self.pending_admin.id
-        assert pending_result["name"] is None
+        assert pending_result["name"] == "pending@example.com"
         assert pending_result["email"] == "pending@example.com"
         assert pending_result["invited_date"] is not None
         assert pending_result["joined_date"] is None
+
+    def test_active_admin_name_falls_back_to_username_when_first_name_blank(self):
+        """
+        ENT-11811: Active admin without a ``first_name`` (and no
+        ``auth_userprofile.name`` available in the test environment)
+        falls back to ``username`` so the column is never blank.
+        """
+        bare_user = UserFactory(
+            username="bare_admin",
+            first_name="",
+            email="bare@example.com",
+            is_active=True,
+        )
+        bare_ecu = EnterpriseCustomerUserFactory(
+            user_id=bare_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        EnterpriseCustomerAdminFactory(enterprise_customer_user=bare_ecu)
+        assign_admin_role(bare_user, self.enterprise_customer)
+
+        response = self.client.get(self.url)
+
+        assert response.status_code == status.HTTP_200_OK
+        bare_result = next(
+            r for r in response.data["results"]
+            if r["email"] == "bare@example.com"
+        )
+        assert bare_result["name"] == "bare_admin"
 
     def test_inactive_user_included(self):
         """Admin whose auth_user.is_active=False is still returned so they can be deleted."""
@@ -232,8 +265,9 @@ class TestEnterpriseAdminMembersViewSet(APITest):
 
         assert response.status_code == status.HTTP_200_OK
         names = [r["name"] for r in response.data["results"]]
-        # None (pending) sorts first, then Alpha, then Jane
-        assert names == [None, "Alpha", "Jane"]
+        # Active admins sort by first_name ("Alpha", "Jane"); pending falls
+        # back to the email "pending@example.com" (ENT-11811).
+        assert names == ["Alpha", "Jane", "pending@example.com"]
 
     def test_ordering_by_email(self):
         """Results can be ordered by email ascending."""

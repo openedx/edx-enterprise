@@ -83,6 +83,12 @@ def enterprise_associate_by_email(strategy, details, user=None, *args, **kwargs)
                         )
                         return None
 
+                    log.info(
+                        f'[Multiple_SSO_SAML_Accounts_Association_to_User] User association successful: '
+                        f'User Email: {current_user.email}, User ID: {current_user.id}, '
+                        f'Provider ID: {current_provider.provider_id}, '
+                        f'is_enterprise_customer_user: {is_enterprise_customer_user}'
+                    )
                     return association_response
 
         except Exception:  # pylint: disable=broad-except
@@ -90,6 +96,13 @@ def enterprise_associate_by_email(strategy, details, user=None, *args, **kwargs)
                 f'[Multiple_SSO_SAML_Accounts_Association_to_User] Error in saml multiple accounts association: '
                 f'User Email: {current_user.email}, User ID: {current_user.id}, '
                 f'Provider ID: {current_provider.provider_id}'
+            )
+        else:
+            log.info(
+                f'[Multiple_SSO_SAML_Accounts_Association_to_User] No user association made: '
+                f'User Email: {current_user.email}, User ID: {current_user.id}, '
+                f'Provider ID: {current_provider.provider_id}, '
+                f'is_enterprise_customer_user: {is_enterprise_customer_user}'
             )
         return None
 

@@ -18,6 +18,18 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.9] - 2026-05-07
+---------------------
+* fix: populate name in Invite Admin list view (ENT-11811)
+
+[8.0.8] - 2026-05-06
+---------------------
+* feat: extra logging for enterprise email association pipeline step
+
+[8.0.7] - 2026-05-06
+---------------------
+* feat: add pluggable override for course home progress username obfuscation
+
 [8.0.6] - 2026-05-05
 ---------------------
 * fix: gate plugin_settings on ENABLE_ENTERPRISE_INTEGRATION
