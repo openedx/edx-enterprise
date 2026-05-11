@@ -202,6 +202,11 @@ SERIALIZED_MOCK_SAVED_ENROLLMENT = {
     'is_enrollment_active': True,
     'course_run_status': 'saved_for_later',
 }
+SERIALIZED_MOCK_UNENROLLED_ENROLLMENT = {
+    'course_id': 'unenrolled-course',
+    'is_enrollment_active': False,
+    'course_run_status': 'unenrolled',
+}
 
 
 def create_mock_default_enterprise_enrollment_intention(
@@ -10299,6 +10304,7 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
                 SERIALIZED_MOCK_UPCOMING_ENROLLMENT,
                 SERIALIZED_MOCK_COMPLETED_ENROLLMENT,
                 SERIALIZED_MOCK_SAVED_ENROLLMENT,
+                SERIALIZED_MOCK_UNENROLLED_ENROLLMENT,
             ]
 
     def setUp(self):
@@ -10343,7 +10349,7 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
                                     'enterprise_uuid': self.enterprise_customer.uuid})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {
-            'count': 4,
+            'count': 5,
             'next': None,
             'previous': None,
             'results': {
@@ -10351,8 +10357,120 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
                 'upcoming': [SERIALIZED_MOCK_UPCOMING_ENROLLMENT],
                 'completed': [SERIALIZED_MOCK_COMPLETED_ENROLLMENT],
                 'saved_for_later': [SERIALIZED_MOCK_SAVED_ENROLLMENT],
+                'unenrolled': [SERIALIZED_MOCK_UNENROLLED_ENROLLMENT],
             }
         })
+
+    @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.models.EnterpriseCourseEnrollment.objects')
+    def test_only_verified_mode_enrollments_are_returned(
+        self, mock_objects, mock_get_course_overviews, mock_serializer
+    ):
+        """
+        Ensure only enrollments with mode='verified' are passed to the serializer.
+        """
+        admin_user = UserFactory.create(is_active=True, is_staff=True)
+        admin_user.set_password("123")
+        admin_user.save()
+        self.client.login(username=admin_user.username, password="123")
+
+        verified_enrollment = mock.MagicMock()
+        verified_enrollment.course_enrollment = mock.MagicMock()
+        verified_enrollment.mode = 'verified'
+        verified_enrollment.is_audit_enrollment = False
+        verified_enrollment.course_id = 'course-v1:edX+Verified+2025'
+
+        audit_enrollment = mock.MagicMock()
+        audit_enrollment.course_enrollment = mock.MagicMock()
+        audit_enrollment.mode = 'audit'
+        audit_enrollment.is_audit_enrollment = True
+        audit_enrollment.course_id = 'course-v1:edX+Audit+2025'
+
+        mock_objects.filter.return_value = [verified_enrollment, audit_enrollment]
+        mock_get_course_overviews.return_value = {}
+        mock_serializer.return_value.data = []
+
+        response = self.client.get(self.url, {
+            'lms_user_id': self.user.id,
+            'enterprise_uuid': self.enterprise_customer.uuid,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        # Serializer should only receive the verified enrollment
+        call_args = mock_serializer.call_args
+        enrollments_passed = call_args[0][0]
+        self.assertEqual(len(enrollments_passed), 1)
+        self.assertEqual(enrollments_passed[0], verified_enrollment)
+
+    @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
+    def test_no_enrollments_returned_when_data_sharing_consent_disabled(
+        self, mock_get_course_overviews, mock_serializer
+    ):
+        """
+        Ensure empty results are returned when enable_data_sharing_consent is False.
+        """
+        admin_user = UserFactory.create(is_active=True, is_staff=True)
+        admin_user.set_password("123")
+        admin_user.save()
+        self.client.login(username=admin_user.username, password="123")
+        self.enterprise_customer.enable_data_sharing_consent = False
+        self.enterprise_customer.save()
+        mock_get_course_overviews.return_value = {}
+        mock_serializer.return_value.data = []
+
+        response = self.client.get(self.url, {
+            'lms_user_id': self.user.id,
+            'enterprise_uuid': self.enterprise_customer.uuid,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['results'],
+                         {'in_progress': [], 'upcoming': [], 'completed': [], 'saved_for_later': [], 'unenrolled': []})
+
+    @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.models.EnterpriseCourseEnrollment.objects')
+    def test_audit_enrollments_included_when_audit_data_reporting_enabled(
+        self, mock_objects, mock_get_course_overviews, mock_serializer
+    ):
+        """
+        Ensure audit enrollments are passed to the serializer when enable_audit_data_reporting is True.
+        """
+        admin_user = UserFactory.create(is_active=True, is_staff=True)
+        admin_user.set_password("123")
+        admin_user.save()
+        self.client.login(username=admin_user.username, password="123")
+        self.enterprise_customer.enable_audit_data_reporting = True
+        self.enterprise_customer.save()
+
+        verified_enrollment = mock.MagicMock()
+        verified_enrollment.course_enrollment = mock.MagicMock()
+        verified_enrollment.is_audit_enrollment = False
+        verified_enrollment.course_id = 'course-v1:edX+Verified+2025'
+
+        audit_enrollment = mock.MagicMock()
+        audit_enrollment.course_enrollment = mock.MagicMock()
+        audit_enrollment.is_audit_enrollment = True
+        audit_enrollment.course_id = 'course-v1:edX+Audit+2025'
+
+        mock_objects.filter.return_value = [verified_enrollment, audit_enrollment]
+        mock_get_course_overviews.return_value = {}
+        mock_serializer.return_value.data = []
+
+        response = self.client.get(self.url, {
+            'lms_user_id': self.user.id,
+            'enterprise_uuid': self.enterprise_customer.uuid,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        # Both verified and audit enrollments should reach the serializer
+        call_args = mock_serializer.call_args
+        enrollments_passed = call_args[0][0]
+        self.assertEqual(len(enrollments_passed), 2)
+        self.assertIn(verified_enrollment, enrollments_passed)
+        self.assertIn(audit_enrollment, enrollments_passed)
 
     @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
     @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
@@ -10392,7 +10510,7 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
                                    {'lms_user_id': no_enrollments_user.id,
                                     'enterprise_uuid': self.enterprise_customer.uuid})
         self.assertEqual(response.json()['results'],
-                         {'in_progress': [], 'upcoming': [], 'completed': [], 'saved_for_later': []})
+                         {'in_progress': [], 'upcoming': [], 'completed': [], 'saved_for_later': [], 'unenrolled': []})
 
     def test_missing_parameters_cause_400(self):
         """
