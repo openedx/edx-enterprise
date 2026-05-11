@@ -92,7 +92,7 @@ code-annotations==3.0.0
     # via
     #   -r requirements/test-master.txt
     #   edx-toggles
-cryptography==47.0.0
+cryptography==48.0.0
     # via
     #   -r requirements/test-master.txt
     #   django-fernet-fields-v2
@@ -108,7 +108,7 @@ defusedxml==0.7.1
     #   djangorestframework-xml
     #   python3-openid
     #   social-auth-core
-django==5.2.13
+django==5.2.14
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test-master.txt
@@ -270,14 +270,14 @@ google-api-core[grpc]==2.30.3
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.49.2
+google-auth==2.52.0
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-cloud-core==2.5.1
+google-cloud-core==2.6.0
     # via
     #   -r requirements/test-master.txt
     #   google-cloud-firestore
@@ -295,11 +295,11 @@ google-crc32c==1.8.0
     #   -r requirements/test-master.txt
     #   google-cloud-storage
     #   google-resumable-media
-google-resumable-media==2.8.2
+google-resumable-media==2.9.0
     # via
     #   -r requirements/test-master.txt
     #   google-cloud-storage
-googleapis-common-protos==1.74.0
+googleapis-common-protos==1.75.0
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -402,7 +402,7 @@ openedx-atlas==0.7.0
     # via -r requirements/test-master.txt
 openedx-events==11.2.0
     # via -r requirements/test-master.txt
-openedx-filters==3.1.0
+openedx-filters==3.3.0
     # via -r requirements/test-master.txt
 packaging==26.2
     # via
@@ -429,7 +429,7 @@ prompt-toolkit==3.0.52
     # via
     #   -r requirements/test-master.txt
     #   click-repl
-proto-plus==1.27.2
+proto-plus==1.28.0
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -507,7 +507,7 @@ python3-openid==3.2.0 ; python_version >= "3"
     #   social-auth-core
 python3-saml==1.16.0
     # via -r requirements/test-master.txt
-pytz==2026.1.post1
+pytz==2026.2
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
@@ -642,7 +642,7 @@ uritemplate==4.2.0
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   -r requirements/test-master.txt
     #   requests
@@ -652,7 +652,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.6.0
+wcwidth==0.7.0
     # via
     #   -r requirements/test-master.txt
     #   prompt-toolkit
