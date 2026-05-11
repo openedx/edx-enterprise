@@ -6,14 +6,19 @@ from edx_rbac.decorators import permission_required
 from rest_framework import filters, mixins, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
 
-from django.db.models import CharField, F, Value
-from django.db.models.functions import Coalesce
+from django.db.models import CharField, F, OuterRef, Subquery, Value
+from django.db.models.functions import Coalesce, NullIf
 
 from enterprise import models
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseViewSet
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from enterprise.logging import getEnterpriseLogger
+
+try:
+    from common.djangoapps.student.models import UserProfile
+except ImportError:
+    UserProfile = None
 
 LOGGER = getEnterpriseLogger(__name__)
 
@@ -63,7 +68,27 @@ class EnterpriseAdminMembersViewSet(
         Return annotated ValuesQuerySet of active (joined) admins.
 
         Clears default model ordering to allow safe use with ``.union()``.
+
+        Resolves ``name`` from ``auth_userprofile.name`` when available
+        (the canonical full-name field in edX). Falls back to
+        ``first_name`` and finally ``username`` so the column is always
+        populated.
         """
+        # Build name expression: prefer auth_userprofile.name (where edX
+        # stores user full names), fall back to auth_user.first_name, then
+        # username. UserProfile may be unavailable outside edx-platform
+        # (e.g. unit tests), in which case we drop the profile lookup.
+        name_args = []
+        if UserProfile is not None:  # pragma: no cover
+            profile_name_subquery = UserProfile.objects.filter(
+                user_id=OuterRef("enterprise_customer_user__user_fk__id"),
+            ).values("name")[:1]
+            name_args.append(NullIf(Subquery(profile_name_subquery), Value("")))
+        name_args.extend([
+            NullIf(F("enterprise_customer_user__user_fk__first_name"), Value("")),
+            F("enterprise_customer_user__user_fk__username"),
+        ])
+
         return (
             models.EnterpriseCustomerAdmin.objects.filter(
                 enterprise_customer_user__enterprise_customer__uuid=enterprise_uuid,
@@ -77,11 +102,7 @@ class EnterpriseAdminMembersViewSet(
             )
             .annotate(
                 admin_id=F("enterprise_customer_user__id"),
-                name=Coalesce(
-                    "enterprise_customer_user__user_fk__first_name",
-                    "enterprise_customer_user__user_fk__username",
-                    output_field=CharField(),
-                ),
+                name=Coalesce(*name_args, output_field=CharField()),
                 email=F("enterprise_customer_user__user_fk__email"),
                 invited_date=Value(None, output_field=CharField()),
                 joined_date=F("created"),
@@ -104,14 +125,32 @@ class EnterpriseAdminMembersViewSet(
         Return annotated ValuesQuerySet of pending (invited) admins.
 
         Clears default model ordering to allow safe use with ``.union()``.
+
+        Pending admins do not yet have an ``EnterpriseCustomerUser`` link,
+        so we resolve ``name`` by matching ``user_email`` against any
+        existing ``auth_userprofile`` row. When no profile exists (or the
+        UserProfile model is unavailable), the email is used so the column
+        is always populated.
         """
+        if UserProfile is not None:  # pragma: no cover
+            profile_name_subquery = UserProfile.objects.filter(
+                user__email=OuterRef("user_email"),
+            ).values("name")[:1]
+            name_expression = Coalesce(
+                NullIf(Subquery(profile_name_subquery), Value("")),
+                F("user_email"),
+                output_field=CharField(),
+            )
+        else:
+            name_expression = F("user_email")
+
         return (
             models.PendingEnterpriseCustomerAdminUser.objects.filter(
                 enterprise_customer__uuid=enterprise_uuid,
             )
             .annotate(
                 admin_id=F("id"),
-                name=Value(None, output_field=CharField()),
+                name=name_expression,
                 email=F("user_email"),
                 invited_date=F("created"),
                 joined_date=Value(None, output_field=CharField()),

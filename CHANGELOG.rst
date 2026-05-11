@@ -18,9 +18,13 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.10] - 2026-05-07
+---------------------
+* feat: account for data sharing consent settings and mark unenrolled courses in admin enrollment viewset
+
 [8.0.9] - 2026-05-07
 ---------------------
-* feat: mark unenrolled courses and filter out audit courses in admin enrollment viewset
+* fix: populate name in Invite Admin list view (ENT-11811)
 
 [8.0.8] - 2026-05-06
 ---------------------
