@@ -60,7 +60,9 @@ class EnterpriseAdminMembersViewSet(
 
     # DRF OrderingFilter settings
     ordering_fields = ["name", "email", "joined_date", "invited_date", "status"]
-    ordering = ["name"]
+    # Add email as secondary sort to ensure deterministic ordering when multiple
+    # records share the same name (e.g., pending admins with blank names).
+    ordering = ["name", "email"]
 
     @classmethod
     def _get_active_admins_qs(cls, enterprise_uuid):
@@ -129,8 +131,7 @@ class EnterpriseAdminMembersViewSet(
         Pending admins do not yet have an ``EnterpriseCustomerUser`` link,
         so we resolve ``name`` by matching ``user_email`` against any
         existing ``auth_userprofile`` row. When no profile exists (or the
-        UserProfile model is unavailable), the email is used so the column
-        is always populated.
+        UserProfile model is unavailable), ``name`` is blank.
         """
         if UserProfile is not None:  # pragma: no cover
             profile_name_subquery = UserProfile.objects.filter(
@@ -138,11 +139,11 @@ class EnterpriseAdminMembersViewSet(
             ).values("name")[:1]
             name_expression = Coalesce(
                 NullIf(Subquery(profile_name_subquery), Value("")),
-                F("user_email"),
+                Value(""),
                 output_field=CharField(),
             )
         else:
-            name_expression = F("user_email")
+            name_expression = Value("", output_field=CharField())
 
         return (
             models.PendingEnterpriseCustomerAdminUser.objects.filter(

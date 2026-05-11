@@ -121,8 +121,7 @@ class TestEnterpriseAdminMembersViewSet(APITest):
         """Pending admin record contains expected fields and values.
 
         When the invited email does not match any existing user profile,
-        ``name`` falls back to ``user_email`` so the column is never blank
-        in the admin list view (ENT-11811).
+        ``name`` is blank (ENT-11811).
         """
         response = self.client.get(self.url)
 
@@ -130,7 +129,7 @@ class TestEnterpriseAdminMembersViewSet(APITest):
             r for r in response.data["results"] if r["status"] == "Pending"
         )
         assert pending_result["id"] == self.pending_admin.id
-        assert pending_result["name"] == "pending@example.com"
+        assert pending_result["name"] == ""
         assert pending_result["email"] == "pending@example.com"
         assert pending_result["invited_date"] is not None
         assert pending_result["joined_date"] is None
@@ -265,9 +264,32 @@ class TestEnterpriseAdminMembersViewSet(APITest):
 
         assert response.status_code == status.HTTP_200_OK
         names = [r["name"] for r in response.data["results"]]
-        # Active admins sort by first_name ("Alpha", "Jane"); pending falls
-        # back to the email "pending@example.com" (ENT-11811).
-        assert names == ["Alpha", "Jane", "pending@example.com"]
+        # Active admins sort by first_name ("Alpha", "Jane"); pending has
+        # blank name so appears first (ENT-11811).
+        assert names == ["", "Alpha", "Jane"]
+
+    def test_default_ordering_with_multiple_pending_admins(self):
+        """Multiple pending admins with blank names sort stably by email."""
+        # Create additional pending admin to test tie-breaking by email.
+        PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_email="zebra@example.com",  # Will have blank name, sorts after 'pending@example.com'
+        )
+
+        response = self.client.get(self.url)
+
+        assert response.status_code == status.HTTP_200_OK
+        # Extract (name, email) pairs to verify stable secondary ordering.
+        results = [(r["name"], r["email"]) for r in response.data["results"]]
+        # Both pending admins have blank names; they sort by email.
+        # Active admin (Jane) sorts by name; pending (blank names)
+        # appear first, sorted by email within the blank-name group.
+        expected = [
+            ("", "pending@example.com"),  # Pending, blank name, sorts by email
+            ("", "zebra@example.com"),     # Pending, blank name, sorts by email after first pending
+            ("Jane", "jane@example.com"),
+        ]
+        assert results == expected
 
     def test_ordering_by_email(self):
         """Results can be ordered by email ascending."""
