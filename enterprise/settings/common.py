@@ -1,6 +1,46 @@
 """
 Common plugin settings for the enterprise app.
 """
+from typing import Any
+
+# Shape of an OPEN_EDX_FILTERS_CONFIG map: ``{filter_type: {'fail_silently': bool, 'pipeline': list[str]}}``.
+FiltersConfig = dict[str, dict[str, Any]]
+
+
+ENTERPRISE_FILTERS_CONFIG: FiltersConfig = {
+    "org.openedx.learning.account.settings.read_only_fields.requested.v1": {
+        "fail_silently": True,
+        "pipeline": ["enterprise.filters.accounts.AccountSettingsEnterpriseReadOnlyFieldsStep"],
+    },
+    "org.openedx.learning.dashboard.render.started.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.dashboard.DashboardContextEnricher"],
+    },
+}
+
+
+def _merge_filters_config(existing: FiltersConfig, additions: FiltersConfig) -> None:
+    """
+    Merge ``additions`` into ``existing`` in place without overwriting operator-defined entries.
+
+    For each filter type in ``additions``:
+      - If the filter type is not already present, copy it in.
+      - If it is present, append the new pipeline steps after any existing steps and
+        only set ``fail_silently`` when the existing entry has not specified it.
+    """
+    for filter_type, filter_config in additions.items():
+        if filter_type in existing:
+            existing_pipeline = existing[filter_type].setdefault('pipeline', [])
+            for step in filter_config.get('pipeline', []):
+                if step not in existing_pipeline:
+                    existing_pipeline.append(step)
+            existing[filter_type].setdefault('fail_silently', filter_config.get('fail_silently', True))
+        else:
+            # Copy so subsequent merges/mutations don't leak back into the plugin default dict.
+            existing[filter_type] = {
+                'fail_silently': filter_config.get('fail_silently', True),
+                'pipeline': list(filter_config.get('pipeline', [])),
+            }
 
 
 def plugin_settings(settings):
@@ -36,3 +76,11 @@ def plugin_settings(settings):
             # pipeline.index() intentionally raises ValueError if the reference step is
             # missing — this prevents Django from starting with a misconfigured pipeline.
             pipeline.insert(pipeline.index(associate_step) + 1, logistration_step)
+
+    # Merge enterprise filter pipeline steps into OPEN_EDX_FILTERS_CONFIG so we never clobber
+    # operator-defined entries (e.g. extra pipeline steps configured via YAML).
+    filters_config = getattr(settings, 'OPEN_EDX_FILTERS_CONFIG', None)
+    if filters_config is None:
+        filters_config = {}
+        settings.OPEN_EDX_FILTERS_CONFIG = filters_config
+    _merge_filters_config(filters_config, ENTERPRISE_FILTERS_CONFIG)

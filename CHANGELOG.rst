@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.13] - 2026-05-14
+---------------------
+* feat: own OPEN_EDX_FILTERS_CONFIG injection in enterprise and consent plugin_settings (ENT-11830)
+
 [8.0.12] - 2026-05-13
 ---------------------
 * fix: dashboard filter step now fetches the live request via crum instead of expecting it in the filter context (ENT-11569)
