@@ -9,7 +9,7 @@ FiltersConfig = dict[str, dict[str, Any]]
 
 ENTERPRISE_FILTERS_CONFIG: FiltersConfig = {
     "org.openedx.learning.account.settings.read_only_fields.requested.v1": {
-        "fail_silently": True,
+        "fail_silently": False,
         "pipeline": ["enterprise.filters.accounts.AccountSettingsEnterpriseReadOnlyFieldsStep"],
     },
     "org.openedx.learning.dashboard.render.started.v1": {
