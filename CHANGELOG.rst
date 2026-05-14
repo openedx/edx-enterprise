@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.14] - 2026-05-14
+---------------------
+* feat: Add basic logging for all enterprise filter pipeline steps (ENT-11830)
+
 [8.0.13] - 2026-05-14
 ---------------------
 * feat: own OPEN_EDX_FILTERS_CONFIG injection in enterprise and consent plugin_settings (ENT-11830)
