@@ -13,6 +13,7 @@ FILTER_TYPE = "org.openedx.learning.dashboard.render.started.v1"
 _CONSENT_PATH = 'enterprise.filters.dashboard.get_dashboard_consent_notification'
 _PORTAL_PATH = 'enterprise.filters.dashboard.get_enterprise_learner_portal_context'
 _IS_ENTERPRISE_PATH = 'enterprise.filters.dashboard.is_enterprise_learner'
+_GET_CURRENT_REQUEST_PATH = 'enterprise.filters.dashboard.get_current_request'
 
 
 class TestDashboardContextEnricher(TestCase):
@@ -49,14 +50,14 @@ class TestDashboardContextEnricher(TestCase):
         user = self._make_user()
         enrollments = [MagicMock()]
         context = {
-            'request': request,
             'user': user,
             'course_enrollments': enrollments,
         }
         template_name = 'student/dashboard.html'
 
         step = self._make_step()
-        result = step.run_filter(context=context, template_name=template_name)
+        with patch(_GET_CURRENT_REQUEST_PATH, return_value=request):
+            result = step.run_filter(context=context, template_name=template_name)
 
         assert result['template_name'] == template_name
         result_context = result['context']
@@ -80,13 +81,13 @@ class TestDashboardContextEnricher(TestCase):
         request = self._make_request()
         user = self._make_user()
         context = {
-            'request': request,
             'user': user,
         }
         template_name = 'student/dashboard.html'
 
         step = self._make_step()
-        result = step.run_filter(context=context, template_name=template_name)
+        with patch(_GET_CURRENT_REQUEST_PATH, return_value=request):
+            result = step.run_filter(context=context, template_name=template_name)
 
         result_context = result['context']
         assert result_context['enterprise_message'] == ''
@@ -95,9 +96,9 @@ class TestDashboardContextEnricher(TestCase):
     def test_returns_unchanged_context_when_no_user(self):
         """
         When no user is present in context, the step returns context unchanged without calling
-        any enterprise helper functions.
+        any enterprise helper functions or attempting to fetch the current request.
         """
-        context = {'request': MagicMock()}
+        context = {}
         template_name = 'student/dashboard.html'
 
         step = self._make_step()
@@ -123,13 +124,35 @@ class TestDashboardContextEnricher(TestCase):
         request = self._make_request()
         user = self._make_user()
         context = {
-            'request': request,
             'user': user,
             # no 'course_enrollments' key
         }
         template_name = 'student/dashboard.html'
 
         step = self._make_step()
-        step.run_filter(context=context, template_name=template_name)
+        with patch(_GET_CURRENT_REQUEST_PATH, return_value=request):
+            step.run_filter(context=context, template_name=template_name)
 
         mock_consent.assert_called_once_with(request, user, [])
+
+    @patch(_IS_ENTERPRISE_PATH, return_value=False)
+    @patch(_PORTAL_PATH, return_value={})
+    @patch(_CONSENT_PATH, return_value='')
+    @patch(_GET_CURRENT_REQUEST_PATH, return_value=None)
+    def test_tolerates_no_current_request(
+        self, _mock_get_request, mock_consent, mock_portal, _mock_is_enterprise
+    ):
+        """
+        When crum cannot supply a request (e.g. tests or admin commands invoking the filter
+        outside a request cycle), the step still runs and forwards ``None`` to the downstream
+        helpers, which are expected to handle the missing request themselves.
+        """
+        user = self._make_user()
+        context = {'user': user, 'course_enrollments': []}
+        template_name = 'student/dashboard.html'
+
+        step = self._make_step()
+        step.run_filter(context=context, template_name=template_name)
+
+        mock_consent.assert_called_once_with(None, user, [])
+        mock_portal.assert_called_once_with(None)

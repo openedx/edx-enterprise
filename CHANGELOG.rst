@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.12] - 2026-05-13
+---------------------
+* fix: dashboard filter step now fetches the live request via crum instead of expecting it in the filter context (ENT-11569)
+
 [8.0.11] - 2026-05-12
 ---------------------
 * fix: populate name as blank in Invite Admin list view for pending customer admin (ENT-11811)
