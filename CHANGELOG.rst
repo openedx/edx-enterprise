@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.13] - 2026-05-14
+---------------------
+* feat: add GradeEventContextEnricher pipeline step for grade analytics (ENT-11563)
+
 [8.0.12] - 2026-05-13
 ---------------------
 * fix: dashboard filter step now fetches the live request via crum instead of expecting it in the filter context (ENT-11569)
