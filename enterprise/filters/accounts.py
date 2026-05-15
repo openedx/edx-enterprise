@@ -1,6 +1,8 @@
 """
 Pipeline step for determining read-only account settings fields.
 """
+import logging
+
 from openedx_filters.filters import PipelineStep
 from social_django.models import UserSocialAuth
 
@@ -12,6 +14,8 @@ except ImportError:
     third_party_auth = None
 
 from enterprise.models import EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser
+
+log = logging.getLogger(__name__)
 
 
 class AccountSettingsEnterpriseReadOnlyFieldsStep(PipelineStep):
@@ -47,6 +51,11 @@ class AccountSettingsEnterpriseReadOnlyFieldsStep(PipelineStep):
         Returns:
             dict: updated pipeline data with ``readonly_fields`` key.
         """
+        log.info(
+            "AccountSettingsEnterpriseReadOnlyFieldsStep running: user_id=%s, current_readonly_fields=%s",
+            getattr(user, "id", None),
+            sorted(readonly_fields),
+        )
         enterprise_customer_user = (
             EnterpriseCustomerUser.objects.filter(user_id=user.id)
             .order_by('-active', '-modified')
