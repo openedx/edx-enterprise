@@ -1,6 +1,7 @@
 """
 Pipeline steps for the student dashboard filter.
 """
+import logging
 from typing import Any
 
 from crum import get_current_request
@@ -19,6 +20,8 @@ except ImportError:
     get_enterprise_learner_portal_context = None
     is_enterprise_learner = None
 
+log = logging.getLogger(__name__)
+
 
 class DashboardContextEnricher(PipelineStep):
     """
@@ -31,6 +34,12 @@ class DashboardContextEnricher(PipelineStep):
         """
         Inject enterprise data into the dashboard context.
         """
+        log.info(
+            "DashboardContextEnricher running: template_name=%s, context_keys=%s, user_id=%s",
+            template_name,
+            sorted(context.keys()),
+            getattr(context.get("user"), "id", None),
+        )
         user = context.get('user')
         course_enrollments = context.get('course_enrollments', [])
 

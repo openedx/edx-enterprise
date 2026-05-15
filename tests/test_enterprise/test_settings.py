@@ -4,9 +4,10 @@ Tests for enterprise plugin settings (enterprise/settings/common.py).
 import unittest
 from types import SimpleNamespace
 
+import ddt
 import pytest
 
-from enterprise.settings.common import plugin_settings
+from enterprise.settings.common import _merge_filters_config, plugin_settings
 
 
 class TestPluginSettingsPipelineInjection(unittest.TestCase):
@@ -140,3 +141,74 @@ class TestPluginSettingsPipelineInjection(unittest.TestCase):
 
         assert 'enterprise.tpa_pipeline.enterprise_associate_by_email' not in pipeline
         assert 'enterprise.tpa_pipeline.handle_enterprise_logistration' not in pipeline
+
+
+FILTER_A = 'org.openedx.test.filter_a.v1'
+FILTER_B = 'org.openedx.test.filter_b.v1'
+STEP_X = 'pkg.steps.StepX'
+STEP_Y = 'pkg.steps.StepY'
+STEP_Z = 'pkg.steps.StepZ'
+
+
+@ddt.ddt
+class TestMergeFiltersConfig(unittest.TestCase):
+    """
+    Unit tests for the ``_merge_filters_config`` helper. These tests use fabricated
+    inputs so they do not need to be updated when ``ENTERPRISE_FILTERS_CONFIG`` grows.
+    """
+
+    @ddt.data(
+        # Empty existing → additions copied in verbatim.
+        {
+            'existing': {},
+            'additions': {FILTER_A: {'fail_silently': True, 'pipeline': [STEP_X]}},
+            'expected': {FILTER_A: {'fail_silently': True, 'pipeline': [STEP_X]}},
+        },
+        # Existing has an unrelated filter type → preserved alongside the addition.
+        {
+            'existing': {FILTER_A: {'fail_silently': False, 'pipeline': [STEP_X]}},
+            'additions': {FILTER_B: {'fail_silently': True, 'pipeline': [STEP_Y]}},
+            'expected': {
+                FILTER_A: {'fail_silently': False, 'pipeline': [STEP_X]},
+                FILTER_B: {'fail_silently': True, 'pipeline': [STEP_Y]},
+            },
+        },
+        # Existing entry for the same filter type → new step appended; existing fail_silently preserved.
+        {
+            'existing': {FILTER_A: {'fail_silently': False, 'pipeline': [STEP_X]}},
+            'additions': {FILTER_A: {'fail_silently': True, 'pipeline': [STEP_Y]}},
+            'expected': {FILTER_A: {'fail_silently': False, 'pipeline': [STEP_X, STEP_Y]}},
+        },
+        # Partial overlap → duplicate step skipped, novel step appended, order preserved.
+        {
+            'existing': {FILTER_A: {'fail_silently': False, 'pipeline': [STEP_X, STEP_Y]}},
+            'additions': {FILTER_A: {'fail_silently': True, 'pipeline': [STEP_Y, STEP_Z]}},
+            'expected': {FILTER_A: {'fail_silently': False, 'pipeline': [STEP_X, STEP_Y, STEP_Z]}},
+        },
+    )
+    @ddt.unpack
+    def test_merge_scenarios(self, existing, additions, expected):
+        _merge_filters_config(existing, additions)
+        assert existing == expected
+
+    def test_idempotent_does_not_duplicate_step(self):
+        existing = {}
+        additions = {FILTER_A: {'fail_silently': True, 'pipeline': [STEP_X]}}
+
+        _merge_filters_config(existing, additions)
+        _merge_filters_config(existing, additions)
+
+        assert existing[FILTER_A]['pipeline'] == [STEP_X]
+
+    def test_additions_dict_isolated_from_subsequent_mutation(self):
+        """
+        Mutating ``existing`` after a merge must not leak back into the
+        ``additions`` dict (i.e., pipeline lists are copied).
+        """
+        additions = {FILTER_A: {'fail_silently': True, 'pipeline': [STEP_X]}}
+        existing = {}
+
+        _merge_filters_config(existing, additions)
+        existing[FILTER_A]['pipeline'].append(STEP_Y)
+
+        assert additions[FILTER_A]['pipeline'] == [STEP_X]

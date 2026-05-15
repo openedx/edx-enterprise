@@ -18,9 +18,17 @@ Unreleased
 
 * nothing unreleased
 
-[8.0.13] - 2026-05-14
+[8.0.15] - 2026-05-15
 ---------------------
 * feat: add GradeEventContextEnricher pipeline step for grade analytics (ENT-11563)
+
+[8.0.14] - 2026-05-14
+---------------------
+* feat: Add basic logging for all enterprise filter pipeline steps (ENT-11830)
+
+[8.0.13] - 2026-05-14
+---------------------
+* feat: own OPEN_EDX_FILTERS_CONFIG injection in enterprise and consent plugin_settings (ENT-11830)
 
 [8.0.12] - 2026-05-13
 ---------------------
