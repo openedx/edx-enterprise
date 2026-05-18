@@ -354,7 +354,7 @@ hyperframe==6.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   h2
-idna==3.13
+idna==3.14
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   anyio
@@ -420,7 +420,7 @@ openedx-events==11.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-openedx-filters==3.3.0
+openedx-filters==3.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -429,7 +429,7 @@ packaging==26.2
     #   -c requirements/edx-platform-constraints.txt
     #   drf-yasg
     #   kombu
-paramiko==4.0.0
+paramiko==5.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -534,7 +534,7 @@ pyyaml==6.0.3
     #   code-annotations
     #   drf-yasg
     #   jsondiff
-requests==2.33.1
+requests==2.34.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in

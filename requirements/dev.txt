@@ -82,7 +82,7 @@ cachecontrol==0.14.4
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   firebase-admin
-cachetools==7.1.1
+cachetools==7.1.2
     # via tox
 celery==5.6.3
     # via
@@ -420,7 +420,7 @@ factory-boy==3.3.3
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==40.15.0
+faker==40.18.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -551,7 +551,7 @@ hyperframe==6.1.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   h2
-idna==3.13
+idna==3.14
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -673,7 +673,7 @@ openedx-events==11.2.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-openedx-filters==3.3.0
+openedx-filters==3.4.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -691,7 +691,7 @@ packaging==26.2
     #   sphinx
     #   tox
     #   wheel
-paramiko==4.0.0
+paramiko==5.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -867,7 +867,7 @@ python-dateutil==2.9.0.post0
     #   celery
     #   edx-ace
     #   freezegun
-python-discovery==1.3.0
+python-discovery==1.3.1
     # via
     #   tox
     #   virtualenv
@@ -913,7 +913,7 @@ pyyaml==6.0.3
     #   responses
 readme-renderer==44.0
     # via -r requirements/doc.txt
-requests==2.33.1
+requests==2.34.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -1084,7 +1084,7 @@ tomlkit==0.15.0
     # via
     #   edx-lint
     #   pylint
-tox==4.53.1
+tox==4.54.0
     # via -r requirements/dev.in
 tqdm==4.67.3
     # via twine
@@ -1140,7 +1140,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==21.3.1
+virtualenv==21.3.3
     # via tox
 wcwidth==0.7.0
     # via

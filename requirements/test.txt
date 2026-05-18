@@ -244,7 +244,7 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==40.15.0
+faker==40.18.0
     # via factory-boy
 fastavro==1.12.2
     # via
@@ -331,7 +331,7 @@ hyperframe==6.1.0
     # via
     #   -r requirements/test-master.txt
     #   h2
-idna==3.13
+idna==3.14
     # via
     #   -r requirements/test-master.txt
     #   anyio
@@ -395,7 +395,7 @@ openedx-atlas==0.7.0
     # via -r requirements/test-master.txt
 openedx-events==11.2.0
     # via -r requirements/test-master.txt
-openedx-filters==3.3.0
+openedx-filters==3.4.0
     # via -r requirements/test-master.txt
 packaging==26.2
     # via
@@ -403,7 +403,7 @@ packaging==26.2
     #   drf-yasg
     #   kombu
     #   pytest
-paramiko==4.0.0
+paramiko==5.0.0
     # via -r requirements/test-master.txt
 path==16.11.0
     # via
@@ -515,7 +515,7 @@ pyyaml==6.0.3
     #   drf-yasg
     #   jsondiff
     #   responses
-requests==2.33.1
+requests==2.34.0
     # via
     #   -r requirements/test-master.txt
     #   cachecontrol
