@@ -2,11 +2,14 @@
 Pipeline step for enriching grade analytics event context.
 """
 import copy
+import logging
 from typing import Any
 
 from openedx_filters.filters import PipelineStep
 
 from enterprise.models import EnterpriseCourseEnrollment
+
+log = logging.getLogger(__name__)
 
 
 class GradeEventContextEnricher(PipelineStep):
@@ -39,6 +42,11 @@ class GradeEventContextEnricher(PipelineStep):
                     "course_id": <unchanged>,
                 }
         """
+        log.info(
+            "GradeEventContextEnricher running: user_id=%s, course_id=%s",
+            str(user_id),
+            str(course_id),
+        )
         uuids = EnterpriseCourseEnrollment.get_enterprise_uuids_with_user_and_course(user_id, course_id)
         if uuids:
             context = copy.deepcopy(context)  # create a copy to avoid altering the passed-in value.
