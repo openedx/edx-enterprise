@@ -16,6 +16,10 @@ ENTERPRISE_FILTERS_CONFIG: FiltersConfig = {
         "fail_silently": False,
         "pipeline": ["enterprise.filters.dashboard.DashboardContextEnricher"],
     },
+    "org.openedx.learning.grade.context.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.grades.GradeEventContextEnricher"],
+    },
 }
 
 
