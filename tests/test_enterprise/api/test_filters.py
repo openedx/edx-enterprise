@@ -308,7 +308,6 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
                     'catalog_query_search_filters_enabled': False,
                     'enterprise_admin_onboarding_enabled': False,
                     'enterprise_edit_highlights_enabled': False,
-                    'enterprise_invite_admins_enabled': False,
                     'enterprise_ai_pathways_operator_enabled': False,
                 }
             }
