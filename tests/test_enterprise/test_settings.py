@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import ddt
 import pytest
 
-from enterprise.settings.common import _merge_filters_config, plugin_settings
+from enterprise.settings.common import ENTERPRISE_FILTERS_CONFIG, _merge_filters_config, plugin_settings
 
 
 class TestPluginSettingsPipelineInjection(unittest.TestCase):
@@ -212,3 +212,47 @@ class TestMergeFiltersConfig(unittest.TestCase):
         existing[FILTER_A]['pipeline'].append(STEP_Y)
 
         assert additions[FILTER_A]['pipeline'] == [STEP_X]
+
+
+class TestEnterpriseFiltersConfig(unittest.TestCase):
+    """
+    Smoke tests asserting that ``ENTERPRISE_FILTERS_CONFIG`` contains the expected
+    filter registrations.  These tests catch omissions when a new pipeline step is
+    added to ``enterprise/filters/`` but its filter-type key is never registered.
+    """
+
+    def test_enrollment_started_filter_is_registered(self):
+        """
+        EnterpriseEnrollmentPostProcessor must be registered under the confirmed
+        upstream filter-type key ``org.openedx.learning.course.enrollment.started.v1``.
+        """
+        filter_key = "org.openedx.learning.course.enrollment.started.v1"
+        assert filter_key in ENTERPRISE_FILTERS_CONFIG, (
+            f"Expected {filter_key!r} to be present in ENTERPRISE_FILTERS_CONFIG"
+        )
+        pipeline = ENTERPRISE_FILTERS_CONFIG[filter_key].get("pipeline", [])
+        assert "enterprise.filters.enrollment.EnterpriseEnrollmentPostProcessor" in pipeline
+
+    def test_enrollment_started_filter_fail_silently_is_false(self):
+        """
+        The enrollment-started filter should not silently swallow exceptions
+        so that enrollment failures surface to the caller.
+        """
+        filter_key = "org.openedx.learning.course.enrollment.started.v1"
+        assert ENTERPRISE_FILTERS_CONFIG[filter_key].get("fail_silently") is False
+
+    def test_plugin_settings_injects_enrollment_filter(self):
+        """
+        After plugin_settings() runs, OPEN_EDX_FILTERS_CONFIG must contain
+        the enrollment-started entry that EnterpriseEnrollmentPostProcessor is
+        registered under.
+        """
+        filter_key = "org.openedx.learning.course.enrollment.started.v1"
+        settings = SimpleNamespace(
+            ENABLE_ENTERPRISE_INTEGRATION=True,
+            OPEN_EDX_FILTERS_CONFIG={},
+        )
+        plugin_settings(settings)
+        assert filter_key in settings.OPEN_EDX_FILTERS_CONFIG
+        pipeline = settings.OPEN_EDX_FILTERS_CONFIG[filter_key].get("pipeline", [])
+        assert "enterprise.filters.enrollment.EnterpriseEnrollmentPostProcessor" in pipeline

@@ -18,6 +18,11 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.16] - 2026-05-22
+---------------------
+* feat: add EnterpriseEnrollmentPostProcessor pipeline step for CourseEnrollmentStarted filter (ENT-11570)
+* fix: register EnterpriseEnrollmentPostProcessor in ENTERPRISE_FILTERS_CONFIG under the confirmed filter key org.openedx.learning.course.enrollment.started.v1
+
 [8.0.15] - 2026-05-15
 ---------------------
 * feat: add GradeEventContextEnricher pipeline step for grade analytics (ENT-11563)
