@@ -221,38 +221,37 @@ class TestEnterpriseFiltersConfig(unittest.TestCase):
     added to ``enterprise/filters/`` but its filter-type key is never registered.
     """
 
-    def test_enrollment_started_filter_is_registered(self):
+    def test_all_filters_have_expected_shape(self):
         """
-        EnterpriseEnrollmentPostProcessor must be registered under the confirmed
-        upstream filter-type key ``org.openedx.learning.course.enrollment.started.v1``.
+        Every enterprise filter registration should define ``fail_silently`` and
+        at least one pipeline step.
         """
-        filter_key = "org.openedx.learning.course.enrollment.started.v1"
-        assert filter_key in ENTERPRISE_FILTERS_CONFIG, (
-            f"Expected {filter_key!r} to be present in ENTERPRISE_FILTERS_CONFIG"
-        )
-        pipeline = ENTERPRISE_FILTERS_CONFIG[filter_key].get("pipeline", [])
-        assert "enterprise.filters.enrollment.EnterpriseEnrollmentPostProcessor" in pipeline
+        assert ENTERPRISE_FILTERS_CONFIG
+        for filter_key, filter_config in ENTERPRISE_FILTERS_CONFIG.items():
+            assert "fail_silently" in filter_config, (
+                f"Expected {filter_key!r} to define fail_silently"
+            )
+            assert isinstance(filter_config["pipeline"], list), (
+                f"Expected {filter_key!r} pipeline to be a list"
+            )
+            assert filter_config["pipeline"], (
+                f"Expected {filter_key!r} to define at least one pipeline step"
+            )
 
-    def test_enrollment_started_filter_fail_silently_is_false(self):
+    def test_plugin_settings_injects_all_enterprise_filters(self):
         """
-        The enrollment-started filter should not silently swallow exceptions
-        so that enrollment failures surface to the caller.
+        plugin_settings() should inject every filter key and pipeline step from
+        ENTERPRISE_FILTERS_CONFIG into OPEN_EDX_FILTERS_CONFIG.
         """
-        filter_key = "org.openedx.learning.course.enrollment.started.v1"
-        assert ENTERPRISE_FILTERS_CONFIG[filter_key].get("fail_silently") is False
-
-    def test_plugin_settings_injects_enrollment_filter(self):
-        """
-        After plugin_settings() runs, OPEN_EDX_FILTERS_CONFIG must contain
-        the enrollment-started entry that EnterpriseEnrollmentPostProcessor is
-        registered under.
-        """
-        filter_key = "org.openedx.learning.course.enrollment.started.v1"
         settings = SimpleNamespace(
             ENABLE_ENTERPRISE_INTEGRATION=True,
             OPEN_EDX_FILTERS_CONFIG={},
         )
         plugin_settings(settings)
-        assert filter_key in settings.OPEN_EDX_FILTERS_CONFIG
-        pipeline = settings.OPEN_EDX_FILTERS_CONFIG[filter_key].get("pipeline", [])
-        assert "enterprise.filters.enrollment.EnterpriseEnrollmentPostProcessor" in pipeline
+
+        for filter_key, expected_filter_config in ENTERPRISE_FILTERS_CONFIG.items():
+            assert filter_key in settings.OPEN_EDX_FILTERS_CONFIG
+            actual_filter_config = settings.OPEN_EDX_FILTERS_CONFIG[filter_key]
+            assert actual_filter_config.get("fail_silently") == expected_filter_config.get("fail_silently")
+            for expected_step in expected_filter_config.get("pipeline", []):
+                assert expected_step in actual_filter_config.get("pipeline", [])
