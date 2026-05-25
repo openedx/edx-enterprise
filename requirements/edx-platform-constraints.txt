@@ -481,7 +481,7 @@ edx-drf-extensions==10.6.0
     #   enterprise-integrated-channels
     #   openedx-authz
     #   openedx-core
-edx-enterprise==8.0.9
+edx-enterprise==8.0.14
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/edx/kernel.in
@@ -577,7 +577,7 @@ enmerkar==0.7.1
     # via enmerkar-underscore
 enmerkar-underscore==2.4.0
     # via -r requirements/edx/kernel.in
-enterprise-integrated-channels==0.1.57
+enterprise-integrated-channels==0.1.58
     # via -r requirements/edx/bundled.in
 event-tracking==4.0.0
     # via
@@ -672,7 +672,7 @@ hyperframe==6.1.0
     # via h2
 icalendar==7.1.0
     # via -r requirements/edx/kernel.in
-idna==3.13
+idna==3.14
     # via
     #   anyio
     #   httpx
@@ -858,7 +858,7 @@ openedx-events==11.2.0
     #   openedx-authz
     #   openedx-core
     #   ora2
-openedx-filters==3.3.0
+openedx-filters==3.4.0
     # via
     #   -r requirements/edx/kernel.in
     #   edx-enterprise
@@ -877,7 +877,7 @@ packaging==26.2
     #   kombu
     #   snowflake-connector-python
     #   wheel
-paramiko==4.0.0
+paramiko==5.0.0
 path==16.11.0
     # via
     #   -c requirements/constraints.txt
@@ -905,7 +905,7 @@ polib==1.2.0
     # via edx-i18n-tools
 prompt-toolkit==3.0.52
     # via click-repl
-propcache==0.4.1
+propcache==0.5.2
     # via
     #   aiohttp
     #   yarl
@@ -1065,9 +1065,9 @@ referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
-regex==2026.4.4
+regex==2026.5.9
     # via nltk
-requests==2.33.1
+requests==2.34.0
     # via
     #   analytics-python
     #   cachecontrol
@@ -1197,7 +1197,7 @@ text-unidecode==1.3
 tincan==1.0.0
 tinycss2==1.4.0
     # via bleach
-tomlkit==0.14.0
+tomlkit==0.15.0
     # via
     #   openedx-core
     #   snowflake-connector-python
