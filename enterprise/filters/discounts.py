@@ -1,7 +1,11 @@
 """
 Pipeline step for excluding certain learners from course discounts.
 """
+import logging
+
 from openedx_filters.filters import PipelineStep
+
+log = logging.getLogger(__name__)
 
 # This import will be replaced with an internal path in epic 17 when
 # enterprise_support is migrated into edx-enterprise.
@@ -38,6 +42,11 @@ class DiscountEligibilityStep(PipelineStep):
             linked to an enterprise; otherwise the original ``is_eligible`` value is
             preserved.
         """
+        log.info(
+            "DiscountEligibilityStep running: user_id=%s, course_key=%s",
+            str(user.id),
+            str(course_key),
+        )
         if is_enterprise_learner(user):
             return {"user": user, "course_key": course_key, "is_eligible": False}
         return {"user": user, "course_key": course_key, "is_eligible": is_eligible}
