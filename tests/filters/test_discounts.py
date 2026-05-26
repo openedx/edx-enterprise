@@ -5,16 +5,16 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
-from enterprise.filters.discounts import DiscountEligibilityStep
+from enterprise.filters.discounts import DiscountEligibilityEnterpriseStep
 
 
-class TestDiscountEligibilityStep(TestCase):
+class TestDiscountEligibilityEnterpriseStep(TestCase):
     """
-    Tests for DiscountEligibilityStep pipeline step.
+    Tests for DiscountEligibilityEnterpriseStep pipeline step.
     """
 
     def _make_step(self):
-        return DiscountEligibilityStep(
+        return DiscountEligibilityEnterpriseStep(
             "org.openedx.learning.discount.eligibility.check.requested.v1",
             [],
         )

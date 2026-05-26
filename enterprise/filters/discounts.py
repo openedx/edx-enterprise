@@ -15,7 +15,7 @@ except ImportError:
     is_enterprise_learner = None
 
 
-class DiscountEligibilityStep(PipelineStep):
+class DiscountEligibilityEnterpriseStep(PipelineStep):
     """
     Marks learners linked to an enterprise as ineligible for LMS-controlled discounts.
 
@@ -43,7 +43,7 @@ class DiscountEligibilityStep(PipelineStep):
             preserved.
         """
         log.info(
-            "DiscountEligibilityStep running: user_id=%s, course_key=%s",
+            "DiscountEligibilityEnterpriseStep running: user_id=%s, course_key=%s",
             str(user.id),
             str(course_key),
         )
