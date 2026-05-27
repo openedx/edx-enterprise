@@ -39,7 +39,7 @@ class TestDiscountEligibilityEnterpriseStep(TestCase):
         mock_is_enterprise.assert_called_once_with(user)
 
     @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=False)
-    def test_returns_original_eligibility_for_non_enterprise_learner(self, mock_is_enterprise):
+    def test_returns_original_eligibility_for_non_enterprise_learner(self, _mock_is_enterprise):
         """
         When the user is not an enterprise learner, is_eligible is passed through unchanged.
         """
@@ -52,7 +52,7 @@ class TestDiscountEligibilityEnterpriseStep(TestCase):
         self.assertEqual(result, {"user": user, "course_key": course_key, "is_eligible": True})
 
     @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=False)
-    def test_passes_through_false_eligibility_unchanged(self, mock_is_enterprise):
+    def test_passes_through_false_eligibility_unchanged(self, _mock_is_enterprise):
         """
         When the user is not an enterprise learner and is_eligible is already False,
         the step does not change it.
