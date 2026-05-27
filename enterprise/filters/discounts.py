@@ -3,10 +3,10 @@ Pipeline step for excluding certain learners from course discounts.
 """
 import logging
 
-from django.contrib.auth.models import AbstractBaseUser
-
 from opaque_keys.edx.keys import CourseKey
 from openedx_filters.filters import PipelineStep
+
+from django.contrib.auth.models import AbstractBaseUser
 
 log = logging.getLogger(__name__)
 
