@@ -2,7 +2,7 @@ name: Upgrade Requirements
 
 on:
   schedule:
-     - cron: "0 2 * * 1"
+     - cron: "0 2 * * 1"  # "At 02:00 on Monday"
   workflow_dispatch:
      inputs:
        branch:
@@ -16,6 +16,7 @@ jobs:
        team_reviewers: "2u-enterprise-titans"
        email_address: enterprise-integrations@edx.org 
        send_success_notification: false
+       python_version: 3.12
     secrets:
        requirements_bot_github_token: ${{ secrets.REQUIREMENTS_BOT_GITHUB_TOKEN }}
        requirements_bot_github_email: ${{ secrets.REQUIREMENTS_BOT_GITHUB_EMAIL }}

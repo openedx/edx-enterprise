@@ -27,10 +27,13 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.signals import (
+    _unlink_enterprise_user_from_idp,
     course_enrollment_changed_receiver,
     create_enterprise_enrollment_receiver,
     enterprise_unenrollment_receiver,
+    handle_social_auth_disconnect,
     handle_user_post_save,
+    retire_user_from_pending_enterprise_customer_user,
 )
 from integrated_channels.integrated_channel.models import OrphanedContentTransmissions
 from test_utils import EmptyCacheMixin
@@ -40,6 +43,7 @@ from test_utils.factories import (
     EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
+    EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
     EnterpriseGroupMembershipFactory,
     LearnerCreditEnterpriseCourseEnrollmentFactory,
@@ -1174,3 +1178,190 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             include_exec_ed_2u_courses=test_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
+
+
+@mark.django_db
+class TestRetireUserFromPendingEnterpriseCustomerUser(unittest.TestCase):
+    """
+    Tests for the retire_user_from_pending_enterprise_customer_user signal handler.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.user = UserFactory()
+        self.retired_email = f'retired__{self.user.email}'
+        self.pending_enterprise_user = PendingEnterpriseCustomerUserFactory(
+            user_email=self.user.email,
+        )
+
+    def _send_signal(self):
+        retire_user_from_pending_enterprise_customer_user(
+            sender=None,
+            user=self.user,
+            retired_username=f'retired__{self.user.username}',
+            retired_email=self.retired_email,
+        )
+
+    def test_retires_user_email_on_pending_records(self):
+        self._send_signal()
+
+        self.pending_enterprise_user.refresh_from_db()
+        assert self.pending_enterprise_user.user_email == self.retired_email
+
+    def test_no_records_with_original_email_remain(self):
+        original_email = self.user.email
+        self._send_signal()
+
+        assert not PendingEnterpriseCustomerUser.objects.filter(user_email=original_email).exists()
+
+    def test_idempotent_when_already_retired(self):
+        """Calling the handler twice does not raise and leaves data in the correct state."""
+        self._send_signal()
+        self._send_signal()
+
+        self.pending_enterprise_user.refresh_from_db()
+        assert self.pending_enterprise_user.user_email == self.retired_email
+
+
+@mark.django_db
+class TestUnlinkEnterpriseUserFromIdp(unittest.TestCase):
+    """
+    Tests for _unlink_enterprise_user_from_idp helper.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.user = UserFactory()
+
+    @mock.patch('enterprise.signals.Registry')
+    @mock.patch('enterprise.signals.enterprise_customer_for_request')
+    def test_unlink_enterprise_user_from_idp(self, mock_customer_for_request, mock_registry):
+        """
+        Verify that the user is unlinked from the enterprise customer when
+        the IdP backend matches the enterprise identity provider.
+        """
+        customer_idp = EnterpriseCustomerIdentityProviderFactory.create(
+            provider_id='the-provider',
+        )
+        customer = customer_idp.enterprise_customer
+        EnterpriseCustomerUserFactory.create(
+            enterprise_customer=customer,
+            user_id=self.user.id,
+        )
+        mock_customer_for_request.return_value = {'uuid': customer.uuid}
+        mock_registry.get_enabled_by_backend_name.return_value = [
+            mock.Mock(provider_id='the-provider'),
+        ]
+        request = mock.Mock()
+
+        _unlink_enterprise_user_from_idp(request, self.user, idp_backend_name='the-backend-name')
+
+        assert EnterpriseCustomerUser.objects.filter(user_id=self.user.id).count() == 0
+
+    @mock.patch('enterprise.signals.Registry')
+    @mock.patch('enterprise.signals.enterprise_customer_for_request')
+    def test_unlink_enterprise_user_from_idp_no_customer_user(self, mock_customer_for_request, mock_registry):
+        """
+        Verify no error when user has no EnterpriseCustomerUser record.
+        """
+        customer_idp = EnterpriseCustomerIdentityProviderFactory.create(
+            provider_id='the-provider',
+        )
+        customer = customer_idp.enterprise_customer
+        mock_customer_for_request.return_value = {'uuid': customer.uuid}
+        mock_registry.get_enabled_by_backend_name.return_value = [
+            mock.Mock(provider_id='the-provider'),
+        ]
+        request = mock.Mock()
+
+        _unlink_enterprise_user_from_idp(request, self.user, idp_backend_name='the-backend-name')
+
+        assert EnterpriseCustomerUser.objects.filter(user_id=self.user.id).count() == 0
+
+    @mock.patch('enterprise.signals.Registry')
+    @mock.patch('enterprise.signals.enterprise_customer_for_request')
+    def test_no_op_when_enterprise_customer_is_none(self, mock_customer_for_request, mock_registry):
+        """
+        Verify that nothing happens when enterprise_customer_for_request returns None.
+        """
+        mock_customer_for_request.return_value = None
+        request = mock.Mock()
+
+        _unlink_enterprise_user_from_idp(request, self.user, idp_backend_name='the-backend-name')
+
+        mock_registry.get_enabled_by_backend_name.assert_not_called()
+
+    @mock.patch('enterprise.signals.Registry')
+    @mock.patch('enterprise.signals.enterprise_customer_for_request')
+    def test_no_op_when_no_matching_idps(self, mock_customer_for_request, mock_registry):
+        """
+        Verify that unlink_user is not called when registry provider IDs don't
+        match any EnterpriseCustomerIdentityProvider records.
+        """
+        customer_idp = EnterpriseCustomerIdentityProviderFactory.create(
+            provider_id='provider-A',
+        )
+        customer = customer_idp.enterprise_customer
+        EnterpriseCustomerUserFactory.create(
+            enterprise_customer=customer,
+            user_id=self.user.id,
+        )
+        mock_customer_for_request.return_value = {'uuid': customer.uuid}
+        # Registry returns a provider with a different ID than the one in the DB.
+        mock_registry.get_enabled_by_backend_name.return_value = [
+            mock.Mock(provider_id='provider-B'),
+        ]
+        request = mock.Mock()
+
+        _unlink_enterprise_user_from_idp(request, self.user, idp_backend_name='the-backend-name')
+
+        # The user should still be linked since no IdPs matched.
+        assert EnterpriseCustomerUser.objects.filter(user_id=self.user.id).count() == 1
+
+
+@mark.django_db
+class TestHandleSocialAuthDisconnect(unittest.TestCase):
+    """
+    Tests for handle_social_auth_disconnect signal handler.
+    """
+
+    @override_settings(ENABLE_ENTERPRISE_INTEGRATION=True)
+    @mock.patch(
+        'enterprise.signals._unlink_enterprise_user_from_idp',
+    )
+    def test_calls_unlink(self, mock_unlink):
+        """
+        Test that _unlink_enterprise_user_from_idp is called.
+        """
+        request = mock.MagicMock()
+        user = mock.MagicMock()
+        saml_backend = mock.MagicMock()
+
+        handle_social_auth_disconnect(
+            sender=None,
+            request=request,
+            user=user,
+            saml_backend=saml_backend,
+        )
+        mock_unlink.assert_called_once_with(request, user, saml_backend.name)
+
+    @override_settings(ENABLE_ENTERPRISE_INTEGRATION=False)
+    @mock.patch(
+        'enterprise.signals._unlink_enterprise_user_from_idp',
+    )
+    def test_skips_unlink_when_enterprise_integration_disabled(self, mock_unlink):
+        """
+        Test that _unlink_enterprise_user_from_idp is not called when
+        ENABLE_ENTERPRISE_INTEGRATION is False.
+        """
+        request = mock.MagicMock()
+        user = mock.MagicMock()
+        saml_backend = mock.MagicMock()
+
+        handle_social_auth_disconnect(
+            sender=None,
+            request=request,
+            user=user,
+            saml_backend=saml_backend,
+        )
+        mock_unlink.assert_not_called()

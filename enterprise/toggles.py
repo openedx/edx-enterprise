@@ -116,6 +116,18 @@ INVITE_ADMINS_ENABLED = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.ai_pathways_operator_enabled
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables specific learners the ability to use the Xpert Platform API in production
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2026-04-28
+AI_PATHWAYS_OPERATOR_ENABLED = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.ai_pathways_operator_enabled',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -180,6 +192,13 @@ def enterprise_invite_admins_enabled():
     return INVITE_ADMINS_ENABLED.is_enabled()
 
 
+def enterprise_ai_pathways_operator_enabled():
+    """
+    Returns whether the invite admins feature flag is enabled.
+    """
+    return AI_PATHWAYS_OPERATOR_ENABLED.is_enabled()
+
+
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -194,4 +213,5 @@ def enterprise_features():
         'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled(),
         'enterprise_edit_highlights_enabled': enterprise_edit_highlights_enabled(),
         'enterprise_invite_admins_enabled': enterprise_invite_admins_enabled(),
+        'enterprise_ai_pathways_operator_enabled': enterprise_ai_pathways_operator_enabled(),
     }

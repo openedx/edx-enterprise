@@ -6,7 +6,11 @@ from django.utils.translation import gettext_lazy as _
 # We listen to the User post_save signal in order to associate new users
 # with an EnterpriseCustomer when applicable. This it the unique identifier
 # used to ensure that signal receiver is only called once.
-USER_POST_SAVE_DISPATCH_UID = "user_post_save_upgrade_pending_enterprise_customer_user"
+USER_POST_SAVE_DISPATCH_UID = "enterprise.user_post_save_upgrade_pending_enterprise_customer_user"
+
+# We listen to the SAMLAccountDisconnected signal to unlink learners from their
+# enterprise identity provider.
+SAML_ACCOUNT_DISCONNECTED_DISPATCH_UID = "enterprise.handle_social_auth_disconnect"
 
 
 # Data sharing consent messages
@@ -36,6 +40,10 @@ COURSE_KEY_URL_PATTERN = r'(?P<course_key>[^/+]+(/|\+)[^/+]+)'
 DEFAULT_USERNAME_ATTR = 'urn:oid:0.9.2342.19200300.100.1.1'
 
 MAX_INVITE_KEYS = 100
+
+# Admin role types for delete_admin endpoint
+PENDING_ADMIN_ROLE_TYPE = 'pending'
+ACTIVE_ADMIN_ROLE_TYPE = 'admin'
 
 
 class DefaultColors:
@@ -157,6 +165,7 @@ PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE = 'provisioning_pending_ente
 ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION = 'provisioning.has_enterprise_customer_admin_access'
 PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION = \
     'provisioning.has_pending_enterprise_customer_admin_access'
+MANAGE_ENTERPRISE_CUSTOMER_ADMINS_PERMISSION = 'enterprise.can_manage_enterprise_customer_admins'
 
 # Tracking related
 PATHWAY_CUSTOMER_ADMIN_ENROLLMENT = 'customer-admin-enrollment'
@@ -173,6 +182,16 @@ EDX_ORG_NAME = 'edX, Inc'
 
 # Waffle flag used to switch over edx-enterprise's usage of the enterprise catalog service
 USE_ENTERPRISE_CATALOG = 'use_enterprise_catalog'
+
+
+class AdminInviteStatus:
+    """
+    Status constants for enterprise admin invitations.
+    """
+    EXISTING_ADMIN = 'already admin'
+    PENDING_INVITE = 'already sent'
+    NEW_INVITE = 'invite sent'
+
 
 # ContentFilter field types for validation.
 CONTENT_FILTER_FIELD_TYPES = {
@@ -248,6 +267,14 @@ class FulfillmentTypes:
 
 SSO_BRAZE_CAMPAIGN_ID = 'a5f10d46-8093-4ce1-bab7-6df018d03660'
 
+# Braze campaign setting names for admin invites
+BRAZE_LEARNER_INVITE_CAMPAIGN_SETTING = 'BRAZE_LEARNER_INVITE_CAMPAIGN_ID'
+BRAZE_ADMIN_INVITE_CAMPAIGN_SETTING = 'BRAZE_ADMIN_INVITE_CAMPAIGN_ID'
+
+# Braze campaign setting names for admin invite reminders
+BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING = 'BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID'
+BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING = 'BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_ID'
+
 # The maximum length of a text field in the database.
 MAX_ALLOWED_TEXT_LENGTH = 16_000_000
 
@@ -269,8 +296,6 @@ GROUP_TYPE_CHOICES = (
     (GROUP_TYPE_BUDGET, 'Budget'),
     (GROUP_TYPE_FLEX, 'Flex')
 )
-
 ENTITY_ID_REGEX = r"<(\w+:)?EntityDescriptor.*?entityID=['\"](.*?)['\"].*?>"
-
 # Max learners included in the Admin Manage Learners page
 DJANGO_ADMIN_MANAGE_LEARNERS_LIMIT = 10000

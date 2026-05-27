@@ -3,10 +3,13 @@ URLs for enterprise.
 """
 
 from edx_api_doc_tools import make_api_info, make_docs_urls
+from rest_framework.routers import DefaultRouter
 
 from django.conf import settings
 from django.urls import include, path, re_path
 
+from enterprise.api.v1.views.saml_provider_config import SAMLProviderConfigViewSet
+from enterprise.api.v1.views.saml_provider_data import SAMLProviderDataViewSet
 from enterprise.constants import COURSE_KEY_URL_PATTERN
 from enterprise.heartbeat.views import heartbeat
 from enterprise.views import (
@@ -120,3 +123,13 @@ api_docs_urlpatterns = make_docs_urls(
 urlpatterns.append(
     path('enterprise/', include(api_docs_urlpatterns)),
 )
+
+# SAML provider admin endpoints (migrated from openedx-platform third_party_auth).
+# Registered at the top-level (not under enterprise/api/v1/) to preserve the
+# original /auth/saml/v0/... URL paths.
+_saml_router = DefaultRouter()
+_saml_router.register(r'auth/saml/v0/provider_config', SAMLProviderConfigViewSet,
+                      basename='enterprise-saml-provider-config')
+_saml_router.register(r'auth/saml/v0/provider_data', SAMLProviderDataViewSet,
+                      basename='enterprise-saml-provider-data')
+urlpatterns += _saml_router.urls

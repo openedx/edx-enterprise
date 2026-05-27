@@ -13,9 +13,6 @@
 
 factory-boy<4.0
 
-# pin celery to 5.x.
-celery>=5.2.2,<6.0.0
-
 # pinning Sphinx 8.x version
 # Sphinx 9.x introduces significant changes and removals compared to Sphinx 8.x,
 # particularly in internal APIs and default behaviors, including a substantial rewrite of the autodoc extension.
