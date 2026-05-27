@@ -3,6 +3,9 @@ Pipeline step for excluding certain learners from course discounts.
 """
 import logging
 
+from django.contrib.auth.models import AbstractBaseUser
+
+from opaque_keys.edx.keys import CourseKey
 from openedx_filters.filters import PipelineStep
 
 log = logging.getLogger(__name__)
@@ -27,8 +30,7 @@ class DiscountEligibilityEnterpriseStep(PipelineStep):
     enterprise learner status and, if the user qualifies, sets ``is_eligible`` to
     ``False`` so the calling code skips the discount.
     """
-
-    def run_filter(self, user, course_key, is_eligible):  # pylint: disable=arguments-differ
+    def run_filter(self, user: AbstractBaseUser, course_key: CourseKey, is_eligible: bool) -> dict:
         """
         Return ``is_eligible=False`` if the user is an enterprise learner.
 
