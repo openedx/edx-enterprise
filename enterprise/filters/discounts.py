@@ -30,7 +30,7 @@ class DiscountEligibilityEnterpriseStep(PipelineStep):
     enterprise learner status and, if the user qualifies, sets ``is_eligible`` to
     ``False`` so the calling code skips the discount.
     """
-    def run_filter(self, user: AbstractBaseUser, course_key: CourseKey, is_eligible: bool) -> dict:
+    def run_filter(self, user: AbstractBaseUser, course_key: CourseKey, is_eligible: bool) -> dict: # pylint: disable=arguments-differ
         """
         Return ``is_eligible=False`` if the user is an enterprise learner.
 
