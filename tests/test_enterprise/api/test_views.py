@@ -84,7 +84,6 @@ from enterprise.toggles import (
     ENTERPRISE_CUSTOMER_SUPPORT_TOOL,
     ENTERPRISE_LEARNER_BFF_ENABLED,
     FEATURE_PREQUERY_SEARCH_SUGGESTIONS,
-    INVITE_ADMINS_ENABLED,
     TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM,
 )
 from enterprise.utils import (
@@ -2154,7 +2153,6 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             catalog_query_search_filters_enabled,
             enterprise_admin_onboarding_enabled,
             enterprise_edit_highlights_enabled,
-            enterprise_invite_admins_enabled,
             enterprise_ai_pathways_operator_enabled,
             mock_get_logo_url,
     ):
@@ -2259,13 +2257,6 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
             )
         with override_waffle_flag(
-            INVITE_ADMINS_ENABLED,
-            active=enterprise_invite_admins_enabled
-        ):
-            response = client.get(
-                f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
-            )
-        with override_waffle_flag(
             AI_PATHWAYS_OPERATOR_ENABLED,
             active=enterprise_ai_pathways_operator_enabled
         ):
@@ -2346,7 +2337,6 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'catalog_query_search_filters_enabled': catalog_query_search_filters_enabled,
                     'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled,
                     'enterprise_edit_highlights_enabled': enterprise_edit_highlights_enabled,
-                    'enterprise_invite_admins_enabled': enterprise_invite_admins_enabled,
                     'enterprise_ai_pathways_operator_enabled': enterprise_ai_pathways_operator_enabled,
                 }
             }

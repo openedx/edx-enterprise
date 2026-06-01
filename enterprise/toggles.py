@@ -104,18 +104,6 @@ EDIT_HIGHLIGHTS_ENABLED = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
-# .. toggle_name: enterprise.invite_admins_enabled
-# .. toggle_implementation: WaffleFlag
-# .. toggle_default: False
-# .. toggle_description: Enables the invite admins on people management page.
-# .. toggle_use_cases: open_edx
-# .. toggle_creation_date: 2026-01-06
-INVITE_ADMINS_ENABLED = WaffleFlag(
-    f'{ENTERPRISE_NAMESPACE}.invite_admins_enabled',
-    __name__,
-    ENTERPRISE_LOG_PREFIX,
-)
-
 # .. toggle_name: enterprise.ai_pathways_operator_enabled
 # .. toggle_implementation: WaffleFlag
 # .. toggle_default: False
@@ -185,16 +173,9 @@ def enterprise_edit_highlights_enabled():
     return EDIT_HIGHLIGHTS_ENABLED.is_enabled()
 
 
-def enterprise_invite_admins_enabled():
-    """
-    Returns whether the invite admins feature flag is enabled.
-    """
-    return INVITE_ADMINS_ENABLED.is_enabled()
-
-
 def enterprise_ai_pathways_operator_enabled():
     """
-    Returns whether the invite admins feature flag is enabled.
+    Returns whether the AI pathways operator feature flag is enabled..
     """
     return AI_PATHWAYS_OPERATOR_ENABLED.is_enabled()
 
@@ -212,6 +193,5 @@ def enterprise_features():
         'catalog_query_search_filters_enabled': catalog_query_search_filters_enabled(),
         'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled(),
         'enterprise_edit_highlights_enabled': enterprise_edit_highlights_enabled(),
-        'enterprise_invite_admins_enabled': enterprise_invite_admins_enabled(),
         'enterprise_ai_pathways_operator_enabled': enterprise_ai_pathways_operator_enabled(),
     }
