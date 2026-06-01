@@ -10,19 +10,17 @@ attrs==26.1.0
     # via
     #   outcome
     #   trio
-certifi==2026.4.22
+certifi==2026.5.20
     # via selenium
 cheroot==11.1.2
     # via cherrypy
 cherrypy==18.10.0
     # via jasmine
-click==8.3.3
-    # via typer
 glob2==0.7
     # via jasmine-core
 h11==0.16.0
     # via wsproto
-idna==3.14
+idna==3.17
     # via trio
 jaraco-classes==3.4.0
     # via -r requirements/js_test.in
@@ -35,7 +33,7 @@ jaraco-context==6.1.2
     # via
     #   jaraco-text
     #   tempora
-jaraco-functools==4.4.0
+jaraco-functools==4.5.0
     # via
     #   -r requirements/js_test.in
     #   cheroot
@@ -55,7 +53,7 @@ markupsafe==3.0.3
     # via jinja2
 mdurl==0.1.2
     # via markdown-it-py
-more-itertools==11.0.2
+more-itertools==11.1.0
     # via
     #   cheroot
     #   cherrypy
@@ -81,7 +79,7 @@ pyyaml==6.0.3
     # via jasmine
 rich==15.0.0
     # via typer
-selenium==4.43.0
+selenium==4.44.0
     # via jasmine
 shellingham==1.5.4
     # via typer
@@ -101,7 +99,7 @@ trio==0.33.0
     #   trio-websocket
 trio-websocket==0.12.2
     # via selenium
-typer==0.25.1
+typer==0.26.4
     # via typer-slim
 typer-slim==0.24.0
     # via jaraco-text

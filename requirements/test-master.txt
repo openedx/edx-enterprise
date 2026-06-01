@@ -46,7 +46,7 @@ celery==5.6.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-certifi==2026.4.22
+certifi==2026.5.20
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   httpcore
@@ -61,7 +61,7 @@ charset-normalizer==3.4.7
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
-click==8.3.3
+click==8.4.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   celery
@@ -177,7 +177,7 @@ django-oauth-toolkit==1.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-object-actions==5.0.1
+django-object-actions==5.1.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -286,7 +286,7 @@ google-api-core[grpc]==2.30.3
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.52.0
+google-auth==2.53.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
@@ -354,7 +354,7 @@ hyperframe==6.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   h2
-idna==3.13
+idna==3.16
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   anyio
@@ -420,7 +420,7 @@ openedx-events==11.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-openedx-filters==3.3.0
+openedx-filters==3.4.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -429,7 +429,7 @@ packaging==26.2
     #   -c requirements/edx-platform-constraints.txt
     #   drf-yasg
     #   kombu
-paramiko==4.0.0
+paramiko==5.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -483,7 +483,7 @@ pycparser==3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   cffi
-pyjwt[crypto]==2.12.1
+pyjwt[crypto]==2.13.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   drf-jwt
@@ -534,7 +534,7 @@ pyyaml==6.0.3
     #   code-annotations
     #   drf-yasg
     #   jsondiff
-requests==2.33.1
+requests==2.34.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -592,7 +592,7 @@ sqlparse==0.5.5
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django
-stevedore==5.7.0
+stevedore==5.8.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -600,7 +600,7 @@ stevedore==5.7.0
     #   edx-ace
     #   edx-django-utils
     #   edx-opaque-keys
-testfixtures==11.0.0
+testfixtures==12.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
