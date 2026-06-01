@@ -175,7 +175,7 @@ def enterprise_edit_highlights_enabled():
 
 def enterprise_ai_pathways_operator_enabled():
     """
-    Returns whether the invite admins feature flag is enabled.
+    Returns whether the AI pathways operator feature flag is enabled.
     """
     return AI_PATHWAYS_OPERATOR_ENABLED.is_enabled()
 
