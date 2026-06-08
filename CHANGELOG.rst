@@ -19,7 +19,7 @@ Unreleased
 
 [8.0.17] - 2026-06-07
 ---------------------
-* feat: add EnterpriseEnrollmentPostProcessor pipeline step for CourseEnrollmentViewStarted filter (ENT-11570)
+* feat: add EnterpriseEnrollmentViewProcessor pipeline step for CourseEnrollmentViewStarted filter (ENT-11570)
 
 [8.0.16] - 2026-06-02
 ---------------------

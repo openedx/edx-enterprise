@@ -17,9 +17,9 @@ except ImportError:
     EnterpriseApiServiceClient = None
 
 
-class EnterpriseEnrollmentPostProcessor(PipelineStep):
+class EnterpriseEnrollmentViewProcessor(PipelineStep):
     """
-    Post-enrollment pipeline step: notify enterprise API and record consent.
+    Enrollment pipeline step: notify enterprise API and record consent.
 
     When an enterprise customer user enrolls in a course, this step calls the enterprise and consent
     API clients to post the enrollment and provide consent on behalf of the enterprise customer.
@@ -39,7 +39,7 @@ class EnterpriseEnrollmentPostProcessor(PipelineStep):
         Post enterprise enrollment and consent if the user is an enterprise customer user.
         """
         log.info(
-            "EnterpriseEnrollmentPostProcessor running: user_id=%s, course_key=%s, "
+            "EnterpriseEnrollmentViewProcessor running: user_id=%s, course_key=%s, "
             + "linked_enterprise=%s, api_permissions=%s",
             user.id,
             str(course_key),

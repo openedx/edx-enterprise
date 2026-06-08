@@ -6,17 +6,17 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
-from enterprise.filters.enrollment import EnterpriseEnrollmentPostProcessor
+from enterprise.filters.enrollment import EnterpriseEnrollmentViewProcessor
 from test_utils.factories import UserFactory
 
 
-class TestEnterpriseEnrollmentPostProcessor(TestCase):
+class TestEnterpriseEnrollmentViewProcessor(TestCase):
     """
-    Tests for EnterpriseEnrollmentPostProcessor pipeline step.
+    Tests for EnterpriseEnrollmentViewProcessor pipeline step.
     """
 
     def _make_step(self):
-        return EnterpriseEnrollmentPostProcessor(
+        return EnterpriseEnrollmentViewProcessor(
             "org.openedx.learning.course.enrollment.view.started.v1",
             [],
         )

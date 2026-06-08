@@ -22,7 +22,7 @@ ENTERPRISE_FILTERS_CONFIG: FiltersConfig = {
     },
     "org.openedx.learning.course.enrollment.view.started.v1": {
         "fail_silently": False,
-        "pipeline": ["enterprise.filters.enrollment.EnterpriseEnrollmentPostProcessor"],
+        "pipeline": ["enterprise.filters.enrollment.EnterpriseEnrollmentViewProcessor"],
     },
 }
 
