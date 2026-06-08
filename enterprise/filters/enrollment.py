@@ -3,6 +3,7 @@ Pipeline steps for the course enrollment filter.
 """
 import logging
 from typing import Any
+from crum import get_current_request
 
 from openedx_filters.filters import PipelineStep
 from openedx_filters.learning.filters import CourseEnrollmentViewStarted
@@ -33,25 +34,27 @@ class EnterpriseEnrollmentViewProcessor(PipelineStep):
             self,
             user: AbstractBaseUser,
             course_key: Any,
-            linked_enterprise: str | None,
             has_api_key_permissions: bool
     ) -> dict[str, Any]:
         """
         Post enterprise enrollment and consent if the user is an enterprise customer user.
         """
         log.info(
-            "EnterpriseEnrollmentViewProcessor running: user_id=%s, course_key=%s, "
-            + "linked_enterprise=%s, api_permissions=%s",
+            "EnterpriseEnrollmentViewProcessor running: user_id=%s, course_key=%s, api_permissions=%s",
             user.id,
             str(course_key),
-            linked_enterprise,
             has_api_key_permissions,
         )
+
+        request = get_current_request()
+        linked_enterprise = None
+        if request and hasattr(request, 'data'):
+            linked_enterprise = request.data.get("linked_enterprise_customer")
+
         if linked_enterprise is None or not has_api_key_permissions:
             return {
                 'user': user,
                 'course_key': course_key,
-                'linked_enterprise': linked_enterprise,
                 'has_api_key_permissions': has_api_key_permissions
             }
 
@@ -88,6 +91,5 @@ class EnterpriseEnrollmentViewProcessor(PipelineStep):
         return {
             'user': user,
             'course_key': course_key,
-            'linked_enterprise': linked_enterprise,
             'has_api_key_permissions': has_api_key_permissions
         }
