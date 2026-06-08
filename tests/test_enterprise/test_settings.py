@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import ddt
 import pytest
 
-from enterprise.settings.common import _merge_filters_config, plugin_settings
+from enterprise.settings.common import ENTERPRISE_FILTERS_CONFIG, _merge_filters_config, plugin_settings
 
 
 class TestPluginSettingsPipelineInjection(unittest.TestCase):
@@ -212,3 +212,29 @@ class TestMergeFiltersConfig(unittest.TestCase):
         existing[FILTER_A]['pipeline'].append(STEP_Y)
 
         assert additions[FILTER_A]['pipeline'] == [STEP_X]
+
+
+class TestEnterpriseFiltersConfig(unittest.TestCase):
+    """
+    Smoke tests asserting that ``ENTERPRISE_FILTERS_CONFIG`` contains the expected
+    filter registrations.  These tests catch omissions when a new pipeline step is
+    added to ``enterprise/filters/`` but its filter-type key is never registered.
+    """
+
+    def test_plugin_settings_injects_all_enterprise_filters(self):
+        """
+        plugin_settings() should inject every filter key and pipeline step from
+        ENTERPRISE_FILTERS_CONFIG into OPEN_EDX_FILTERS_CONFIG.
+        """
+        settings = SimpleNamespace(
+            ENABLE_ENTERPRISE_INTEGRATION=True,
+            OPEN_EDX_FILTERS_CONFIG={},
+        )
+        plugin_settings(settings)
+
+        for filter_key, expected_filter_config in ENTERPRISE_FILTERS_CONFIG.items():
+            assert filter_key in settings.OPEN_EDX_FILTERS_CONFIG
+            actual_filter_config = settings.OPEN_EDX_FILTERS_CONFIG[filter_key]
+            assert actual_filter_config.get("fail_silently") == expected_filter_config.get("fail_silently")
+            for expected_step in expected_filter_config.get("pipeline", []):
+                assert expected_step in actual_filter_config.get("pipeline", [])
