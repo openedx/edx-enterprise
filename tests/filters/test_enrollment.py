@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase
 
 from enterprise.filters.enrollment import EnterpriseEnrollmentViewProcessor
+from openedx_filters.learning.filters import CourseEnrollmentViewStarted
 from test_utils.factories import UserFactory
 
 
@@ -137,16 +138,17 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
             enterprise_customer_uuid=str(enterprise_uuid),
         )
 
+
     @patch("enterprise.filters.enrollment.ConsentApiServiceClient")
     @patch("enterprise.filters.enrollment.EnterpriseApiServiceClient")
-    def test_logs_exception_when_enterprise_api_call_fails(
+    def test_raises_prevent_enrollment_when_enterprise_api_call_fails(
         self,
         mock_enterprise_client,
         mock_consent_client,
     ):
         """
-        When the enterprise API client raises an exception, it is logged and
-        execution continues to the consent API call.
+        When the enterprise API client raises, the step raises PreventEnrollment
+        and does not proceed to the consent API call.
         """
         user = UserFactory.create(username="enterprise-learner")
         enterprise_uuid = uuid.uuid4()
@@ -160,35 +162,27 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         )
 
         step = self._make_step()
-        result = step.run_filter(
-            user=user,
-            course_key=course_key,
-            linked_enterprise=enterprise_uuid,
-            has_api_key_permissions=True,
-        )
-        self.assertEqual(
-            result,
-            {
-                "user": user,
-                "course_key": course_key,
-                "linked_enterprise": enterprise_uuid,
-                "has_api_key_permissions": True,
-            },
-        )
+        with self.assertRaises(CourseEnrollmentViewStarted.PreventEnrollment):
+            step.run_filter(
+                user=user,
+                course_key=course_key,
+                linked_enterprise=enterprise_uuid,
+                has_api_key_permissions=True,
+            )
 
-        # Consent API should still be called despite enrollment API failure
-        mock_consent_client.return_value.provide_consent.assert_called_once()
+        # Consent API must NOT be reached once the enterprise post has failed
+        mock_consent_client.return_value.provide_consent.assert_not_called()
 
     @patch("enterprise.filters.enrollment.ConsentApiServiceClient")
     @patch("enterprise.filters.enrollment.EnterpriseApiServiceClient")
-    def test_logs_exception_when_consent_api_call_fails(
+    def test_raises_prevent_enrollment_when_consent_api_call_fails(
         self,
         mock_enterprise_client,
         mock_consent_client,
     ):
         """
-        When the consent API client raises an exception, it is logged and
-        the filter still returns the original arguments.
+        When the consent API client raises, the step raises PreventEnrollment
+        after the enterprise enrollment post has already happened.
         """
         user = UserFactory.create(username="enterprise-learner")
         enterprise_uuid = uuid.uuid4()
@@ -202,21 +196,13 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         )
 
         step = self._make_step()
-        result = step.run_filter(
-            user=user,
-            course_key=course_key,
-            linked_enterprise=enterprise_uuid,
-            has_api_key_permissions=True,
-        )
-        self.assertEqual(
-            result,
-            {
-                "user": user,
-                "course_key": course_key,
-                "linked_enterprise": enterprise_uuid,
-                "has_api_key_permissions": True,
-            },
-        )
+        with self.assertRaises(CourseEnrollmentViewStarted.PreventEnrollment):
+            step.run_filter(
+                user=user,
+                course_key=course_key,
+                linked_enterprise=enterprise_uuid,
+                has_api_key_permissions=True,
+            )
 
-        # Enterprise API should still be called despite consent API failure
+        # Enterprise post happens before consent, so it is still called once
         mock_enterprise_client.return_value.post_enterprise_course_enrollment.assert_called_once()

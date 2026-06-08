@@ -5,6 +5,7 @@ import logging
 from typing import Any
 
 from openedx_filters.filters import PipelineStep
+from openedx_filters.learning.filters import CourseEnrollmentViewStarted
 
 from django.contrib.auth.base_user import AbstractBaseUser
 
@@ -56,17 +57,17 @@ class EnterpriseEnrollmentViewProcessor(PipelineStep):
 
         username = user.username
         course_id = str(course_key)
+
         try:
-            EnterpriseApiServiceClient().post_enterprise_course_enrollment(
-                username,
-                course_id,
-            )
-        except Exception:  # pylint: disable=broad-except
+            EnterpriseApiServiceClient().post_enterprise_course_enrollment(username, course_id)
+        except Exception as exc:
             log.exception(
                 "Failed to post enterprise course enrollment for user %s in course %s.",
-                username,
-                course_id,
+                username, course_id,
             )
+            raise CourseEnrollmentViewStarted.PreventEnrollment(
+                f"Failed to post enterprise course enrollment for {username} in {course_id}."
+            ) from exc
 
         try:
             ConsentApiServiceClient().provide_consent(
@@ -74,12 +75,15 @@ class EnterpriseEnrollmentViewProcessor(PipelineStep):
                 course_id=course_id,
                 enterprise_customer_uuid=str(linked_enterprise),
             )
-        except Exception:  # pylint: disable=broad-except
+        except Exception as exc:
             log.exception(
                 "Failed to provide enterprise consent for user %s in course %s.",
-                username,
-                course_id,
+                username, course_id,
             )
+            raise CourseEnrollmentViewStarted.PreventEnrollment(
+                f"Failed to provide enterprise consent for {username} in {course_id}."
+            ) from exc
+
 
         return {
             'user': user,
