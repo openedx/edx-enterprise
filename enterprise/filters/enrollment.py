@@ -4,8 +4,8 @@ Pipeline steps for the course enrollment filter.
 import logging
 from typing import Any
 from requests.exceptions import HTTPError
-
 from crum import get_current_request
+
 from openedx_filters.filters import PipelineStep
 from openedx_filters.learning.filters import CourseEnrollmentViewStarted
 
