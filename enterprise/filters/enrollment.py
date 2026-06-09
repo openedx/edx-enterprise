@@ -3,6 +3,7 @@ Pipeline steps for the course enrollment filter.
 """
 import logging
 from typing import Any
+from requests.exceptions import HTTPError
 
 from crum import get_current_request
 from openedx_filters.filters import PipelineStep
@@ -13,9 +14,12 @@ from django.contrib.auth.base_user import AbstractBaseUser
 log = logging.getLogger(__name__)
 
 try:
-    from openedx.features.enterprise_support.api import ConsentApiServiceClient, EnterpriseApiServiceClient
+    from openedx.features.enterprise_support.api import (
+        ConsentApiServiceClient, EnterpriseApiException, EnterpriseApiServiceClient
+    )
 except ImportError:
     ConsentApiServiceClient = None
+    EnterpriseApiException = None
     EnterpriseApiServiceClient = None
 
 
@@ -63,7 +67,7 @@ class EnterpriseEnrollmentViewProcessor(PipelineStep):
 
         try:
             EnterpriseApiServiceClient().post_enterprise_course_enrollment(username, course_id)
-        except Exception as exc:
+        except EnterpriseApiException as exc:
             log.exception(
                 "Failed to post enterprise course enrollment for user %s in course %s.",
                 username, course_id,
@@ -78,13 +82,13 @@ class EnterpriseEnrollmentViewProcessor(PipelineStep):
                 course_id=course_id,
                 enterprise_customer_uuid=str(linked_enterprise),
             )
-        except Exception as exc:
+        except HTTPError as exc:
             log.exception(
-                "Failed to provide enterprise consent for user %s in course %s.",
+                "Failed to record enterprise consent for user %s in course %s.",
                 username, course_id,
             )
             raise CourseEnrollmentViewStarted.PreventEnrollment(
-                f"Failed to provide enterprise consent for {username} in {course_id}."
+                f"Failed to record enterprise consent for {username} in {course_id}."
             ) from exc
 
 
