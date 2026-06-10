@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.0.17] - 2026-06-05
+---------------------
+* fix: format integration and SSO configuration created/modified datetimes as ISO-8601
+
 [8.0.16] - 2026-06-02
 ---------------------
 * feat: remove enterprise_invite_admins_enabled feature flag and related conditional behavior (ENT-11269)

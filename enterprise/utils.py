@@ -2603,8 +2603,8 @@ def get_integrations_for_customers(customer_uuid):
         if integration is not None:
             unique_integrations.append({
                 'channel_code': code,
-                'created': datetime.datetime.strftime(integration.get('created'), '%B %d, %Y'),
-                'modified': datetime.datetime.strftime(integration.get('modified'), '%B %d, %Y'),
+                'created': integration.get('created').isoformat(),
+                'modified': integration.get('modified').isoformat(),
                 'display_name': integration.get('display_name'),
                 'active': integration.get('active'),
             })
@@ -2626,8 +2626,8 @@ def get_active_sso_configurations_for_customer(customer_uuid):
     if sso_configurations:
         for sso_configuration in sso_configurations:
             active_configurations.append({
-                'created': datetime.datetime.strftime(sso_configuration.get('created'), '%B %d, %Y'),
-                'modified': datetime.datetime.strftime(sso_configuration.get('modified'), '%B %d, %Y'),
+                'created': sso_configuration.get('created').isoformat(),
+                'modified': sso_configuration.get('modified').isoformat(),
                 'active': sso_configuration.get('active'),
                 'display_name': sso_configuration.get('display_name'),
             })
