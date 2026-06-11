@@ -143,6 +143,28 @@ class TestPluginSettingsPipelineInjection(unittest.TestCase):
         assert 'enterprise.tpa_pipeline.handle_enterprise_logistration' not in pipeline
 
 
+COURSE_ENROLLMENT_STARTED_FILTER = 'org.openedx.learning.course.enrollment.started.v1'
+ENTERPRISE_ENROLLMENT_POST_PROCESSOR_STEP = 'enterprise.filters.enrollment.EnterpriseEnrollmentPostProcessor'
+
+
+class TestPluginSettingsFiltersInjection(unittest.TestCase):
+    """
+    Tests for OPEN_EDX_FILTERS_CONFIG injection in plugin_settings().
+    """
+
+    def test_includes_enterprise_enrollment_post_processor(self):
+        """
+        plugin_settings() should inject the enrollment post-processor pipeline
+        step under the CourseEnrollmentStarted filter key.
+        """
+        settings = SimpleNamespace(ENABLE_ENTERPRISE_INTEGRATION=True)
+        plugin_settings(settings)
+
+        enrollment_filter_config = settings.OPEN_EDX_FILTERS_CONFIG[COURSE_ENROLLMENT_STARTED_FILTER]
+        assert enrollment_filter_config['fail_silently'] is False
+        assert ENTERPRISE_ENROLLMENT_POST_PROCESSOR_STEP in enrollment_filter_config['pipeline']
+
+
 FILTER_A = 'org.openedx.test.filter_a.v1'
 FILTER_B = 'org.openedx.test.filter_b.v1'
 STEP_X = 'pkg.steps.StepX'
