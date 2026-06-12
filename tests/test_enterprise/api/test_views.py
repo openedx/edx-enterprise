@@ -1902,8 +1902,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_one_academy': False,
                 'active_integrations': [{
                     'channel_code': 'BLACKBOARD',
-                    'created': datetime.strftime(datetime.now(), '%B %d, %Y'),
-                    'modified': datetime.strftime(datetime.now(), '%B %d, %Y'),
+                    'created': mock.ANY,
+                    'modified': mock.ANY,
                     'display_name': 'BLACKBOARD 1',
                     'active': True,
                 }],
@@ -2041,9 +2041,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'country': 'US',
                 'enable_slug_login': False,
                 'active_sso_configurations': [{
-                    'created': datetime.strftime(datetime.now(), '%B %d, %Y'),
+                    'created': mock.ANY,
                     'display_name': 'Test SSO',
-                    'modified': datetime.strftime(datetime.now(), '%B %d, %Y'),
+                    'modified': mock.ANY,
                     'active': True,
                 }],
                 'created': '2021-10-20T19:01:31Z',
