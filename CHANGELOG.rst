@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[7.0.1] - 2026-06-11
+---------------------
+* feat: add the ``enterprise.search_default_sort_newest`` waffle flag, surfaced via ``enterprise_features``, to gate the Learner Portal "newest courses first" search sort (ENT-11384).
+
 [7.0.0] - 2026-04-07
 ---------------------
 * chore: drop Python 3.11 support

@@ -116,6 +116,18 @@ INVITE_ADMINS_ENABLED = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.search_default_sort_newest
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Makes the enterprise Learner Portal search default to a "newest courses first" sort (a sorted Algolia replica). Used as the eligibility gate / kill-switch for the newest-first sort A/B experiment.
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2026-06-11
+SEARCH_DEFAULT_SORT_NEWEST = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.search_default_sort_newest',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -180,6 +192,13 @@ def enterprise_invite_admins_enabled():
     return INVITE_ADMINS_ENABLED.is_enabled()
 
 
+def search_default_sort_newest_enabled():
+    """
+    Returns whether the "newest courses first" default search sort is enabled.
+    """
+    return SEARCH_DEFAULT_SORT_NEWEST.is_enabled()
+
+
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -194,4 +213,5 @@ def enterprise_features():
         'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled(),
         'enterprise_edit_highlights_enabled': enterprise_edit_highlights_enabled(),
         'enterprise_invite_admins_enabled': enterprise_invite_admins_enabled(),
+        'search_default_sort_newest_enabled': search_default_sort_newest_enabled(),
     }

@@ -2332,6 +2332,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled,
                     'enterprise_edit_highlights_enabled': enterprise_edit_highlights_enabled,
                     'enterprise_invite_admins_enabled': enterprise_invite_admins_enabled,
+                    'search_default_sort_newest_enabled': False,
                 }
             }
             assert response in (expected_error, mock_empty_200_success_response)
