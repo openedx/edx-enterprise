@@ -42,7 +42,7 @@ cachecontrol==0.14.4
     #   firebase-admin
 celery==5.6.3
     # via -r requirements/test-master.txt
-certifi==2026.4.22
+certifi==2026.5.20
     # via
     #   -r requirements/test-master.txt
     #   httpcore
@@ -59,7 +59,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/test-master.txt
     #   requests
-click==8.3.3
+click==8.4.1
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -84,7 +84,7 @@ code-annotations==3.0.0
     # via
     #   -r requirements/test-master.txt
     #   edx-toggles
-coverage[toml]==7.14.0
+coverage[toml]==7.14.1
     # via pytest-cov
 cryptography==48.0.0
     # via
@@ -104,7 +104,7 @@ defusedxml==0.7.1
     #   djangorestframework-xml
     #   python3-openid
     #   social-auth-core
-diff-cover==10.2.0
+diff-cover==10.3.0
     # via -r requirements/test.in
     # via
     #   -c requirements/common_constraints.txt
@@ -164,7 +164,7 @@ django-multi-email-field==0.8.0
     # via -r requirements/test-master.txt
 django-oauth-toolkit==1.7.1
     # via -r requirements/test-master.txt
-django-object-actions==5.0.1
+django-object-actions==5.1.2
     # via -r requirements/test-master.txt
 django-push-notifications==3.3.0
     # via
@@ -244,7 +244,7 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==40.15.0
+faker==40.21.0
     # via factory-boy
 fastavro==1.12.2
     # via
@@ -256,14 +256,14 @@ firebase-admin==7.4.0
     #   edx-ace
 freezegun==1.5.5
     # via -r requirements/test.in
-google-api-core[grpc]==2.30.3
+google-api-core[grpc]==2.31.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.52.0
+google-auth==2.53.0
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -279,7 +279,7 @@ google-cloud-firestore==2.27.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
-google-cloud-storage==3.10.1
+google-cloud-storage==3.11.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
@@ -288,7 +288,7 @@ google-crc32c==1.8.0
     #   -r requirements/test-master.txt
     #   google-cloud-storage
     #   google-resumable-media
-google-resumable-media==2.9.0
+google-resumable-media==2.10.0
     # via
     #   -r requirements/test-master.txt
     #   google-cloud-storage
@@ -297,13 +297,13 @@ googleapis-common-protos==1.75.0
     #   -r requirements/test-master.txt
     #   google-api-core
     #   grpcio-status
-grpcio==1.80.0
+grpcio==1.81.0
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
     #   google-cloud-firestore
     #   grpcio-status
-grpcio-status==1.80.0
+grpcio-status==1.81.0
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -331,7 +331,7 @@ hyperframe==6.1.0
     # via
     #   -r requirements/test-master.txt
     #   h2
-idna==3.13
+idna==3.18
     # via
     #   -r requirements/test-master.txt
     #   anyio
@@ -395,7 +395,7 @@ openedx-atlas==0.7.0
     # via -r requirements/test-master.txt
 openedx-events==11.2.0
     # via -r requirements/test-master.txt
-openedx-filters==3.3.0
+openedx-filters==3.4.1
     # via -r requirements/test-master.txt
 packaging==26.2
     # via
@@ -403,7 +403,7 @@ packaging==26.2
     #   drf-yasg
     #   kombu
     #   pytest
-paramiko==4.0.0
+paramiko==5.0.0
     # via -r requirements/test-master.txt
 path==16.11.0
     # via
@@ -429,7 +429,7 @@ proto-plus==1.28.0
     #   -r requirements/test-master.txt
     #   google-api-core
     #   google-cloud-firestore
-protobuf==6.33.6
+protobuf==7.35.0
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -458,7 +458,7 @@ pygments==2.20.0
     # via
     #   diff-cover
     #   pytest
-pyjwt[crypto]==2.12.1
+pyjwt[crypto]==2.13.0
     # via
     #   -r requirements/test-master.txt
     #   drf-jwt
@@ -515,7 +515,7 @@ pyyaml==6.0.3
     #   drf-yasg
     #   jsondiff
     #   responses
-requests==2.33.1
+requests==2.34.2
     # via
     #   -r requirements/test-master.txt
     #   cachecontrol
@@ -534,7 +534,7 @@ requests-oauthlib==2.0.0
     # via
     #   -r requirements/test-master.txt
     #   social-auth-core
-responses==0.26.0
+responses==0.26.1
     # via -r requirements/test.in
 rules==3.5
     # via -r requirements/test-master.txt
@@ -569,14 +569,14 @@ sqlparse==0.5.5
     # via
     #   -r requirements/test-master.txt
     #   django
-stevedore==5.7.0
+stevedore==5.8.0
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
     #   edx-ace
     #   edx-django-utils
     #   edx-opaque-keys
-testfixtures==11.0.0
+testfixtures==12.0.0
     # via
     #   -r requirements/test-master.txt
     #   -r requirements/test.in
