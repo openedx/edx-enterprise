@@ -321,11 +321,16 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         """
 
         try:
-            # this serializer is also called from tpa_pipeline and request is not available in the first place there.
-            request = self.context['request']
+            request = self.context.get('request')
+            if not request:
+                # this serializer is called from tpa_pipeline and other code paths
+                # where 'request' is not available
+                LOGGER.debug('[Admin Notification API] Get enterprise notification banner request object not found,'
+                             ' Enterprise Customer :{}'.format(obj.slug))
+                return None
             user_id = request.user.id
         except Exception as exc:  # pylint: disable=broad-except
-            LOGGER.error('[Admin Notification API] Get enterprise notification banner request object not found,'
+            LOGGER.error('[Admin Notification API] Failed to retrieve user_id for notification banner,'
                          ' Enterprise Customer :{} Exception: {}'.format(obj.slug, exc))
             return None
         now = datetime.datetime.now(pytz.UTC)
