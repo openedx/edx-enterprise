@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.0.18] - 2026-06-05
+---------------------
+* feat: add DiscountEligibilityStep pipeline step
+
 [8.0.17] - 2026-06-05
 ---------------------
 * fix: format integration and SSO configuration created/modified datetimes as ISO-8601
