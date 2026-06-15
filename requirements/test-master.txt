@@ -34,7 +34,7 @@ billiard==4.2.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   celery
-bleach==6.3.0
+bleach==6.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -646,7 +646,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.7.0
+wcwidth==0.8.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   prompt-toolkit

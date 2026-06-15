@@ -44,7 +44,7 @@ billiard==4.2.4
     # via
     #   -r requirements/test-master.txt
     #   celery
-bleach==6.3.0
+bleach==6.4.0
     # via -r requirements/test-master.txt
 cachecontrol==0.14.4
     # via
@@ -253,7 +253,7 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==40.21.0
+faker==40.23.0
     # via factory-boy
 fastavro==1.12.2
     # via
@@ -486,7 +486,7 @@ pynacl==1.6.2
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   paramiko
-pytest==9.0.3
+pytest==9.1.0
     # via -r requirements/doc.in
 python-dateutil==2.9.0.post0
     # via
@@ -518,7 +518,7 @@ pyyaml==6.0.3
     #   code-annotations
     #   drf-yasg
     #   jsondiff
-readme-renderer==44.0
+readme-renderer==45.0
     # via -r requirements/doc.in
 requests==2.34.2
     # via
@@ -652,7 +652,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.7.0
+wcwidth==0.8.1
     # via
     #   -r requirements/test-master.txt
     #   prompt-toolkit
