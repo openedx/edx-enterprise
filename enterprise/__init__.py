@@ -2,4 +2,4 @@
 Your project description goes here.
 """
 
-__version__ = "8.0.18"
+__version__ = "8.0.19"

@@ -416,6 +416,14 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_credit_and_industry_pathways = models.BooleanField(
+        verbose_name='Display credit and industry pathways',
+        default=False,
+        help_text=_(
+            "Controls the visibility of Credit and Industry Pathways in the learner portal."
+        ),
+    )
+
     enable_programs = models.BooleanField(
         verbose_name="Display programs screen",
         default=True,
