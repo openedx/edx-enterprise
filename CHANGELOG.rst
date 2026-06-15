@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.0.18] - 2026-06-12
+---------------------
+* fix: downgrade notification banner log level from error to debug for expected missing-request exceptions
+
 [8.0.17] - 2026-06-05
 ---------------------
 * fix: format integration and SSO configuration created/modified datetimes as ISO-8601
