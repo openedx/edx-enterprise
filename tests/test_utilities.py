@@ -177,6 +177,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "learner_portal_sidebar_content",
                 "sso_orchestration_records",
                 "enable_pathways",
+                "enable_credit_and_industry_pathways",
                 "enable_programs",
                 "enable_demo_data_for_analytics_and_lpr",
                 "enable_academies",

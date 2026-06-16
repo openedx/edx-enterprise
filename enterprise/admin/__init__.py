@@ -243,7 +243,8 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
                        'disable_expiry_messaging_for_learner_credit',
                        'enable_executive_education_2U_fulfillment',
                        'enable_learner_portal_sidebar_message',
-                       'learner_portal_sidebar_content', 'enable_pathways', 'enable_programs',
+                       'learner_portal_sidebar_content', 'enable_pathways', 'enable_credit_and_industry_pathways',
+                       'enable_programs',
                        'enable_demo_data_for_analytics_and_lpr', 'enable_academies', 'enable_one_academy',
                        'enable_learner_credit_message_box'),
             'description': ('The following default settings should be the same for '

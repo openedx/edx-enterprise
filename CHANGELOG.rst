@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.0.19] - 2026-06-16
+---------------------
+* feat: Add the ``enable_credit_and_industry_pathways`` field for EnterpriseCustomer
+
 [8.0.18] - 2026-06-12
 ---------------------
 * fix: downgrade notification banner log level from error to debug for expected missing-request exceptions
