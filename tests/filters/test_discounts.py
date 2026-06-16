@@ -8,6 +8,14 @@ from django.test import TestCase
 from enterprise.filters.discounts import DiscountEligibilityEnterpriseStep
 
 
+class _FakeDiscountIneligible(Exception):
+    pass
+
+
+class _FakeDiscountEligibilityCheckRequested:
+    DiscountIneligible = _FakeDiscountIneligible
+
+
 class TestDiscountEligibilityEnterpriseStep(TestCase):
     """
     Tests for DiscountEligibilityEnterpriseStep pipeline step.
@@ -25,17 +33,18 @@ class TestDiscountEligibilityEnterpriseStep(TestCase):
         return user
 
     @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=True)
-    def test_returns_ineligible_for_enterprise_learner(self, mock_is_enterprise):
+    @patch('enterprise.filters.discounts.DiscountEligibilityCheckRequested', _FakeDiscountEligibilityCheckRequested)
+    def test_raises_discount_ineligible_for_enterprise_learner(self, mock_is_enterprise):
         """
-        When the user is an enterprise learner, is_eligible is set to False.
+        When the user is an enterprise learner, DiscountIneligible is raised to halt the pipeline.
         """
         user = self._mock_user()
         course_key = MagicMock()
 
         step = self._make_step()
-        result = step.run_filter(user=user, course_key=course_key, is_eligible=True)
+        with self.assertRaises(_FakeDiscountIneligible):
+            step.run_filter(user=user, course_key=course_key, is_eligible=True)
 
-        self.assertEqual(result, {"user": user, "course_key": course_key, "is_eligible": False})
         mock_is_enterprise.assert_called_once_with(user)
 
     @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=False)
@@ -65,10 +74,10 @@ class TestDiscountEligibilityEnterpriseStep(TestCase):
 
         self.assertEqual(result["is_eligible"], False)
 
-    @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=True)
+    @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=False)
     def test_course_key_passed_through_unchanged(self, _):
         """
-        The course_key is always returned unchanged regardless of enterprise status.
+        The course_key is returned unchanged for non-enterprise learners.
         """
         user = self._mock_user()
         course_key = MagicMock()

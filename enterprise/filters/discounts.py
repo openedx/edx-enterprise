@@ -8,6 +8,11 @@ from openedx_filters.filters import PipelineStep
 
 from django.contrib.auth.models import AbstractBaseUser
 
+try:
+    from openedx_filters.learning.filters import DiscountEligibilityCheckRequested
+except ImportError:
+    DiscountEligibilityCheckRequested = None
+
 log = logging.getLogger(__name__)
 
 # This import will be replaced with an internal path in epic 17 when
@@ -27,12 +32,12 @@ class DiscountEligibilityEnterpriseStep(PipelineStep):
 
     LMS-controlled discounts (such as the first-purchase offer) are not applicable to
     learners whose enrollment is managed by an enterprise. This step queries the
-    enterprise learner status and, if the user qualifies, sets ``is_eligible`` to
-    ``False`` so the calling code skips the discount.
+    enterprise learner status and, if the user qualifies, raises ``DiscountIneligible``
+    to halt the pipeline and prevent the discount from being applied.
     """
     def run_filter(self, user: AbstractBaseUser, course_key: CourseKey, is_eligible: bool) -> dict:  # pylint: disable=arguments-differ
         """
-        Return ``is_eligible=False`` if the user is an enterprise learner.
+        Raise ``DiscountIneligible`` if the user is an enterprise learner.
 
         Arguments:
             user (User): the Django User being checked for discount eligibility.
@@ -40,9 +45,11 @@ class DiscountEligibilityEnterpriseStep(PipelineStep):
             is_eligible (bool): the current eligibility status.
 
         Returns:
-            dict: updated pipeline data. ``is_eligible`` is ``False`` when the user is
-            linked to an enterprise; otherwise the original ``is_eligible`` value is
-            preserved.
+            dict: updated pipeline data (unchanged) when the user is not an enterprise learner.
+
+        Raises:
+            DiscountEligibilityCheckRequested.DiscountIneligible: when the user is linked
+            to an enterprise, halting further pipeline processing.
         """
         log.info(
             "DiscountEligibilityEnterpriseStep running: user_id=%s, course_key=%s",
@@ -50,5 +57,7 @@ class DiscountEligibilityEnterpriseStep(PipelineStep):
             str(course_key),
         )
         if is_enterprise_learner(user):
-            return {"user": user, "course_key": course_key, "is_eligible": False}
+            raise DiscountEligibilityCheckRequested.DiscountIneligible(
+                "User is an enterprise learner and is not eligible for LMS-controlled discounts."
+            )
         return {"user": user, "course_key": course_key, "is_eligible": is_eligible}
