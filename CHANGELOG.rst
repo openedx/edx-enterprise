@@ -17,9 +17,17 @@ Unreleased
 ----------
 * nothing unreleased
 
-[8.0.18] - 2026-06-05
+[8.0.20] - 2026-06-05
 ---------------------
 * feat: add DiscountEligibilityStep pipeline step
+
+[8.0.19] - 2026-06-16
+---------------------
+* feat: Add the ``enable_credit_and_industry_pathways`` field for EnterpriseCustomer
+
+[8.0.18] - 2026-06-12
+---------------------
+* fix: downgrade notification banner log level from error to debug for expected missing-request exceptions
 
 [8.0.17] - 2026-06-05
 ---------------------
