@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import ddt
 import pytest
 
-from enterprise.settings.common import _merge_filters_config, plugin_settings
+from enterprise.settings.common import ENTERPRISE_FILTERS_CONFIG, _merge_filters_config, plugin_settings
 
 
 class TestPluginSettingsPipelineInjection(unittest.TestCase):
@@ -212,3 +212,48 @@ class TestMergeFiltersConfig(unittest.TestCase):
         existing[FILTER_A]['pipeline'].append(STEP_Y)
 
         assert additions[FILTER_A]['pipeline'] == [STEP_X]
+
+
+class TestEnterpriseFiltersConfigRegistration(unittest.TestCase):
+    """
+    Tests that ENTERPRISE_FILTERS_CONFIG declares the expected filter types and
+    that plugin_settings() injects them into OPEN_EDX_FILTERS_CONFIG.
+    """
+
+    ENROLLMENT_STARTED_FILTER = "org.openedx.learning.course.enrollment.started.v1"
+    ENROLLMENT_STEP = "enterprise.filters.enrollment.EnterpriseEnrollmentPostProcessor"
+
+    def _make_settings(self):
+        return SimpleNamespace(ENABLE_ENTERPRISE_INTEGRATION=True)
+
+    def test_enrollment_started_filter_is_declared_in_enterprise_filters_config(self):
+        """
+        ENTERPRISE_FILTERS_CONFIG must contain an entry for the CourseEnrollmentStarted
+        filter pointing at EnterpriseEnrollmentPostProcessor.
+        """
+        assert self.ENROLLMENT_STARTED_FILTER in ENTERPRISE_FILTERS_CONFIG
+        pipeline = ENTERPRISE_FILTERS_CONFIG[self.ENROLLMENT_STARTED_FILTER].get("pipeline", [])
+        assert self.ENROLLMENT_STEP in pipeline
+
+    def test_enrollment_started_filter_injected_by_plugin_settings(self):
+        """
+        plugin_settings() must merge the enrollment filter into OPEN_EDX_FILTERS_CONFIG.
+        """
+        settings = self._make_settings()
+        plugin_settings(settings)
+
+        filters_config = getattr(settings, "OPEN_EDX_FILTERS_CONFIG", {})
+        assert self.ENROLLMENT_STARTED_FILTER in filters_config
+        pipeline = filters_config[self.ENROLLMENT_STARTED_FILTER].get("pipeline", [])
+        assert self.ENROLLMENT_STEP in pipeline
+
+    def test_enrollment_filter_not_injected_when_enterprise_integration_disabled(self):
+        """
+        When ENABLE_ENTERPRISE_INTEGRATION is False, plugin_settings() must not
+        add the enrollment filter to OPEN_EDX_FILTERS_CONFIG.
+        """
+        settings = SimpleNamespace(ENABLE_ENTERPRISE_INTEGRATION=False)
+        plugin_settings(settings)
+
+        filters_config = getattr(settings, "OPEN_EDX_FILTERS_CONFIG", {})
+        assert self.ENROLLMENT_STARTED_FILTER not in filters_config
