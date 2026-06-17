@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.1.2] - 2026-06-23
+---------------------
+* fix: change enable_credit_and_industry_pathways default to true
+
 [8.1.1] - 2026-06-18
 ---------------------
 * refactor: reorganize helper functions into model-dependent and model-independent to break an import cycle
