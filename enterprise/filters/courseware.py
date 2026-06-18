@@ -18,8 +18,8 @@ try:
 except ImportError:
     DEFAULT_START_DATE = datetime(2040, 1, 1, tzinfo=ZoneInfo("UTC"))
 
+from enterprise.core_api import enterprise_learner_enrolled
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
-from enterprise.utils import enterprise_learner_enrolled
 
 log = logging.getLogger(__name__)
 
