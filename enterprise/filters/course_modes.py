@@ -2,8 +2,20 @@
 Pipeline steps for the course mode checkout filter.
 """
 import logging
+from requests.exceptions import HTTPError
+from django.http import HttpRequest
+from typing import Any
 
 from openedx_filters.filters import PipelineStep
+
+# This import will be replaced with internal paths when enterprise_support is
+# migrated into edx-enterprise.
+try:
+    from openedx.features.enterprise_support.api import (
+        enterprise_customer_for_request
+    )
+except ImportError:
+    enterprise_customer_for_request = None
 
 log = logging.getLogger(__name__)
 
@@ -17,17 +29,13 @@ class CheckoutEnterpriseContextInjector(PipelineStep):
     This allows downstream checkout logic to apply enterprise-specific pricing.
     """
 
-    def run_filter(self, context, request, course_mode):  # pylint: disable=arguments-differ
+    def run_filter(self, context: dict[str, Any], request: HttpRequest, course_mode: Any) -> dict[str, Any]:  # pylint: disable=arguments-differ
         """
         Inject enterprise customer into the checkout context.
         """
-        # Deferred import — will be replaced with internal path in epic 17.
-        from openedx.features.enterprise_support.api import \
-            enterprise_customer_for_request  # pylint: disable=import-outside-toplevel
-
         try:
             enterprise_customer = enterprise_customer_for_request(request)
-        except Exception:  # pylint: disable=broad-except
+        except HTTPError:
             log.warning('Failed to retrieve enterprise customer for checkout context.', exc_info=True)
             enterprise_customer = None
 
