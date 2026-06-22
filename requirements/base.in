@@ -33,7 +33,7 @@ jsonfield
 lxml
 openedx-atlas
 openedx-events
-openedx-filters
+openedx-filters>=3.5.0
 paramiko
 path.py
 pillow
