@@ -14,7 +14,8 @@ from django.urls import reverse
 
 from consent.models import ProxyDataSharingConsent
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
-from enterprise.utils import get_active_enterprise_customer_user, get_enterprise_customer
+from enterprise.core_api import get_active_enterprise_customer_user
+from enterprise.utils import get_enterprise_customer
 
 # ENT-11576: CONSENT_FAILED_PARAMETER, ConsentApiClient, enterprise_customer_uuid_for_request,
 # and get_data_consent_share_cache_key will be migrated from the platform's enterprise_support
