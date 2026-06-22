@@ -21,6 +21,10 @@ Unreleased
 ---------------------
 * feat: add DiscountEligibilityStep pipeline step
 
+[8.1.1] - 2026-06-18
+---------------------
+* refactor: reorganize helper functions into model-dependent and model-independent to break an import cycle
+
 [8.1.0] - 2026-06-17
 ---------------------
 * feat: add courseware-access pipeline steps
