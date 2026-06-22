@@ -17,6 +17,167 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.1.1] - 2026-06-18
+---------------------
+* refactor: reorganize helper functions into model-dependent and model-independent to break an import cycle
+
+[8.1.0] - 2026-06-17
+---------------------
+* feat: add courseware-access pipeline steps
+
+[8.0.19] - 2026-06-16
+---------------------
+* feat: Add the ``enable_credit_and_industry_pathways`` field for EnterpriseCustomer
+
+[8.0.18] - 2026-06-12
+---------------------
+* fix: downgrade notification banner log level from error to debug for expected missing-request exceptions
+
+[8.0.17] - 2026-06-05
+---------------------
+* fix: format integration and SSO configuration created/modified datetimes as ISO-8601
+
+[8.0.16] - 2026-06-02
+---------------------
+* feat: remove enterprise_invite_admins_enabled feature flag and related conditional behavior (ENT-11269)
+
+
+[8.0.15] - 2026-05-15
+---------------------
+* feat: add GradeEventContextEnricher pipeline step for grade analytics (ENT-11563)
+
+[8.0.14] - 2026-05-14
+---------------------
+* feat: Add basic logging for all enterprise filter pipeline steps (ENT-11830)
+
+[8.0.13] - 2026-05-14
+---------------------
+* feat: own OPEN_EDX_FILTERS_CONFIG injection in enterprise and consent plugin_settings (ENT-11830)
+
+[8.0.12] - 2026-05-13
+---------------------
+* fix: dashboard filter step now fetches the live request via crum instead of expecting it in the filter context (ENT-11569)
+
+[8.0.11] - 2026-05-12
+---------------------
+* fix: populate name as blank in Invite Admin list view for pending customer admin (ENT-11811)
+
+[8.0.10] - 2026-05-11
+---------------------
+* feat: account for data sharing consent settings and mark unenrolled courses in admin enrollment viewset
+
+[8.0.9] - 2026-05-07
+---------------------
+* fix: populate name in Invite Admin list view (ENT-11811)
+
+[8.0.8] - 2026-05-06
+---------------------
+* feat: extra logging for enterprise email association pipeline step
+
+[8.0.7] - 2026-05-06
+---------------------
+* feat: add pluggable override for course home progress username obfuscation
+
+[8.0.6] - 2026-05-05
+---------------------
+* fix: gate plugin_settings on ENABLE_ENTERPRISE_INTEGRATION
+
+[8.0.5] - 2026-05-04
+---------------------
+* feat: add TPA pipeline step and social auth disconnect handler
+
+[8.0.4] - 2026-05-05
+---------------------
+* feat: extend manage enterprise customer admins permission to the enterprise_openedx_operator role
+
+[8.0.3] - 2026-04-29
+---------------------
+* feat: adding the missing consent_required_courses injection
+
+[8.0.2] - 2026-04-27
+---------------------
+* feat: add ai pathways operator waffle flag
+
+[8.0.1] - 2026-04-27
+---------------------
+* feat: add DashboardContextEnricher pipeline step for student dashboard filter
+
+[8.0.0] - 2026-04-22
+---------------------
+* feat!: Drop management commands that dependend on the snowflake-connector
+
+[7.0.7] - 2026-04-24
+---------------------
+* fix: update social media links for email compatibility
+
+[7.0.6] - 2026-04-22
+---------------------
+* fix: Block SSRF in SAML metadata URL fetching (GHSA-64cv-vxpr-j6vc)
+
+[7.0.5] - 2026-04-21
+---------------------
+* fix: restrict invite and delete enterprise admin endpoints to provisioning admin and enterprise admin roles only
+
+[7.0.4] - 2026-04-15
+---------------------
+* fix: [SAML Views] Accept an "enterprise_customer_uuid" query param (instead of "enterprise-id")
+
+[7.0.3] - 2026-04-15
+---------------------
+* feat: add migration for enable_academies default value change (ENT-11220)
+
+[7.0.2] - 2026-04-14
+---------------------
+* feat: enable academies by default for customers (ENT-11220)
+
+[7.0.1] - 2026-04-08
+---------------------
+* feat: add SAML provider admin API and migrate SAML utilities
+
+[7.0.0] - 2026-04-07
+---------------------
+* chore: drop Python 3.11 support
+
+[6.8.6] - 2026-04-07
+---------------------
+* fix: allow deletion of inactive enterprise admin users (ENT-11714)
+
+[6.8.5] - 2026-03-31
+---------------------
+* feat: add AccountSettingsEnterpriseReadOnlyFieldsStep pipeline step (ENT-11510)
+
+[6.8.4] - 2026-03-31
+--------------------
+* fix: hard delete customer admin records from API
+
+[6.8.3] - 2026-03-27
+---------------------
+* fix: Move settings reads out of AppConfig, into consumers
+
+[6.8.2] - 2026-03-26
+---------------------
+* feat: add admin invite reminder emails (ENT-11581)
+
+[6.8.1] - 2026-03-25
+---------------------
+* fix: also register enterprise and consent as CMS plugins (ENT-11663)
+
+[6.8.0] - 2026-03-24
+---------------------
+* feat: register enterprise and consent as openedx LMS plugins (ENT-11663)
+
+[6.7.0] - 2026-03-10
+---------------------
+* feat: Invite admin endpoints with validation  (ENT-11238)
+
+[6.6.9] - 2026-03-10
+---------------------
+* fix: handle duplicate enterprise group name validation error (ENT-11506)
+
+[6.6.8] - 2026-03-05
+---------------------
+* feat: moving retirement code to edx-enterprise
+
 [6.6.7] - 2026-03-04
 ---------------------
 * feat: expose admin list endpoint with search and pagination

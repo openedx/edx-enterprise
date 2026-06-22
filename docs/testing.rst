@@ -8,15 +8,7 @@ checks to catch potential problems during development.
 
 Running all of the python tests
 -------------------------------
-To run all unit tests and quality checks in the version of Python you chose for your virtualenv.
-
-Alternatively, `docker`_ can be used to provide a containerized shell to run the commands below inside.
-
-.. _docker: https://www.docker.com/
-
-.. code-block:: bash
-
-    $ make test-shell
+To run all unit tests and quality checks in the version of Python/Node you previously configured:
 
 .. code-block:: bash
 
@@ -34,19 +26,31 @@ To run just the unit tests and check diff coverage
 
     $ make diff_cover
 
-To run the unit tests under every supported Python version and the code
-quality checks:
+To run the unit tests under every supported Python/Django combination via tox:
 
 .. code-block:: bash
 
-    $ make test-all
+    $ tox                    # run all supported combinations
+    $ tox -e py312-django52  # run one specific combination
 
-To run all tests under certain python versions and edx-platform dependency environments:
+When testing a subset of tests, use ``pytest.local.ini`` to disable coverage:
 
 .. code-block:: bash
 
-    $ tox -e py35-master   # run all tests under python 3.5 and master branch dependencies
+    $ pytest -c pytest.local.ini tests/test_enterprise/api/
+    $ pytest -c pytest.local.ini tests/test_apps.py::TestEnterpriseConfig::test_ready_connects_user_post_save_handler
 
+Alternatively, `docker`_ can be used to provide a containerized environment to run tests.
+
+.. _docker: https://www.docker.com/
+
+.. code-block:: bash
+
+    $ make dev.up
+    $ docker compose exec test-shell make test
+    $ docker compose exec test-shell make validate
+    $ docker compose exec test-shell pytest -c pytest.local.ini tests/test_enterprise/api/
+    $ docker compose exec test-shell pytest -c pytest.local.ini tests/test_apps.py::TestEnterpriseConfig::test_ready_connects_user_post_save_handler
 
 Code coverage
 -------------
@@ -58,38 +62,13 @@ test cases:
 
     $ make coverage
 
-There is a useful ``pytest.local.ini`` file that helps with looking at coverage of only a single module at a time:
-
-.. code-block:: bash
-
-    $ pytest tests/test_enterprise/api -c pytest.local.ini --cov=enterprise.api
-
-
-Running subsets of tests
-------------------------
-
-Various options to run only subset of tests:
-
-.. code-block:: bash
-
-    $ pytest tests/test_admin/              # run all tests in tests/admin folder
-    $ pytest tests/test_enterprise/api      # run all tests in tests/test_enterprise_api folder
-    $ pytest tests/test_enterprise/api/test_permissions.py  # run all the tests in the test_permissions.py file
-
-    # run all tests in TestEnterpriseCustomer test suite file
-    $ pytest tests/test_models.py::TestEnterpriseCustomer
-
-    # run only `test_ready_connects_user_post_save_handler` in `TestEnterpriseConfig` suite
-    $ pytest tests/test_apps.py::TestEnterpriseConfig::test_ready_connects_user_post_save_handler
-
-
 Quality
 -------
 To run just the code quality checks:
 
 .. code-block:: bash
 
-    $ tox -e quality
+    $ make quality
 
 To run quality checks on specific files:
 
@@ -106,3 +85,14 @@ To run quality checks on specific files:
 
     # use isort to actually change the file(s)
     $ isort enterprise/api/v1/views.py enterprise/api/v1/permissions.py
+
+`docker`_ can also be used to provide a containerized environment to run quality checks.
+
+.. code-block:: bash
+
+    $ make dev.up
+    $ docker compose exec test-shell make quality
+    $ docker compose exec test-shell pycodestyle enterprise/api/v1/views.py
+    $ docker compose exec test-shell pylint enterprise/api/v1/views.py
+    $ docker compose exec test-shell isort --check-only enterprise/api/v1/views.py
+    $ docker compose exec test-shell isort enterprise/api/v1/views.py enterprise/api/v1/permissions.py

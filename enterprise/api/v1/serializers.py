@@ -12,6 +12,7 @@ from oauth2_provider.generators import generate_client_id, generate_client_secre
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.settings import api_settings
+from rest_framework.validators import UniqueTogetherValidator
 from slumber.exceptions import HttpClientError
 
 from django.contrib import auth
@@ -248,8 +249,10 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
             'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
             'enable_learner_portal_sidebar_message', 'learner_portal_sidebar_content',
-            'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
-            'enable_one_academy', 'active_integrations', 'show_videos_in_learner_portal_search_results',
+            'enable_pathways', 'enable_credit_and_industry_pathways', 'enable_programs',
+            'enable_demo_data_for_analytics_and_lpr',
+            'enable_academies', 'enable_one_academy', 'active_integrations',
+            'show_videos_in_learner_portal_search_results',
             'default_language', 'country', 'enable_slug_login', 'enable_learner_credit_message_box',
         )
 
@@ -320,11 +323,16 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         """
 
         try:
-            # this serializer is also called from tpa_pipeline and request is not available in the first place there.
-            request = self.context['request']
+            request = self.context.get('request')
+            if not request:
+                # this serializer is called from tpa_pipeline and other code paths
+                # where 'request' is not available
+                LOGGER.debug('[Admin Notification API] Get enterprise notification banner request object not found,'
+                             ' Enterprise Customer :{}'.format(obj.slug))
+                return None
             user_id = request.user.id
         except Exception as exc:  # pylint: disable=broad-except
-            LOGGER.error('[Admin Notification API] Get enterprise notification banner request object not found,'
+            LOGGER.error('[Admin Notification API] Failed to retrieve user_id for notification banner,'
                          ' Enterprise Customer :{} Exception: {}'.format(obj.slug, exc))
             return None
         now = datetime.datetime.now(pytz.UTC)
@@ -385,7 +393,8 @@ class EnterpriseCustomerSupportToolSerializer(EnterpriseCustomerSerializer):
             'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
             'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
             'enable_learner_portal_sidebar_message', 'learner_portal_sidebar_content',
-            'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
+            'enable_pathways', 'enable_credit_and_industry_pathways', 'enable_programs',
+            'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
             'enable_one_academy', 'active_integrations', 'show_videos_in_learner_portal_search_results',
             'default_language', 'country', 'enable_slug_login', 'active_sso_configurations', 'created',
             'enable_learner_credit_message_box',
@@ -531,12 +540,15 @@ class EnterpriseCourseEnrollmentAdminViewSerializer(serializers.ModelSerializer)
 
         Returns:
             status: one of (
+                CourseRunProgressStatuses.UNENROLLED,
                 CourseRunProgressStatuses.SAVED_FOR_LATER,
-                CourseRunProgressStatuses.COMPLETE,
+                CourseRunProgressStatuses.COMPLETED,
                 CourseRunProgressStatuses.IN_PROGRESS,
                 CourseRunProgressStatuses.UPCOMING,
             )
         """
+        if enterprise_enrollment and enterprise_enrollment.unenrolled:
+            return CourseRunProgressStatuses.UNENROLLED
         if enterprise_enrollment and enterprise_enrollment.saved_for_later:
             return CourseRunProgressStatuses.SAVED_FOR_LATER
 
@@ -567,12 +579,16 @@ class EnterpriseCourseEnrollmentAdminViewSerializer(serializers.ModelSerializer)
 
         Returns:
             status: one of (
+                CourseRunProgressStatuses.UNENROLLED,
                 CourseRunProgressStatuses.SAVED_FOR_LATER,
-                CourseRunProgressStatuses.COMPLETE,
+                CourseRunProgressStatuses.COMPLETED,
                 CourseRunProgressStatuses.IN_PROGRESS,
                 CourseRunProgressStatuses.UPCOMING,
             )
         """
+        if enterprise_enrollment and enterprise_enrollment.unenrolled:
+            return CourseRunProgressStatuses.UNENROLLED
+
         if enterprise_enrollment and enterprise_enrollment.saved_for_later:
             return CourseRunProgressStatuses.SAVED_FOR_LATER
 
@@ -795,6 +811,13 @@ class EnterpriseGroupSerializer(serializers.ModelSerializer):
         fields = (
             'enterprise_customer', 'name', 'uuid',
             'accepted_members_count', 'group_type', 'created')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=models.EnterpriseGroup.all_objects.all(),
+                fields=('name', 'enterprise_customer'),
+                message='A group with this name already exists. Please enter a unique name to create a new group.',
+            )
+        ]
 
     accepted_members_count = serializers.SerializerMethodField()
 
@@ -2395,3 +2418,59 @@ class EnterpriseAdminMemberSerializer(serializers.Serializer):
         format="%b %d, %Y",
     )
     status = serializers.CharField()
+
+
+class AdminInviteSerializer(serializers.Serializer):
+    """
+    Accepts a list of email addresses for processing.
+
+    Example::
+
+        {
+            "emails": ["a@x.com", "b@x.com"]
+        }
+
+    Validation:
+
+    - Emails are validated for proper format.
+    - Emails are stripped and lowercased.
+    - Empty lists are not allowed.
+    - Duplicate emails are not allowed.
+    - (Optional) Additional business rules such as domain restrictions can be applied.
+    """
+    emails = serializers.ListField(
+        child=serializers.EmailField(),
+        allow_empty=False,
+        required=True,
+        error_messages={
+            "required": "The 'emails' field is required.",
+            "empty": "This list may not be empty.",
+        },
+    )
+
+    def validate_emails(self, value):
+        """
+        Normalize emails and check for duplicates.
+
+        Args:
+            value: List of email strings
+
+        Returns:
+            List of normalized (stripped, lowercased) emails
+
+        Raises:
+            ValidationError: If duplicate emails exist
+        """
+        normalized_emails = []
+
+        for email in value:
+            # Strip and lowercase
+            normalized_email = email.strip().lower()
+
+            normalized_emails.append(normalized_email)
+
+        # Check for duplicates
+        if len(normalized_emails) != len(set(normalized_emails)):
+            raise serializers.ValidationError("Duplicate emails are not allowed.")
+
+        return normalized_emails

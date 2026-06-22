@@ -3,13 +3,15 @@ branch = True
 data_file = .coverage
 source=enterprise
 omit =
-    enterprise/settings*
-    enterprise/conf*
-    enterprise/django_compatibility.py
-    consent/apps.py
-    consent/errors.py
-    *migrations*
-    *admin/__init__.py
-    *static*
-    *templates*
-    *urls.py
+    enterprise/settings/*
+    enterprise/conf/*
+    consent/settings/*
+    consent/conf/*
+    */mocks.py
+    */urls.py
+    */migrations/*
+    */admin.py
+    */static/*
+    */templates/*
+    */tests/*
+    test_*

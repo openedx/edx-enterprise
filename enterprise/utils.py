@@ -1,5 +1,12 @@
 """
 Utility functions for enterprise app.
+
+Going forward, functions in this file should be lightweight and NOT depend on
+any enterprise models because those models already import this file. Doing so
+would create an import cycle.
+
+Functions which depend on enterprise models should instead go in one of the
+``*_api.py`` files.
 """
 import datetime
 import hashlib
@@ -9,6 +16,7 @@ import re
 from collections import OrderedDict
 from functools import reduce
 from itertools import islice
+from typing import TYPE_CHECKING
 from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
@@ -17,10 +25,12 @@ import pytz
 from edx_django_utils.cache import TieredCache
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
 from slumber.exceptions import HttpClientError
+from social_django.models import UserSocialAuth
 
 from django.apps import apps
 from django.conf import settings
 from django.contrib import auth
+from django.contrib.auth.models import AbstractUser
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
@@ -88,11 +98,6 @@ try:
 except ImportError:
     get_url = None
 
-try:
-    from social_django.models import UserSocialAuth
-except ImportError:
-    UserSocialAuth = None
-
 # Only create manual enrollments if running in edx-platform
 try:
     from common.djangoapps.student.api import (
@@ -137,6 +142,9 @@ try:
     from openedx.core.djangoapps.lang_pref import LANGUAGE_KEY
 except ImportError:
     LANGUAGE_KEY = 'pref-lang'
+
+if TYPE_CHECKING:
+    from enterprise.models import EnterpriseCustomerUser
 
 
 class ValidationMessages:
@@ -1723,7 +1731,7 @@ def get_idiff_list(list_a, list_b):
     return list(set(lower_list_a) - set(lower_list_b))
 
 
-def get_users_by_email(emails):
+def get_users_by_email(emails: list[str]) -> tuple[QuerySet, list[str]]:
     """
     Accept a list of emails, and separate them into users that exist on OpenEdX and users who don't.
 
@@ -1738,6 +1746,15 @@ def get_users_by_email(emails):
     present_emails = users.values_list('email', flat=True)
     unregistered_emails = get_idiff_list(emails, present_emails)
     return users, unregistered_emails
+
+
+def get_user_from_email(email: str) -> AbstractUser | None:
+    """
+    Return a single user matching the email, or None.
+    """
+    if email:
+        return User.objects.filter(email=email).first()
+    return None
 
 
 def is_user_enrolled(user, course_id, course_mode, enrollment_client=None):
@@ -2597,8 +2614,8 @@ def get_integrations_for_customers(customer_uuid):
         if integration is not None:
             unique_integrations.append({
                 'channel_code': code,
-                'created': datetime.datetime.strftime(integration.get('created'), '%B %d, %Y'),
-                'modified': datetime.datetime.strftime(integration.get('modified'), '%B %d, %Y'),
+                'created': integration.get('created').isoformat(),
+                'modified': integration.get('modified').isoformat(),
                 'display_name': integration.get('display_name'),
                 'active': integration.get('active'),
             })
@@ -2620,8 +2637,8 @@ def get_active_sso_configurations_for_customer(customer_uuid):
     if sso_configurations:
         for sso_configuration in sso_configurations:
             active_configurations.append({
-                'created': datetime.datetime.strftime(sso_configuration.get('created'), '%B %d, %Y'),
-                'modified': datetime.datetime.strftime(sso_configuration.get('modified'), '%B %d, %Y'),
+                'created': sso_configuration.get('created').isoformat(),
+                'modified': sso_configuration.get('modified').isoformat(),
                 'active': sso_configuration.get('active'),
                 'display_name': sso_configuration.get('display_name'),
             })

@@ -416,6 +416,14 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_credit_and_industry_pathways = models.BooleanField(
+        verbose_name='Display credit and industry pathways',
+        default=False,
+        help_text=_(
+            "Controls the visibility of Credit and Industry Pathways in the learner portal."
+        ),
+    )
+
     enable_programs = models.BooleanField(
         verbose_name="Display programs screen",
         default=True,
@@ -426,7 +434,7 @@ class EnterpriseCustomer(TimeStampedModel):
 
     enable_academies = models.BooleanField(
         verbose_name="Display academies screen",
-        default=False,
+        default=True,
         help_text=_(
             "If checked, the learners will be able to see the academies on the learner portal dashboard."
         )
@@ -3969,6 +3977,12 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
         on_delete=models.CASCADE,
     )
     user_email = models.EmailField(null=False, blank=False)
+    reminder_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text=_("The last time a reminder email was sent for this pending admin."),
+    )
     history = HistoricalRecords()
 
     class Meta:

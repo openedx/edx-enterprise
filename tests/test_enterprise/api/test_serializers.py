@@ -18,6 +18,7 @@ from django.test import TestCase
 
 from enterprise.api.utils import CourseRunProgressStatuses
 from enterprise.api.v1.serializers import (
+    AdminInviteSerializer,
     EnterpriseAdminMemberSerializer,
     EnterpriseCourseEnrollmentAdminViewSerializer,
     EnterpriseCustomerApiCredentialSerializer,
@@ -25,6 +26,7 @@ from enterprise.api.v1.serializers import (
     EnterpriseCustomerReportingConfigurationSerializer,
     EnterpriseCustomerSerializer,
     EnterpriseCustomerUserReadOnlySerializer,
+    EnterpriseGroupSerializer,
     EnterpriseMembersSerializer,
     EnterpriseSSOUserInfoRequestSerializer,
     EnterpriseUserSerializer,
@@ -186,6 +188,52 @@ class TestEnterpriseCustomerSerializer(BaseSerializerTestWithEnterpriseRoleAssig
         expected_auth_org_id = self.enterprise_customer_1.auth_org_id
         serialized_auth_org_id = serializer.data['auth_org_id']
         self.assertEqual(serialized_auth_org_id, expected_auth_org_id)
+
+
+@mark.django_db
+class TestEnterpriseGroupSerializer(APITest):
+    """
+    Tests for EnterpriseGroupSerializer.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.group_name = 'duplicate-group-name'
+        self.duplicate_name_error = (
+            'A group with this name already exists. Please enter a unique name to create a new group.'
+        )
+
+    def _serialize_group(self):
+        """Return a serializer with duplicate-prone payload."""
+        return EnterpriseGroupSerializer(data={
+            'enterprise_customer': self.enterprise_customer.uuid,
+            'name': self.group_name,
+            'group_type': 'flex',
+        })
+
+    def test_duplicate_group_name_returns_custom_error_message(self):
+        """Ensure active duplicate group names get the expected friendly validation message."""
+        factories.EnterpriseGroupFactory(
+            enterprise_customer=self.enterprise_customer,
+            name=self.group_name,
+        )
+
+        serializer = self._serialize_group()
+        assert not serializer.is_valid()
+        assert serializer.errors.get('non_field_errors') == [self.duplicate_name_error]
+
+    def test_deleted_duplicate_group_name_returns_custom_error_message(self):
+        """Ensure soft-deleted duplicate group names are also blocked with the same validation message."""
+        group = factories.EnterpriseGroupFactory(
+            enterprise_customer=self.enterprise_customer,
+            name=self.group_name,
+        )
+        group.delete()
+
+        serializer = self._serialize_group()
+        assert not serializer.is_valid()
+        assert serializer.errors.get('non_field_errors') == [self.duplicate_name_error]
 
 
 @mark.django_db
@@ -1011,7 +1059,21 @@ class TestGetExecEdCourseRunStatus(TestCase):
             start_date=self.now,
             end_date=self.now + datetime.timedelta(days=30)
         )
-        self.enterprise_enrollment = Mock(saved_for_later=False)
+        self.enterprise_enrollment = Mock(unenrolled=False, saved_for_later=False)
+
+    @patch('enterprise.api.v1.serializers.datetime')
+    def test_unenrolled_supersedes_all(self, mock_datetime):
+        """Test that unenrolled=True returns UNENROLLED regardless of other conditions."""
+        mock_datetime.datetime.now.return_value = self.now
+        self.enterprise_enrollment.unenrolled = True
+        self.enterprise_enrollment.saved_for_later = True
+        # pylint: disable=protected-access
+        status = self.serializer._get_exec_ed_course_run_status(
+            self.course_details,
+            {'is_passing': True},
+            self.enterprise_enrollment
+        )
+        assert status == CourseRunProgressStatuses.UNENROLLED
 
     @patch('enterprise.api.v1.serializers.datetime')
     def test_saved_for_later(self, mock_datetime):
@@ -1071,6 +1133,81 @@ class TestGetExecEdCourseRunStatus(TestCase):
             self.course_details,
             {'is_passing': False},
             self.enterprise_enrollment
+        )
+        assert status == CourseRunProgressStatuses.UPCOMING
+
+
+@mark.django_db
+class TestGetCourseRunStatus(TestCase):
+    """Unit tests for _get_course_run_status."""
+
+    def setUp(self):
+        """Set up test data."""
+        super().setUp()
+        self.serializer = EnterpriseCourseEnrollmentAdminViewSerializer()
+        self.course_overview = {'has_started': True, 'has_ended': False}
+        self.enterprise_enrollment = Mock(unenrolled=False, saved_for_later=False)
+
+    def test_unenrolled_supersedes_all(self):
+        """Test that unenrolled=True returns UNENROLLED regardless of other conditions."""
+        self.enterprise_enrollment.unenrolled = True
+        self.enterprise_enrollment.saved_for_later = True
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            {'has_started': True, 'has_ended': True},
+            {'is_passing': True},
+            self.enterprise_enrollment,
+        )
+        assert status == CourseRunProgressStatuses.UNENROLLED
+
+    def test_saved_for_later(self):
+        """Test that saved_for_later=True returns SAVED_FOR_LATER status."""
+        self.enterprise_enrollment.saved_for_later = True
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            self.course_overview,
+            {'is_passing': False},
+            self.enterprise_enrollment,
+        )
+        assert status == CourseRunProgressStatuses.SAVED_FOR_LATER
+
+    def test_completed_with_certificate(self):
+        """Test that a passing certificate returns COMPLETED status."""
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            self.course_overview,
+            {'is_passing': True},
+            self.enterprise_enrollment,
+        )
+        assert status == CourseRunProgressStatuses.COMPLETED
+
+    def test_completed_with_ended_course(self):
+        """Test that an ended course returns COMPLETED status."""
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            {'has_started': True, 'has_ended': True},
+            {'is_passing': False},
+            self.enterprise_enrollment,
+        )
+        assert status == CourseRunProgressStatuses.COMPLETED
+
+    def test_in_progress(self):
+        """Test that a started, non-ended course returns IN_PROGRESS status."""
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            self.course_overview,
+            {'is_passing': False},
+            self.enterprise_enrollment,
+        )
+        assert status == CourseRunProgressStatuses.IN_PROGRESS
+
+    def test_upcoming(self):
+        """Test that a course that hasn't started returns UPCOMING status."""
+        # pylint: disable=protected-access
+        status = self.serializer._get_course_run_status(
+            {'has_started': False, 'has_ended': False},
+            {'is_passing': False},
+            self.enterprise_enrollment,
         )
         assert status == CourseRunProgressStatuses.UPCOMING
 
@@ -1170,12 +1307,91 @@ class TestEnterpriseSSOUserInfoRequestSerializer(TestCase):
 
 
 @mark.django_db
+class TestAdminInviteSerializer(TestCase):
+    """
+    Tests for AdminInviteSerializer.
+    """
+
+    def test_valid_emails(self):
+        """Test serializer with valid emails."""
+        data = {"emails": ["user1@example.com", "user2@example.com"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        assert len(serializer.validated_data["emails"]) == 2
+        assert "user1@example.com" in serializer.validated_data["emails"]
+        assert "user2@example.com" in serializer.validated_data["emails"]
+
+    def test_emails_are_normalized(self):
+        """Test that emails are lowercased and stripped."""
+        data = {"emails": ["  User@EXAMPLE.com  ", "ADMIN@Test.COM"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["emails"] == ["user@example.com", "admin@test.com"]
+
+    def test_duplicate_emails_rejected(self):
+        """Test that duplicate emails are rejected."""
+        data = {"emails": ["user@example.com", "user@example.com"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "emails" in serializer.errors
+        assert "Duplicate emails" in str(serializer.errors["emails"])
+
+    def test_duplicate_emails_case_insensitive(self):
+        """Test that duplicate detection is case-insensitive."""
+        data = {"emails": ["User@Example.com", "user@example.com"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "Duplicate emails" in str(serializer.errors["emails"])
+
+    def test_missing_emails_field(self):
+        """Test that missing emails field fails validation."""
+        serializer = AdminInviteSerializer(data={})
+        assert not serializer.is_valid()
+        assert "emails" in serializer.errors
+        assert serializer.errors["emails"][0] == "The 'emails' field is required."
+
+    def test_empty_emails_list(self):
+        """Test that empty emails list fails validation."""
+        serializer = AdminInviteSerializer(data={"emails": []})
+        assert not serializer.is_valid()
+        assert "emails" in serializer.errors
+        assert serializer.errors["emails"][0] == "This list may not be empty."
+
+    def test_invalid_email_format(self):
+        """Test that invalid email format is rejected."""
+        data = {"emails": ["notanemail"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "emails" in serializer.errors
+        assert "Enter a valid email address" in str(serializer.errors["emails"])
+        assert "Invalid email format" not in str(serializer.errors["emails"])
+
+    def test_large_batch_accepted(self):
+        """Test that large batches of emails are accepted."""
+        emails = [f"user{i}@example.com" for i in range(100)]
+        data = {"emails": emails}
+        serializer = AdminInviteSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        assert len(serializer.validated_data["emails"]) == 100
+
+    def test_single_email(self):
+        """Test serializer with a single email."""
+        data = {"emails": ["single@example.com"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["emails"] == ["single@example.com"]
+
+
+@mark.django_db
 class TestEnterpriseAdminMemberSerializer(TestCase):
     """
     Tests for EnterpriseAdminMemberSerializer.
     """
 
     def test_serializer_with_admin_user_is_valid(self):
+        """
+        Test that EnterpriseAdminMemberSerializer correctly validates an active admin user.
+        """
         data = {
             "id": 10,
             "name": "admin_user",
@@ -1192,6 +1408,9 @@ class TestEnterpriseAdminMemberSerializer(TestCase):
         assert serializer.validated_data["name"] == "admin_user"
 
     def test_serializer_with_pending_user_is_valid(self):
+        """
+        Test that EnterpriseAdminMemberSerializer correctly validates a pending admin invitation.
+        """
         data = {
             "id": 1,
             "name": None,

@@ -2,9 +2,9 @@
 Pipeline steps for the course mode checkout filter.
 """
 import logging
+from typing import Any
 from requests.exceptions import HTTPError
 from django.http import HttpRequest
-from typing import Any
 
 from openedx_filters.filters import PipelineStep
 
