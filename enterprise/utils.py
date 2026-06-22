@@ -9,6 +9,7 @@ import re
 from collections import OrderedDict
 from functools import reduce
 from itertools import islice
+from typing import TYPE_CHECKING
 from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
@@ -16,11 +17,14 @@ import bleach
 import pytz
 from edx_django_utils.cache import TieredCache
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
+from opaque_keys.edx.keys import CourseKey
 from slumber.exceptions import HttpClientError
+from social_django.models import UserSocialAuth
 
 from django.apps import apps
 from django.conf import settings
 from django.contrib import auth
+from django.contrib.auth.models import AbstractUser
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
@@ -28,7 +32,7 @@ from django.db import utils
 from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.forms.models import model_to_dict
-from django.http import Http404
+from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
@@ -55,6 +59,12 @@ try:
     from openedx.features.enterprise_support.enrollments.utils import lms_update_or_create_enrollment
 except ImportError:
     lms_update_or_create_enrollment = None
+
+# In ENT-11576, enterprise_customer_from_session_or_learner_data will be migrated into this repo.
+try:
+    from openedx.features.enterprise_support.api import enterprise_customer_from_session_or_learner_data
+except ImportError:
+    enterprise_customer_from_session_or_learner_data = None
 
 try:
     from openedx.core.djangoapps.course_groups.models import CourseUserGroup
@@ -87,11 +97,6 @@ try:
     from lms.djangoapps.branding.api import get_url
 except ImportError:
     get_url = None
-
-try:
-    from social_django.models import UserSocialAuth
-except ImportError:
-    UserSocialAuth = None
 
 # Only create manual enrollments if running in edx-platform
 try:
@@ -137,6 +142,9 @@ try:
     from openedx.core.djangoapps.lang_pref import LANGUAGE_KEY
 except ImportError:
     LANGUAGE_KEY = 'pref-lang'
+
+if TYPE_CHECKING:
+    from enterprise.models import EnterpriseCustomerUser
 
 
 class ValidationMessages:
@@ -840,6 +848,76 @@ def get_enterprise_customer_user(user_id, enterprise_uuid):
         )
     except EnterpriseCustomerUser.DoesNotExist:
         return None
+
+
+def get_active_enterprise_customer_user(user: AbstractUser) -> 'EnterpriseCustomerUser | None':
+    """
+    Return the active EnterpriseCustomerUser model instance for ``user``, or None.
+
+    There is at most one active EnterpriseCustomerUser per user.
+    """
+    if not getattr(settings, 'ENABLE_ENTERPRISE_INTEGRATION', False) or not user.is_authenticated:
+        return None
+    EnterpriseCustomerUser = apps.get_model('enterprise', 'EnterpriseCustomerUser')
+    try:
+        return EnterpriseCustomerUser.objects.get(user_id=user.id, active=True)
+    except EnterpriseCustomerUser.DoesNotExist:
+        LOGGER.info(
+            "Active EnterpriseCustomerUser for user [%s] does not exist", user.username,
+        )
+        return None
+
+
+def enterprise_learner_enrolled(request: HttpRequest, course_key: CourseKey) -> bool:
+    """
+    Return True if the request user is an enterprise learner enrolled via a subsidy for ``course_key``.
+
+    Returns True only when all of the following conditions hold:
+
+    1. The request user has an active linked EnterpriseCustomer.
+    2. The linked customer has the learner portal enabled.
+    3. The user has an EnterpriseCourseEnrollment for ``course_key`` under that customer.
+
+    Intended use: determining whether the learner should be subject to enterprise-specific
+    courseware gating (e.g. data-sharing consent enforcement or start-date error overrides)
+    and redirected to the enterprise learner portal when access is denied.
+
+    ``enterprise_customer_from_session_or_learner_data`` is used in lieu of direct model access
+    because it caches the customer data on the request session, making it safe to call on
+    frequently-hit views without incurring repeated database queries.
+    """
+    # enterprise_customer is either None (learner not linked to any customer) or a serialized
+    # EnterpriseCustomer representing the learner's active linked customer.
+    enterprise_customer = enterprise_customer_from_session_or_learner_data(request)
+
+    enterprise_enrollment_exists = False
+
+    # 1. Check that the request user has an active linked EnterpriseCustomer.
+    if enterprise_customer:
+        # 2. Check that the linked customer has the learner portal enabled.
+        if enterprise_customer.get('enable_learner_portal'):
+            # 3. Make sure the enterprise learner is actually enrolled in the requested course,
+            #    subsidized via the discovered customer.
+            EnterpriseCourseEnrollment = apps.get_model('enterprise', 'EnterpriseCourseEnrollment')
+            enterprise_enrollment_exists = EnterpriseCourseEnrollment.objects.filter(
+                course_id=course_key,
+                enterprise_customer_user__user_id=request.user.id,
+                enterprise_customer_user__enterprise_customer__uuid=enterprise_customer['uuid'],
+            ).exists()
+
+    LOGGER.info(
+        (
+            "[enterprise_learner_enrolled] Checking for an enterprise enrollment for "
+            "lms_user_id=%s in course_key=%s via enterprise_customer_uuid=%s (enable_learner_portal=%s). "
+            "Exists: %s"
+        ),
+        request.user.id,
+        course_key,
+        enterprise_customer['uuid'] if enterprise_customer else None,
+        enterprise_customer.get('enable_learner_portal') if enterprise_customer else None,
+        enterprise_enrollment_exists,
+    )
+    return enterprise_enrollment_exists
 
 
 def get_course_track_selection_url(course_run, query_parameters):
@@ -1723,7 +1801,7 @@ def get_idiff_list(list_a, list_b):
     return list(set(lower_list_a) - set(lower_list_b))
 
 
-def get_users_by_email(emails):
+def get_users_by_email(emails: list[str]) -> tuple[QuerySet, list[str]]:
     """
     Accept a list of emails, and separate them into users that exist on OpenEdX and users who don't.
 
@@ -1738,6 +1816,15 @@ def get_users_by_email(emails):
     present_emails = users.values_list('email', flat=True)
     unregistered_emails = get_idiff_list(emails, present_emails)
     return users, unregistered_emails
+
+
+def get_user_from_email(email: str) -> AbstractUser | None:
+    """
+    Return a single user matching the email, or None.
+    """
+    if email:
+        return User.objects.filter(email=email).first()
+    return None
 
 
 def is_user_enrolled(user, course_id, course_mode, enrollment_client=None):
@@ -2597,8 +2684,8 @@ def get_integrations_for_customers(customer_uuid):
         if integration is not None:
             unique_integrations.append({
                 'channel_code': code,
-                'created': datetime.datetime.strftime(integration.get('created'), '%B %d, %Y'),
-                'modified': datetime.datetime.strftime(integration.get('modified'), '%B %d, %Y'),
+                'created': integration.get('created').isoformat(),
+                'modified': integration.get('modified').isoformat(),
                 'display_name': integration.get('display_name'),
                 'active': integration.get('active'),
             })
@@ -2620,8 +2707,8 @@ def get_active_sso_configurations_for_customer(customer_uuid):
     if sso_configurations:
         for sso_configuration in sso_configurations:
             active_configurations.append({
-                'created': datetime.datetime.strftime(sso_configuration.get('created'), '%B %d, %Y'),
-                'modified': datetime.datetime.strftime(sso_configuration.get('modified'), '%B %d, %Y'),
+                'created': sso_configuration.get('created').isoformat(),
+                'modified': sso_configuration.get('modified').isoformat(),
                 'active': sso_configuration.get('active'),
                 'display_name': sso_configuration.get('display_name'),
             })

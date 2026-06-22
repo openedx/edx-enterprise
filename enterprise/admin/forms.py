@@ -407,6 +407,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_learner_portal_sidebar_message",
             "learner_portal_sidebar_content",
             "enable_pathways",
+            "enable_credit_and_industry_pathways",
             "enable_programs",
             "enable_demo_data_for_analytics_and_lpr",
             "enable_analytics_screen",

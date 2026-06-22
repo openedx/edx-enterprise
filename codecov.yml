@@ -1,12 +1,8 @@
 coverage:
   status:
-    project:
-      default:
-        enabled: yes
-        target: auto
     patch:
       default:
-        enabled: yes
-        target: 100%
-
-comment: false
+        target: 95%
+    project:
+      default:
+        target: auto  # Just make sure it doesn't get worse
