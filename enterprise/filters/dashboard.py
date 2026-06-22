@@ -7,8 +7,8 @@ from typing import Any
 from crum import get_current_request
 from openedx_filters.filters import PipelineStep
 
-# These imports will be replaced with internal paths in epic 17 when enterprise_support is
-# migrated into edx-enterprise.
+# ENT-11576: These functions will be migrated from the platform's enterprise_support module
+# into edx-enterprise, eliminating these cross-boundary imports.
 try:
     from openedx.features.enterprise_support.api import (
         get_dashboard_consent_notification,

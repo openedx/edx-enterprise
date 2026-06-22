@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[8.0.20] - 2026-06-05
+[8.2.0] - 2026-06-22
 ---------------------
 * feat: add DiscountEligibilityStep pipeline step
+
+[8.1.0] - 2026-06-17
+---------------------
+* feat: add courseware-access pipeline steps
 
 [8.0.19] - 2026-06-16
 ---------------------

@@ -20,6 +20,20 @@ ENTERPRISE_FILTERS_CONFIG: FiltersConfig = {
         "fail_silently": False,
         "pipeline": ["enterprise.filters.grades.GradeEventContextEnricher"],
     },
+    "org.openedx.learning.course.start_date.validation_failed.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.courseware.EnterpriseStartDateAccessFailureStep"],
+    },
+    # NOTE: Pipeline ordering matters here. ActiveEnterpriseCheckStep must run before
+    # consent's DataSharingConsentCourseAccessStep to match the original platform behavior
+    # (the incorrect-enterprise redirect took priority over the DSC redirect). This ordering
+    # is guaranteed because setup.py lists "enterprise" before "consent" in entry_points,
+    # stevedore preserves intra-distribution order, and consent's plugin_settings appends
+    # its step after enterprise's via _merge_filters_config.
+    "org.openedx.learning.courseware.access_checks.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.courseware.ActiveEnterpriseCheckStep"],
+    },
     "org.openedx.learning.discount.eligibility.check.requested.v1": {
         "fail_silently": False,
         "pipeline": ["enterprise.filters.discounts.DiscountEligibilityEnterpriseStep"],
