@@ -13,14 +13,14 @@ try:
 except ImportError:
     DiscountEligibilityCheckRequested = None
 
-log = logging.getLogger(__name__)
-
-# This import will be replaced with an internal path in epic 17 when
+# This import will be replaced with an internal path in ENT-11576 when
 # enterprise_support is migrated into edx-enterprise.
 try:
     from openedx.features.enterprise_support.utils import is_enterprise_learner
 except ImportError:
     is_enterprise_learner = None
+
+log = logging.getLogger(__name__)
 
 
 class DiscountEligibilityEnterpriseStep(PipelineStep):
@@ -35,14 +35,13 @@ class DiscountEligibilityEnterpriseStep(PipelineStep):
     enterprise learner status and, if the user qualifies, raises ``DiscountIneligible``
     to halt the pipeline and prevent the discount from being applied.
     """
-    def run_filter(self, user: AbstractBaseUser, course_key: CourseKey, is_eligible: bool) -> dict:  # pylint: disable=arguments-differ
+    def run_filter(self, user: AbstractBaseUser, course_key: CourseKey) -> dict:  # pylint: disable=arguments-differ
         """
         Raise ``DiscountIneligible`` if the user is an enterprise learner.
 
         Arguments:
             user (User): the Django User being checked for discount eligibility.
             course_key: identifies the course (passed through unchanged).
-            is_eligible (bool): the current eligibility status.
 
         Returns:
             dict: updated pipeline data (unchanged) when the user is not an enterprise learner.
@@ -60,4 +59,4 @@ class DiscountEligibilityEnterpriseStep(PipelineStep):
             raise DiscountEligibilityCheckRequested.DiscountIneligible(
                 "User is an enterprise learner and is not eligible for LMS-controlled discounts."
             )
-        return {"user": user, "course_key": course_key, "is_eligible": is_eligible}
+        return {"user": user, "course_key": course_key}
