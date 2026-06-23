@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.1.3] - 2026-06-23
+---------------------
+* feat: add EnterpriseEnrollmentViewProcessor pipeline step for CourseEnrollmentViewStarted filter (ENT-11570)
+
 [8.1.2] - 2026-06-23
 ---------------------
 * fix: change enable_credit_and_industry_pathways default to true
@@ -44,7 +48,6 @@ Unreleased
 [8.0.16] - 2026-06-02
 ---------------------
 * feat: remove enterprise_invite_admins_enabled feature flag and related conditional behavior (ENT-11269)
-
 
 [8.0.15] - 2026-05-15
 ---------------------
