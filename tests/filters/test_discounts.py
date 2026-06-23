@@ -1,19 +1,16 @@
 """
 Tests for enterprise.filters.discounts pipeline step.
 """
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
+from opaque_keys.edx.keys import CourseKey
 
 from django.test import TestCase
 
+from openedx_filters.learning.filters import DiscountEligibilityCheckRequested
+
 from enterprise.filters.discounts import DiscountEligibilityEnterpriseStep
-
-
-class _FakeDiscountIneligible(Exception):
-    pass
-
-
-class _FakeDiscountEligibilityCheckRequested:
-    DiscountIneligible = _FakeDiscountIneligible
+from test_utils.factories import UserFactory
 
 
 class TestDiscountEligibilityEnterpriseStep(TestCase):
@@ -27,22 +24,16 @@ class TestDiscountEligibilityEnterpriseStep(TestCase):
             [],
         )
 
-    def _mock_user(self):
-        user = MagicMock()
-        user.id = 42
-        return user
-
     @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=True)
-    @patch('enterprise.filters.discounts.DiscountEligibilityCheckRequested', _FakeDiscountEligibilityCheckRequested)
     def test_raises_discount_ineligible_for_enterprise_learner(self, mock_is_enterprise):
         """
         When the user is an enterprise learner, DiscountIneligible is raised to halt the pipeline.
         """
-        user = self._mock_user()
-        course_key = MagicMock()
+        user = UserFactory()
+        course_key = CourseKey.from_string('course-v1:edX+DemoX+Demo_Course')
 
         step = self._make_step()
-        with self.assertRaises(_FakeDiscountIneligible):
+        with self.assertRaises(DiscountEligibilityCheckRequested.DiscountIneligible):
             step.run_filter(user=user, course_key=course_key)
 
         mock_is_enterprise.assert_called_once_with(user)
@@ -52,8 +43,8 @@ class TestDiscountEligibilityEnterpriseStep(TestCase):
         """
         When the user is not an enterprise learner, user and course_key are returned unchanged.
         """
-        user = self._mock_user()
-        course_key = MagicMock()
+        user = UserFactory()
+        course_key = CourseKey.from_string('course-v1:edX+DemoX+Demo_Course')
 
         step = self._make_step()
         result = step.run_filter(user=user, course_key=course_key)
@@ -65,8 +56,8 @@ class TestDiscountEligibilityEnterpriseStep(TestCase):
         """
         The course_key is returned unchanged for non-enterprise learners.
         """
-        user = self._mock_user()
-        course_key = MagicMock()
+        user = UserFactory()
+        course_key = CourseKey.from_string('course-v1:edX+DemoX+Demo_Course')
 
         step = self._make_step()
         result = step.run_filter(user=user, course_key=course_key)
