@@ -43,36 +43,22 @@ class TestDiscountEligibilityEnterpriseStep(TestCase):
 
         step = self._make_step()
         with self.assertRaises(_FakeDiscountIneligible):
-            step.run_filter(user=user, course_key=course_key, is_eligible=True)
+            step.run_filter(user=user, course_key=course_key)
 
         mock_is_enterprise.assert_called_once_with(user)
 
     @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=False)
-    def test_returns_original_eligibility_for_non_enterprise_learner(self, _mock_is_enterprise):
+    def test_returns_user_and_course_key_for_non_enterprise_learner(self, _mock_is_enterprise):
         """
-        When the user is not an enterprise learner, is_eligible is passed through unchanged.
-        """
-        user = self._mock_user()
-        course_key = MagicMock()
-
-        step = self._make_step()
-        result = step.run_filter(user=user, course_key=course_key, is_eligible=True)
-
-        self.assertEqual(result, {"user": user, "course_key": course_key, "is_eligible": True})
-
-    @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=False)
-    def test_passes_through_false_eligibility_unchanged(self, _mock_is_enterprise):
-        """
-        When the user is not an enterprise learner and is_eligible is already False,
-        the step does not change it.
+        When the user is not an enterprise learner, user and course_key are returned unchanged.
         """
         user = self._mock_user()
         course_key = MagicMock()
 
         step = self._make_step()
-        result = step.run_filter(user=user, course_key=course_key, is_eligible=False)
+        result = step.run_filter(user=user, course_key=course_key)
 
-        self.assertEqual(result["is_eligible"], False)
+        self.assertEqual(result, {"user": user, "course_key": course_key})
 
     @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=False)
     def test_course_key_passed_through_unchanged(self, _):
@@ -83,6 +69,6 @@ class TestDiscountEligibilityEnterpriseStep(TestCase):
         course_key = MagicMock()
 
         step = self._make_step()
-        result = step.run_filter(user=user, course_key=course_key, is_eligible=True)
+        result = step.run_filter(user=user, course_key=course_key)
 
         self.assertIs(result["course_key"], course_key)
