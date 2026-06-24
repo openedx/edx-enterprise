@@ -395,7 +395,7 @@ openedx-atlas==0.7.0
     # via -r requirements/test-master.txt
 openedx-events==11.2.0
     # via -r requirements/test-master.txt
-openedx-filters==3.5.0
+openedx-filters==3.7.0
     # via -r requirements/test-master.txt
 packaging==26.2
     # via
