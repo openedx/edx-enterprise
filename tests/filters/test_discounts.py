@@ -4,10 +4,9 @@ Tests for enterprise.filters.discounts pipeline step.
 from unittest.mock import patch
 
 from opaque_keys.edx.keys import CourseKey
+from openedx_filters.learning.filters import DiscountEligibilityCheckRequested
 
 from django.test import TestCase
-
-from openedx_filters.learning.filters import DiscountEligibilityCheckRequested
 
 from enterprise.filters.discounts import DiscountEligibilityEnterpriseStep
 from test_utils.factories import UserFactory
