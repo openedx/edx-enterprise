@@ -4,6 +4,8 @@ Tests for enterprise.filters.enrollment pipeline step.
 import uuid
 from unittest.mock import MagicMock, patch
 
+import pytest
+from opaque_keys.edx.keys import CourseKey
 from openedx_filters.learning.filters import CourseEnrollmentViewStarted
 from requests.exceptions import HTTPError
 
@@ -39,7 +41,7 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         """
         user = UserFactory.create(username="regular-user")
         course_key = MagicMock()
-        course_key.__str__.return_value = "course-v1:org+course+run"
+        course_key = CourseKey.from_string("course-v1:org+course+run")
 
         mock_request = MagicMock()
         mock_request.data = {}
@@ -49,16 +51,13 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         result = step.run_filter(
             user=user,
             course_key=course_key,
-            has_api_key_permissions=True,
+            requester_is_backend_service=True,
         )
-        self.assertEqual(
-            result,
-            {
-                "user": user,
-                "course_key": course_key,
-                "has_api_key_permissions": True,
-            },
-        )
+        assert result == {
+            "user": user,
+            "course_key": course_key,
+            "requester_is_backend_service": True,
+        }
 
         mock_enterprise_client.return_value.post_enterprise_course_enrollment.assert_not_called()
         mock_consent_client.return_value.provide_consent.assert_not_called()
@@ -83,22 +82,19 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         mock_get_current_request.return_value = mock_request
 
         course_key = MagicMock()
-        course_key.__str__.return_value = "course-v1:org+course+run"
+        course_key = CourseKey.from_string("course-v1:org+course+run")
 
         step = self._make_step()
         result = step.run_filter(
             user=user,
             course_key=course_key,
-            has_api_key_permissions=False,
+            requester_is_backend_service=False,
         )
-        self.assertEqual(
-            result,
-            {
-                "user": user,
-                "course_key": course_key,
-                "has_api_key_permissions": False,
-            },
-        )
+        assert result == {
+            "user": user,
+            "course_key": course_key,
+            "requester_is_backend_service": False,
+        }
 
         mock_enterprise_client.return_value.post_enterprise_course_enrollment.assert_not_called()
         mock_consent_client.return_value.provide_consent.assert_not_called()
@@ -123,22 +119,19 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         mock_get_current_request.return_value = mock_request
 
         course_key = MagicMock()
-        course_key.__str__.return_value = "course-v1:org+course+run"
+        course_key = CourseKey.from_string("course-v1:org+course+run")
 
         step = self._make_step()
         result = step.run_filter(
             user=user,
             course_key=course_key,
-            has_api_key_permissions=True,
+            requester_is_backend_service=True,
         )
-        self.assertEqual(
-            result,
-            {
-                "user": user,
-                "course_key": course_key,
-                "has_api_key_permissions": True,
-            },
-        )
+        assert result == {
+            "user": user,
+            "course_key": course_key,
+            "requester_is_backend_service": True,
+        }
 
         mock_enterprise_client.return_value.post_enterprise_course_enrollment.assert_called_once_with(
             "enterprise-learner",
@@ -171,17 +164,17 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         mock_get_current_request.return_value = mock_request
 
         course_key = MagicMock()
-        course_key.__str__.return_value = "course-v1:org+course+run"
+        course_key = CourseKey.from_string("course-v1:org+course+run")
 
         # Something goes wrong in the enterprise client
         mock_enterprise_client.return_value.post_enterprise_course_enrollment.side_effect = Exception("boom")
 
         step = self._make_step()
-        with self.assertRaises(CourseEnrollmentViewStarted.PreventEnrollment):
+        with pytest.raises(CourseEnrollmentViewStarted.PreventEnrollment):
             step.run_filter(
                 user=user,
                 course_key=course_key,
-                has_api_key_permissions=True,
+                requester_is_backend_service=True,
             )
 
         # Consent API must NOT be reached once the enterprise post has failed
@@ -207,7 +200,7 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         mock_get_current_request.return_value = mock_request
 
         course_key = MagicMock()
-        course_key.__str__.return_value = "course-v1:org+course+run"
+        course_key = CourseKey.from_string("course-v1:org+course+run")
 
         # Something goes wrong in the consent client
         mock_consent_client.return_value.provide_consent.side_effect = HTTPError(
@@ -215,11 +208,11 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         )
 
         step = self._make_step()
-        with self.assertRaises(CourseEnrollmentViewStarted.PreventEnrollment):
+        with pytest.raises(CourseEnrollmentViewStarted.PreventEnrollment):
             step.run_filter(
                 user=user,
                 course_key=course_key,
-                has_api_key_permissions=True,
+                requester_is_backend_service=True,
             )
 
         # Enterprise post happens before consent, so it is still called once

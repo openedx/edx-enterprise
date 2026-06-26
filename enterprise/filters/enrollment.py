@@ -5,6 +5,7 @@ import logging
 from typing import Any
 
 from crum import get_current_request
+from opaque_keys.edx.keys import CourseKey
 from openedx_filters.filters import PipelineStep
 from openedx_filters.learning.filters import CourseEnrollmentViewStarted
 from requests.exceptions import HTTPError
@@ -39,30 +40,36 @@ class EnterpriseEnrollmentViewProcessor(PipelineStep):
     def run_filter(  # pylint: disable=arguments-differ
             self,
             user: AbstractBaseUser,
-            course_key: Any,
-            has_api_key_permissions: bool
+            course_key: CourseKey,
+            requester_is_backend_service: bool
     ) -> dict[str, Any]:
         """
         Post enterprise enrollment and consent if the user is an enterprise customer user.
         """
         log.info(
-            "EnterpriseEnrollmentViewProcessor running: user_id=%s, course_key=%s, api_permissions=%s",
+            "EnterpriseEnrollmentViewProcessor running: user_id=%s, course_key=%s, is_backend_service=%s",
             user.id,
             str(course_key),
-            has_api_key_permissions,
+            requester_is_backend_service,
         )
 
         request = get_current_request()
         linked_enterprise = None
         if request and hasattr(request, 'data'):
-            linked_enterprise = request.data.get("linked_enterprise_customer")
+            linked_enterprise = request.data.get('linked_enterprise_customer')
 
-        if linked_enterprise is None or not has_api_key_permissions:
-            return {
-                'user': user,
-                'course_key': course_key,
-                'has_api_key_permissions': has_api_key_permissions
-            }
+        result = {
+            'user': user,
+            'course_key': course_key,
+            'requester_is_backend_service': requester_is_backend_service,
+        }
+
+        if not linked_enterprise or not requester_is_backend_service:
+            return result
+
+        if EnterpriseApiServiceClient is None or ConsentApiServiceClient is None or EnterpriseApiException is None:
+            log.warning('enterprise_support.api is unavailable; skipping enterprise enrollment side effects')
+            return result
 
         username = user.username
         course_id = str(course_key)
@@ -96,5 +103,5 @@ class EnterpriseEnrollmentViewProcessor(PipelineStep):
         return {
             'user': user,
             'course_key': course_key,
-            'has_api_key_permissions': has_api_key_permissions
+            'requester_is_backend_service': requester_is_backend_service
         }
