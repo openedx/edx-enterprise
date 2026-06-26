@@ -100,12 +100,14 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         mock_consent_client.return_value.provide_consent.assert_not_called()
 
     @patch('enterprise.filters.enrollment.get_current_request')
+    @patch('enterprise.filters.enrollment.EnterpriseApiException')
     @patch("enterprise.filters.enrollment.ConsentApiServiceClient")
     @patch("enterprise.filters.enrollment.EnterpriseApiServiceClient")
     def test_calls_api_clients_for_enterprise_user(
         self,
         mock_enterprise_client,
         mock_consent_client,
+        mock_enterprise_api_exception,
         mock_get_current_request,
     ):
         """
@@ -181,12 +183,14 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         mock_consent_client.return_value.provide_consent.assert_not_called()
 
     @patch('enterprise.filters.enrollment.get_current_request')
+    @patch('enterprise.filters.enrollment.EnterpriseApiException')
     @patch("enterprise.filters.enrollment.ConsentApiServiceClient")
     @patch("enterprise.filters.enrollment.EnterpriseApiServiceClient")
     def test_raises_prevent_enrollment_when_consent_api_call_fails(
         self,
         mock_enterprise_client,
         mock_consent_client,
+        mock_enterprise_api_exception,
         mock_get_current_request,
     ):
         """

@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[8.1.3] - 2026-06-23
+[8.3.0] - 2026-06-23
 ---------------------
 * feat: add EnterpriseEnrollmentViewProcessor pipeline step for CourseEnrollmentViewStarted filter (ENT-11570)
+
+[8.2.0] - 2026-06-22
+---------------------
+* feat: add DiscountEligibilityStep pipeline step
 
 [8.1.2] - 2026-06-23
 ---------------------

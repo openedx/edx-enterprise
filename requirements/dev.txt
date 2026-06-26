@@ -673,7 +673,7 @@ openedx-events==11.2.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-openedx-filters==3.6.0
+openedx-filters==3.7.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
