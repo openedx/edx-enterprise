@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.3.0] - 2026-06-23
+---------------------
+* feat: add EnterpriseEnrollmentViewProcessor pipeline step for CourseEnrollmentViewStarted filter (ENT-11570)
+
 [8.2.0] - 2026-06-22
 ---------------------
 * feat: add DiscountEligibilityStep pipeline step
@@ -48,7 +52,6 @@ Unreleased
 [8.0.16] - 2026-06-02
 ---------------------
 * feat: remove enterprise_invite_admins_enabled feature flag and related conditional behavior (ENT-11269)
-
 
 [8.0.15] - 2026-05-15
 ---------------------
