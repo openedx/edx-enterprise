@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.2.0] - 2026-06-22
+---------------------
+* feat: add DiscountEligibilityStep pipeline step
+
 [8.1.2] - 2026-06-23
 ---------------------
 * fix: change enable_credit_and_industry_pathways default to true
