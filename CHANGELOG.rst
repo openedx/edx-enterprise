@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.3.0] - 2026-06-30
+---------------------
+* feat: add enterprise.use_algolia_index_v2 waffle flag and expose it in the enterprise_features API response
+
 [8.2.0] - 2026-06-22
 ---------------------
 * feat: add DiscountEligibilityStep pipeline step
