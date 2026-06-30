@@ -1,0 +1,46 @@
+enterprise/api_client/xpert_ai.py
+  s_677cb45ba31ff5::t_90ef055f21e138 31
+enterprise/toggles.py
+  s_a0809125471317::t_7aabb8023dd9ca 195-201
+  s_a0809125471317::t_671ab1d88d2dfc 119-130
+  s_a0809125471317::t_7456ce3444c9c3 216
+tests/test_enterprise/api/test_views.py
+  s_a0809125471317::t_65facc972234d0 2164
+  s_a0809125471317::t_39b1fcb89347e9 2274-2280
+  s_a0809125471317::t_b1aa4269777a7a 88
+  s_a0809125471317::t_020f0650054a5d 2357
+  s_a0809125471317::t_7535e7a875799b 2076,2081,2085,2090,2094,2099,2102,2107,2111,2115,2119,2123,2127,2131,2140,2143
+CHANGELOG.rst
+  s_a0809125471317::t_aea0f0899edbe1 20-23
+tests/test_enterprise/api/test_filters.py
+  s_a0809125471317::t_c0f54faf60a6bf 312
+enterprise/__init__.py
+  s_a0809125471317::t_52d04cf4b57a24 5
+tests/test_enterprise/test_toggles.py
+  s_a0809125471317::t_2a82d53de33f0a 13
+  s_a0809125471317::t_7665af62b593f6 1-12,14-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.4",
+  "base_commit_sha": "978d5ee9619d341b912805991ba7fec0b082d8cf",
+  "prompts": {},
+  "sessions": {
+    "s_677cb45ba31ff5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fa9704c4-0f93-49c9-8045-42735451da18",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Alexander Dusenbery <adusenbery@2u.com>"
+    },
+    "s_a0809125471317": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06bf55bb-ac8a-41d6-bf64-73d858d2d0c3",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": null
+    }
+  }
+}
