@@ -309,6 +309,7 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
                     'enterprise_admin_onboarding_enabled': False,
                     'enterprise_edit_highlights_enabled': False,
                     'enterprise_ai_pathways_operator_enabled': False,
+                    'use_algolia_index_v2': False,
                 }
             }
             assert response == mock_empty_200_success_response
