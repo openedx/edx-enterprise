@@ -4,7 +4,6 @@ Tests for enterprise.overrides.learner_home pluggable override.
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-
 ENTERPRISE_SUPPORT_API_PATH = 'openedx.features.enterprise_support.api'
 
 
