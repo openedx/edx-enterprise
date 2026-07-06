@@ -1,5 +1,14 @@
 """
 Pluggable override for the learner home enterprise customer lookup.
+
+.. note::
+    TODO: Wire this up to OVERRIDE_LEARNER_HOME_GET_ENTERPRISE_CUSTOMER once
+    edx-enterprise is a plugin (ENT-11584), before the plugin becomes optional.
+
+    This override is **not yet wired up** to the
+    ``OVERRIDE_LEARNER_HOME_GET_ENTERPRISE_CUSTOMER`` setting. Registering it requires
+    edx-enterprise to be installable/importable as an openedx plugin, which is not yet
+    the case.
 """
 import logging
 
