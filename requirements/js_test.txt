@@ -10,7 +10,7 @@ attrs==26.1.0
     # via
     #   outcome
     #   trio
-certifi==2026.5.20
+certifi==2026.6.17
     # via selenium
 cheroot==11.1.2
     # via cherrypy
@@ -79,7 +79,7 @@ pyyaml==6.0.3
     # via jasmine
 rich==15.0.0
     # via typer
-selenium==4.44.0
+selenium==4.45.0
     # via jasmine
 shellingham==1.5.4
     # via typer
@@ -99,11 +99,11 @@ trio==0.33.0
     #   trio-websocket
 trio-websocket==0.12.2
     # via selenium
-typer==0.26.7
+typer==0.26.8
     # via typer-slim
 typer-slim==0.24.0
     # via jaraco-text
-typing-extensions==4.15.0
+typing-extensions==4.16.0
     # via selenium
 urllib3[socks]==2.7.0
     # via selenium
