@@ -1,0 +1,19 @@
+.github/copilot-instructions.md
+  s_436a79d7ec4070::t_e3786bfbec4695 13-75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d0cf72384e31441ef7f7be6b07865aa996304d0a",
+  "prompts": {},
+  "sessions": {
+    "s_436a79d7ec4070": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "99d845eb-6a5d-485c-a142-6bd540df2cec",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Alexander Dusenbery <adusenbery@2u.com>"
+    }
+  }
+}
