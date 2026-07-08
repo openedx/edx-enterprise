@@ -68,7 +68,7 @@ class EnterpriseEnrollmentViewProcessor(PipelineStep):
             return result
 
         if EnterpriseApiServiceClient is None or ConsentApiServiceClient is None or EnterpriseApiException is None:
-            log.warning('enterprise_support.api is unavailable; skipping enterprise enrollment side effects')
+            log.warning('enterprise_support.api is unavailable: skipping enterprise enrollment side effects')
             return result
 
         username = user.username

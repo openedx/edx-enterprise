@@ -40,7 +40,6 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         arguments unchanged without calling any API clients.
         """
         user = UserFactory.create(username="regular-user")
-        course_key = MagicMock()
         course_key = CourseKey.from_string("course-v1:org+course+run")
 
         mock_request = MagicMock()
@@ -81,7 +80,6 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         mock_request.data = {"linked_enterprise_customer": str(enterprise_uuid)}
         mock_get_current_request.return_value = mock_request
 
-        course_key = MagicMock()
         course_key = CourseKey.from_string("course-v1:org+course+run")
 
         step = self._make_step()
@@ -107,7 +105,7 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         self,
         mock_enterprise_client,
         mock_consent_client,
-        mock_enterprise_api_exception,
+        mock_enterprise_api_exception,  # pylint: disable=unused-argument
         mock_get_current_request,
     ):
         """
@@ -120,7 +118,6 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         mock_request.data = {"linked_enterprise_customer": str(enterprise_uuid)}
         mock_get_current_request.return_value = mock_request
 
-        course_key = MagicMock()
         course_key = CourseKey.from_string("course-v1:org+course+run")
 
         step = self._make_step()
@@ -165,7 +162,6 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         mock_request.data = {"linked_enterprise_customer": str(enterprise_uuid)}
         mock_get_current_request.return_value = mock_request
 
-        course_key = MagicMock()
         course_key = CourseKey.from_string("course-v1:org+course+run")
 
         # Something goes wrong in the enterprise client
@@ -190,7 +186,7 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         self,
         mock_enterprise_client,
         mock_consent_client,
-        mock_enterprise_api_exception,
+        mock_enterprise_api_exception,  # pylint: disable=unused-argument
         mock_get_current_request,
     ):
         """
@@ -203,7 +199,6 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
         mock_request.data = {"linked_enterprise_customer": str(enterprise_uuid)}
         mock_get_current_request.return_value = mock_request
 
-        course_key = MagicMock()
         course_key = CourseKey.from_string("course-v1:org+course+run")
 
         # Something goes wrong in the consent client
@@ -221,3 +216,40 @@ class TestEnterpriseEnrollmentViewProcessor(TestCase):
 
         # Enterprise post happens before consent, so it is still called once
         mock_enterprise_client.return_value.post_enterprise_course_enrollment.assert_called_once()
+
+    @patch('enterprise.filters.enrollment.get_current_request')
+    @patch("enterprise.filters.enrollment.ConsentApiServiceClient", new=None)
+    @patch("enterprise.filters.enrollment.EnterpriseApiServiceClient", new=None)
+    @patch("enterprise.filters.enrollment.EnterpriseApiException", new=None)
+    def test_skips_enrollment_when_enterprise_api_unavailable(
+        self,
+        mock_get_current_request,
+    ):
+        """
+        When enterprise_support.api is unavailable (imports fail), the step logs
+        a warning and returns arguments unchanged without attempting API calls.
+        """
+        user = UserFactory.create(username="enterprise-learner")
+        enterprise_uuid = uuid.uuid4()
+        mock_request = MagicMock()
+        mock_request.data = {"linked_enterprise_customer": str(enterprise_uuid)}
+        mock_get_current_request.return_value = mock_request
+
+        course_key = CourseKey.from_string("course-v1:org+course+run")
+
+        step = self._make_step()
+        with patch('enterprise.filters.enrollment.log') as mock_log:
+            result = step.run_filter(
+                user=user,
+                course_key=course_key,
+                requester_is_backend_service=True,
+            )
+            assert result == {
+                "user": user,
+                "course_key": course_key,
+                "requester_is_backend_service": True,
+            }
+
+            mock_log.warning.assert_called_once_with(
+                'enterprise_support.api is unavailable: skipping enterprise enrollment side effects'
+            )

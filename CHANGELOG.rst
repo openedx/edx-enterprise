@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[8.3.0] - 2026-06-23
+[8.4.0] - 2026-07-08
 ---------------------
 * feat: add EnterpriseEnrollmentViewProcessor pipeline step for CourseEnrollmentViewStarted filter (ENT-11570)
+
+[8.3.0] - 2026-06-30
+---------------------
+* feat: add enterprise.use_algolia_index_v2 waffle flag and expose it in the enterprise_features API response
 
 [8.2.0] - 2026-06-22
 ---------------------
