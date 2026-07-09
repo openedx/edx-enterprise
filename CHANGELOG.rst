@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.4.0] - 2026-07-08
+---------------------
+* feat: add EnterpriseEnrollmentViewProcessor pipeline step for CourseEnrollmentViewStarted filter (ENT-11570)
+
 [8.3.0] - 2026-06-30
 ---------------------
 * feat: add enterprise.use_algolia_index_v2 waffle flag and expose it in the enterprise_features API response
@@ -52,7 +56,6 @@ Unreleased
 [8.0.16] - 2026-06-02
 ---------------------
 * feat: remove enterprise_invite_admins_enabled feature flag and related conditional behavior (ENT-11269)
-
 
 [8.0.15] - 2026-05-15
 ---------------------
