@@ -76,49 +76,25 @@ coverage: clean ## generate and view HTML coverage report
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	tox -e docs
+	uv run tox -e docs
 	$(BROWSER) docs/_build/html/index.html
 
-# Define PIP_COMPILE_OPTS=-v to get more information during make upgrade.
-PIP_COMPILE = pip-compile --upgrade --rebuild $(PIP_COMPILE_OPTS)
+compile-requirements: ## generate the uv.lock file without upgrading packages
+	uv lock
 
-# Special for edx-enterprise: Treat production package versions from openedx-platform as local constraints for testing.
-# This ensures we'll only test with package versions actually used in production.
-LOCAL_EDX_PINS = requirements/edx-platform-constraints.txt
-PLATFORM_BASE_REQS = https://raw.githubusercontent.com/openedx/openedx-platform/master/requirements/edx/base.txt
-.PHONY: $(LOCAL_EDX_PINS)
-$(LOCAL_EDX_PINS): ## check that our local copy of edx-platform pins is accurate
-	echo "### DON'T edit this file, it's copied from edx-platform. See make upgrade" > $(LOCAL_EDX_PINS)
-	curl -fsSL $(PLATFORM_BASE_REQS) | grep -v '^-e' | grep -v 'via edx-enterprise$$' >> $(LOCAL_EDX_PINS)
-	python requirements/check_pins.py requirements/test-master.txt $(LOCAL_EDX_PINS)
-
-upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
-upgrade: $(LOCAL_EDX_PINS) ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
-	pip install -qr requirements/pip-tools.txt -c requirements/constraints.txt
-	# Make sure to compile files after any other files they include!
-	$(PIP_COMPILE) --allow-unsafe -o requirements/pip.txt requirements/pip.in
-	$(PIP_COMPILE) -o requirements/pip-tools.txt requirements/pip-tools.in
-	pip install -qr requirements/pip.txt
-	pip install -qr requirements/pip-tools.txt
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test-master.txt requirements/test-master.in
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/doc.txt requirements/doc.in
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test.txt requirements/test.in
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/dev.txt requirements/dev.in
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/ci.txt requirements/ci.in
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/js_test.txt requirements/js_test.in
-	# Let tox control the Django version for tests
-	sed '/^[dD]jango==/d' requirements/test.txt > requirements/test.tmp
-	mv requirements/test.tmp requirements/test.txt
+# Special for edx-enterprise: treat production package versions from openedx-platform
+# as local constraints for testing, so we only test with versions actually used in
+# production. Layered on top of edx_lint's global + repo-specific constraints below.
+upgrade: ## upgrade all packages in uv.lock and sync constraints from edx-lint and openedx-platform
+	uv run --with edx-lint edx_lint write_uv_constraints pyproject.toml
+	uv run --with tomlkit python requirements/sync_platform_constraints.py
+	uv lock --upgrade
 
 requirements.js: ## install JS requirements for local development
 	npm ci
 
-piptools: ## install pinned version of pip-compile and pip-sync
-	pip install -r requirements/pip-tools.txt
-
-dev_requirements: piptools requirements.js ## sync to requirements for local development
-	# test-master.txt brings constraints from openedx-platform so that we are testing with the same versions.
-	pip-sync -q requirements/test-master.txt requirements/dev.txt requirements/private.* requirements/test.txt
+dev_requirements: requirements.js ## sync to requirements for local development
+	uv sync --group dev
 
 requirements: dev_requirements ## install development environment requirements
 
@@ -144,7 +120,7 @@ pylint: ## Lint python code
 	touch tests/__init__.py
 	pylint -j 1 enterprise enterprise_learner_portal --clear-cache-post-run=y
 	pylint -j 1 consent integrated_channels --clear-cache-post-run=y
-	pylint -j 1 test_utils requirements/check_pins.py --clear-cache-post-run=y
+	pylint -j 1 test_utils requirements/sync_platform_constraints.py --clear-cache-post-run=y
 	pylint -j 1 tests -v --clear-cache-post-run=y
 	rm tests/__init__.py
 
@@ -159,10 +135,10 @@ pii_clean:
 	mkdir -p pii_report
 
 isort: ## call isort on packages/files that are checked in quality tests
-	isort --skip migrations tests test_utils enterprise enterprise_learner_portal consent integrated_channels manage.py setup.py
+	isort --skip migrations tests test_utils enterprise enterprise_learner_portal consent integrated_channels manage.py
 
 isort-check: ## call isort on packages/files that are checked in quality tests
-	isort --skip migrations --check-only --diff tests test_utils enterprise enterprise_learner_portal consent integrated_channels manage.py setup.py
+	isort --skip migrations --check-only --diff tests test_utils enterprise enterprise_learner_portal consent integrated_channels manage.py
 
 ########################################################################
 # Docker shortcuts for managing a local test/quality container.        #
@@ -233,7 +209,7 @@ dev.provision.keycloak: ## provision Keycloak SAML IdP and LMS TPA records for t
 	@echo "(where VS Code / the browser runs), not inside the codespace."
 	@echo ""
 
-.PHONY: clean clean.static compile_translations coverage docs dummy_translations extract_translations \
+.PHONY: clean clean.static compile-requirements compile_translations coverage docs dummy_translations extract_translations \
 	fake_translations help pull_translations push_translations requirements dev_requirements test upgrade validate isort \
 	isort-check static static.dev static.watch quality pylint pycodestyle pii_check pii_clean jasmine \
 	dev.pull dev.up dev.down dev.stop dev.makemigrations dev.shell dev.logs dev.restart-container dev.attach \
