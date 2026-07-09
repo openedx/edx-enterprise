@@ -1,5 +1,6 @@
 """
 Your project description goes here.
 """
+from importlib.metadata import version
 
-__version__ = "8.7.0"
+__version__ = version("edx-enterprise")

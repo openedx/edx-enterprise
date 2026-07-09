@@ -1,0 +1,124 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm>8.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edx-enterprise"
+description = "Your project description goes here"
+requires-python = ">=3.12"
+license = "AGPL-3.0-or-later"
+authors = [
+    {name = "edX", email = "oscm@edx.org"},
+]
+keywords = [
+    "Django",
+    "edx",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Django",
+    "Framework :: Django :: 5.2",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+
+dynamic = ["readme", "version"]
+
+dependencies = [
+    "bleach",
+    "celery",
+    "code-annotations",
+    "cryptography",
+    "django-cache-memoize",
+    "django-config-models",
+    "django-countries",
+    "django-crum",
+    "django-fernet-fields-v2",
+    "django-filter",
+    "django-ipware",
+    "django-model-utils",
+    "django-multi-email-field",
+    "django-object-actions",
+    "django-simple-history",
+    "django-waffle",
+    "Django",
+    "djangorestframework-xml",
+    "djangorestframework",
+    "edx-django-utils>=3.12.0",
+    "edx-drf-extensions",
+    "edx-opaque-keys[django]",
+    "edx-rest-api-client",
+    "edx-rbac",
+    "tincan",
+    "edx-toggles",
+    "jsondiff",
+    "jsonfield",
+    "lxml",
+    "openedx-atlas",
+    "openedx-events",
+    "openedx-filters",
+    "paramiko",
+    "path.py",
+    "pillow",
+    "python-dateutil",
+    "python3-saml",
+    "pytz",
+    "requests",
+    "rules",
+    "slumber",
+    "social-auth-app-django",
+    "stevedore",
+    "testfixtures",
+    "unicodecsv",
+    "PGPy",
+    "django-oauth-toolkit",
+]
+
+[project.optional-dependencies]
+braze = [
+    "edx-braze-client",
+]
+
+[project.entry-points."lms.djangoapp"]
+enterprise = "enterprise.apps:EnterpriseConfig"
+consent = "consent.apps:ConsentConfig"
+
+[project.entry-points."cms.djangoapp"]
+enterprise = "enterprise.apps:EnterpriseConfig"
+consent = "consent.apps:ConsentConfig"
+
+[project.urls]
+Homepage = "https://github.com/openedx/edx-enterprise"
+Repository = "https://github.com/openedx/edx-enterprise"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.rst", "CHANGELOG.rst"], content-type = "text/x-rst"}
+
+[tool.setuptools.packages.find]
+include = ["enterprise*", "consent*", "integrated_channels*", "enterprise_learner_portal*"]
+exclude = ["*tests*"]
+
+[tool.setuptools_scm]
+version_scheme = "only-version"
+local_scheme = "no-local-version"
+fallback_version = "0.0.0.dev0"
+
+[tool.isort]
+line_length = 120
+known_django = ["django"]
+known_djangoapp = ["model_utils"]
+known_first_party = ["consent", "enterprise", "enterprise_learner_portal", "integrated_channels"]
+include_trailing_comma = true
+multi_line_output = 3
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "DJANGOAPP", "EDX", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "enterprise.settings.test"
+addopts = "--cov enterprise --cov enterprise_learner_portal --cov consent --cov integrated_channels --cov-report term-missing --cov-report xml"
+norecursedirs = [".*", "docs", "requirements", "site-packages", "scripts", "node_modules"]
+testpaths = ["tests"]
