@@ -164,6 +164,9 @@ version_scheme = "only-version"
 local_scheme = "no-local-version"
 fallback_version = "0.0.0.dev0"
 
+[tool.semantic_release]
+build_command = "pip install build && SETUPTOOLS_SCM_PRETEND_VERSION=$NEW_VERSION python -m build"
+
 [tool.uv]
 # js_test (Jasmine JS-test runner) depends on an old jasmine package that
 # hard-pins pyyaml far below what test-master/test/doc/dev need (transitively,
