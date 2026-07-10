@@ -96,6 +96,7 @@ enterprise/static/enterprise/bundles/*.js
 
 # Virtual environments
 venv/
+.venv/
 
 # pyenv
 .python-version

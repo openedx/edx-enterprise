@@ -167,6 +167,12 @@ fallback_version = "0.0.0.dev0"
 build_command = "pip install build && SETUPTOOLS_SCM_PRETEND_VERSION=$NEW_VERSION python -m build"
 
 [tool.uv]
+# Every `uv sync`/`uv run` invocation in this repo names an explicit --group.
+# Without this, uv's implicit default group (named "dev") would be synced *in
+# addition* to whatever --group is passed, silently pulling the entire
+# dev/test/quality/ci superset into every target, defeating the point of
+# having separate groups.
+default-groups = []
 # js_test (Jasmine JS-test runner) depends on an old jasmine package that
 # hard-pins pyyaml far below what test-master/test/doc/dev need (transitively,
 # via edx-api-doc-tools -> drf-yasg). Those requirement sets are mutually
