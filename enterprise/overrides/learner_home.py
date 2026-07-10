@@ -11,8 +11,11 @@ Pluggable override for the learner home enterprise customer lookup.
     the case.
 """
 import logging
+from typing import TYPE_CHECKING, Optional, TypedDict
 
-# Will be replaced with an internal path in epic 17.
+from rest_framework.request import Request
+
+# Will be replaced with an internal path in ENT-11576.
 try:
     from openedx.features.enterprise_support.api import (
         enterprise_customer_from_session_or_learner_data,
@@ -22,10 +25,31 @@ except ImportError:
     enterprise_customer_from_session_or_learner_data = None
     get_enterprise_learner_data_from_db = None
 
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
+
 log = logging.getLogger(__name__)
 
 
-def enterprise_get_enterprise_customer(prev_fn, user, request, is_masquerading):
+class EnterpriseCustomerData(TypedDict):
+    """
+    Required keys for the learner home enterprise dashboard.
+
+    Mirrors ``lms.djangoapps.learner_home.views.EnterpriseCustomerData``
+    """
+    name: str
+    uuid: str
+    slug: str
+    auth_org_id: Optional[str]
+    enable_learner_portal: bool
+
+
+def enterprise_get_enterprise_customer(
+    prev_fn,
+    user: "User",
+    request: Request,
+    is_masquerading: bool,
+) -> Optional[EnterpriseCustomerData]:
     """
     Return the enterprise customer dict for the given user, or None.
 
