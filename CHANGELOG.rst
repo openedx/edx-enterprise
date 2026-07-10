@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.5.0] - 2026-07-10
+---------------------
+* feat: add pluggable override for learner home enterprise customer lookup
+
 [8.4.0] - 2026-07-08
 ---------------------
 * feat: add EnterpriseEnrollmentViewProcessor pipeline step for CourseEnrollmentViewStarted filter (ENT-11570)
