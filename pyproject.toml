@@ -510,6 +510,7 @@ uv_constraints = [
 
 [tool.isort]
 line_length = 120
+known_edx = []
 known_django = ["django"]
 known_djangoapp = ["model_utils"]
 known_first_party = ["consent", "enterprise", "enterprise_learner_portal", "integrated_channels"]
