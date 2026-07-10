@@ -48,7 +48,8 @@ def fetch_platform_pins():
             # Only pulled into edx-platform's own lock because edx-enterprise itself
             # requires it -- pinning it back against ourselves would be circular.
             continue
-        match = re.match(r"^([A-Za-z0-9][A-Za-z0-9_.-]*)==([^\s;]+)", line)
+        # Package name, optional extras (e.g. "lxml[html-clean]"), then the pin.
+        match = re.match(r"^([A-Za-z0-9][A-Za-z0-9_.-]*)(?:\[[^\]]*\])?==([^\s;]+)", line)
         if not match:
             continue
         pkg = match.group(1)
