@@ -63,6 +63,7 @@ def fetch_platform_pins():
 
 
 def main():
+    """Merge openedx-platform's pins into pyproject.toml's constraint-dependencies."""
     with open(PYPROJECT_PATH, encoding="utf-8") as f:
         doc = tomlkit.load(f)
 
