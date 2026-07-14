@@ -87,6 +87,10 @@ def plugin_settings(settings):
         'enterprise.overrides.course_home_progress.enterprise_obfuscated_username'
     )
 
+    settings.OVERRIDE_LEARNER_HOME_GET_ENTERPRISE_CUSTOMER = (
+        'enterprise.overrides.learner_home.enterprise_get_enterprise_customer'
+    )
+
     pipeline = getattr(settings, 'SOCIAL_AUTH_PIPELINE', None)
     if pipeline is not None:
         email_step = 'enterprise.tpa_pipeline.enterprise_associate_by_email'
