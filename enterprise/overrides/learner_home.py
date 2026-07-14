@@ -5,9 +5,11 @@ Wired up to ``OVERRIDE_LEARNER_HOME_GET_ENTERPRISE_CUSTOMER`` in
 ``enterprise.settings.common.plugin_settings``.
 """
 import logging
-from typing import TYPE_CHECKING, Optional, TypedDict
+from typing import Optional, TypedDict
 
 from rest_framework.request import Request
+
+from django.contrib.auth.models import AbstractBaseUser
 
 # Will be replaced with an internal path in ENT-11576.
 try:
@@ -18,9 +20,6 @@ try:
 except ImportError:
     enterprise_customer_from_session_or_learner_data = None
     get_enterprise_learner_data_from_db = None
-
-if TYPE_CHECKING:
-    from django.contrib.auth.models import User
 
 log = logging.getLogger(__name__)
 
@@ -39,8 +38,8 @@ class EnterpriseCustomerData(TypedDict):
 
 
 def enterprise_get_enterprise_customer(
-    prev_fn,
-    user: "User",
+    prev_fn,  # pylint: disable=unused-argument
+    user: AbstractBaseUser,
     request: Request,
     is_masquerading: bool,
 ) -> Optional[EnterpriseCustomerData]:
