@@ -12,13 +12,6 @@ class TestEnterpriseGetEnterpriseCustomer(TestCase):
     Tests for enterprise_get_enterprise_customer override function.
     """
 
-    def _call(self, user=None, request=None, is_masquerading=False):
-        """Import and call the override function."""
-        # pylint: disable=import-outside-toplevel
-        from enterprise.overrides.learner_home import enterprise_get_enterprise_customer
-        prev_fn = MagicMock()
-        return enterprise_get_enterprise_customer(prev_fn, user, request, is_masquerading)
-
     def test_non_masquerading_delegates_to_session_api(self):
         """
         When is_masquerading is False, should call
@@ -32,7 +25,9 @@ class TestEnterpriseGetEnterpriseCustomer(TestCase):
         mock_api.get_enterprise_learner_data_from_db.return_value = []
 
         with patch.dict('sys.modules', {ENTERPRISE_SUPPORT_API_PATH: mock_api}):
-            result = self._call(user=user, request=request, is_masquerading=False)
+            from enterprise.overrides.learner_home import \
+                enterprise_get_enterprise_customer  # pylint: disable=import-outside-toplevel
+            result = enterprise_get_enterprise_customer(MagicMock(), user, request, is_masquerading=False)
 
         mock_api.enterprise_customer_from_session_or_learner_data.assert_called_once_with(request)
         mock_api.get_enterprise_learner_data_from_db.assert_not_called()
@@ -52,7 +47,9 @@ class TestEnterpriseGetEnterpriseCustomer(TestCase):
         ]
 
         with patch.dict('sys.modules', {ENTERPRISE_SUPPORT_API_PATH: mock_api}):
-            result = self._call(user=user, request=request, is_masquerading=True)
+            from enterprise.overrides.learner_home import \
+                enterprise_get_enterprise_customer  # pylint: disable=import-outside-toplevel
+            result = enterprise_get_enterprise_customer(MagicMock(), user, request, is_masquerading=True)
 
         mock_api.get_enterprise_learner_data_from_db.assert_called_once_with(user)
         mock_api.enterprise_customer_from_session_or_learner_data.assert_not_called()
@@ -68,7 +65,9 @@ class TestEnterpriseGetEnterpriseCustomer(TestCase):
         mock_api.get_enterprise_learner_data_from_db.return_value = []
 
         with patch.dict('sys.modules', {ENTERPRISE_SUPPORT_API_PATH: mock_api}):
-            result = self._call(user=user, request=request, is_masquerading=True)
+            from enterprise.overrides.learner_home import \
+                enterprise_get_enterprise_customer  # pylint: disable=import-outside-toplevel
+            result = enterprise_get_enterprise_customer(MagicMock(), user, request, is_masquerading=True)
 
         mock_api.get_enterprise_learner_data_from_db.assert_called_once_with(user)
         mock_api.enterprise_customer_from_session_or_learner_data.assert_not_called()
