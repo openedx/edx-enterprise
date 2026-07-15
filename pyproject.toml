@@ -189,7 +189,9 @@ conflicts = [
 #  both run as part of `make upgrade`.
 #  - GLOBAL constraints: edit edx_lint/files/common_constraints.txt
 #  - REPO-SPECIFIC constraints: edit [tool.edx_lint].uv_constraints in this file
-#  - PLATFORM constraints: nothing to edit, refreshed live from openedx-platform
+#  - PLATFORM constraints: nothing to edit, refreshed live from openedx-platform;
+#    fenced below with "begin/end openedx-platform sync" markers so they're
+#    visibly distinct from the GLOBAL/REPO-SPECIFIC entries above them
 constraint-dependencies = [
     "Django<6.0",
     "elasticsearch<7.14.0",
