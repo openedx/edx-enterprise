@@ -71,6 +71,7 @@ jobs:
 
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Setup | Download Build Artifacts
@@ -81,6 +82,3 @@ jobs:
 
       - name: Publish to PyPi
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_UPLOAD_TOKEN }}
