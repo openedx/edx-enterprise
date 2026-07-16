@@ -161,7 +161,7 @@ class PendingEnterpriseCustomerAdminUserInline(admin.TabularInline):
         """
         Formats the ``admin_registration_url`` model property as an HTML link.
         """
-        return format_html('<a href="{0}">{0}</a>'.format(obj.admin_registration_url))
+        return format_html('<a href="{0}">{0}</a>', obj.admin_registration_url)
 
 
 @admin.register(models.EnterpriseCustomerType)
@@ -674,7 +674,7 @@ class PendingEnterpriseCustomerAdminUserAdmin(admin.ModelAdmin):
         """
         Formats the ``admin_registration_url`` model property as an HTML link.
         """
-        return format_html('<a href="{0}">{0}</a>'.format(obj.admin_registration_url))
+        return format_html('<a href="{0}">{0}</a>', obj.admin_registration_url)
 
 
 @admin.register(models.EnrollmentNotificationEmailTemplate)
@@ -953,7 +953,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         """
         Inject html for disabling wrap for uuid
         """
-        return format_html('<span style="white-space: nowrap;">{uuid}</span>'.format(uuid=obj.uuid))
+        return format_html('<span style="white-space: nowrap;">{uuid}</span>', uuid=obj.uuid)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, change, **kwargs)

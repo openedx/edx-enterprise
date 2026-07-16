@@ -74,6 +74,10 @@ docs/enterprise.*.rst
 requirements/private.in
 requirements/private.txt
 
+# Historically downloaded from edx-lint during `make upgrade`; no longer used
+# and should never be committed.
+requirements/common_constraints.txt
+
 # tox environment temporary artifacts
 tests/__init__.py
 
