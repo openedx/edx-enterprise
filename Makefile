@@ -82,19 +82,12 @@ docs: ## generate Sphinx HTML documentation, including API docs
 # Define PIP_COMPILE_OPTS=-v to get more information during make upgrade.
 PIP_COMPILE = pip-compile --upgrade --rebuild $(PIP_COMPILE_OPTS)
 
-# Pull in the org-wide common_constraints.txt file.
-COMMON_CONSTRAINTS_TXT=requirements/common_constraints.txt
-.PHONY: $(COMMON_CONSTRAINTS_TXT)
-$(COMMON_CONSTRAINTS_TXT):
-	wget -O "$(@)" https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt || touch "$(@)"
-	echo "$(COMMON_CONSTRAINTS_TEMP_COMMENT)" | cat - $(@) > temp && mv temp $(@)
-
 # Special for edx-enterprise: Treat production package versions from openedx-platform as local constraints for testing.
 # This ensures we'll only test with package versions actually used in production.
 LOCAL_EDX_PINS = requirements/edx-platform-constraints.txt
 PLATFORM_BASE_REQS = https://raw.githubusercontent.com/openedx/openedx-platform/master/requirements/edx/base.txt
 .PHONY: $(LOCAL_EDX_PINS)
-$(LOCAL_EDX_PINS): $(COMMON_CONSTRAINTS_TXT) ## check that our local copy of edx-platform pins is accurate
+$(LOCAL_EDX_PINS): ## check that our local copy of edx-platform pins is accurate
 	echo "### DON'T edit this file, it's copied from edx-platform. See make upgrade" > $(LOCAL_EDX_PINS)
 	curl -fsSL $(PLATFORM_BASE_REQS) | grep -v '^-e' | grep -v 'via edx-enterprise$$' >> $(LOCAL_EDX_PINS)
 	python requirements/check_pins.py requirements/test-master.txt $(LOCAL_EDX_PINS)
