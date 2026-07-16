@@ -164,6 +164,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_integrated_customer_learner_portal_search",
                 "enable_learner_portal_sidebar_message",
                 "enable_analytics_screen",
+                "enable_people_management",
                 "enable_slug_login",
                 "contact_email",
                 "default_contract_discount",

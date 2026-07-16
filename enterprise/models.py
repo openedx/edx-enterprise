@@ -461,6 +461,13 @@ class EnterpriseCustomer(TimeStampedModel):
                     "which includes skill and labor market data.")
     )
 
+    enable_people_management = models.BooleanField(
+        verbose_name="Display people management",
+        default=True,
+        help_text=_("Automatically enabled. "
+                    "Displays organization learners and invite admins.")
+    )
+
     enable_portal_lms_configurations_screen = models.BooleanField(
         verbose_name="Display learning platform configuration screen",
         default=False,

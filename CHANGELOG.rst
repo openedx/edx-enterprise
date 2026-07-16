@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.6.0] - 2026-07-16
+---------------------
+* feat: add ``enable_people_management`` flag to EnterpriseCustomer to display the people management page
+
 [8.5.0] - 2026-07-10
 ---------------------
 * feat: add pluggable override for learner home enterprise customer lookup
