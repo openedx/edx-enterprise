@@ -411,6 +411,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_programs",
             "enable_demo_data_for_analytics_and_lpr",
             "enable_analytics_screen",
+            "enable_people_management",
             "enable_portal_reporting_config_screen",
             "enable_portal_saml_configuration_screen",
             "enable_portal_lms_configurations_screen",

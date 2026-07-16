@@ -238,7 +238,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         ('Recommended default settings for all enterprise customers', {
             'fields': ('site', 'customer_type', 'enable_learner_portal',
                        'enable_integrated_customer_learner_portal_search',
-                       'enable_analytics_screen', 'enable_audit_enrollment',
+                       'enable_analytics_screen', 'enable_people_management', 'enable_audit_enrollment',
                        'enable_audit_data_reporting', 'enable_learner_portal_offers',
                        'disable_expiry_messaging_for_learner_credit',
                        'enable_executive_education_2U_fulfillment',
