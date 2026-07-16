@@ -28,6 +28,10 @@ ENTERPRISE_FILTERS_CONFIG: FiltersConfig = {
         "fail_silently": False,
         "pipeline": ["enterprise.filters.courseware.EnterpriseStartDateAccessFailureStep"],
     },
+    "org.openedx.learning.course_mode.price.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.course_modes.CalculateEnterpriseDiscountedPrice"],
+    },
     # NOTE: Pipeline ordering matters here. ActiveEnterpriseCheckStep must run before
     # consent's DataSharingConsentCourseAccessStep to match the original platform behavior
     # (the incorrect-enterprise redirect took priority over the DSC redirect). This ordering
