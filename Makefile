@@ -173,10 +173,16 @@ isort-check: ## call isort on packages/files that are checked in quality tests
 dev.pull: ## Pulls the docker image used by the test container (unsupported)
 	@echo "ERROR: To re-build the enterprise test container, use `make dev.build` instead."
 
-dev.build: ## Builds the docker image used by the test container
+# Give each clone of this repo its own docker compose project name so that
+# multiple clones don't fight over the same test-shell container. docker
+# compose automatically reads .env from the project directory.
+.env:
+	echo "COMPOSE_PROJECT_NAME=edx-enterprise-$$(pwd | shasum | cut -c1-8)" > .env
+
+dev.build: .env ## Builds the docker image used by the test container
 	docker compose build test-shell
 
-dev.up: ## Starts the test container
+dev.up: .env ## Starts the test container
 	docker compose up --remove-orphans -d test-shell
 
 dev.down: ## Kills the test container and all its data that isn't in volumes

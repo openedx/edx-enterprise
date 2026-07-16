@@ -24,17 +24,17 @@ Examples:
 
 ### 1. Make sure the test-shell container is running
 
-Determine if the test-shell container is running:
-
-```bash
-docker compose ps
-```
-
-Start the test-shell container if not running:
+Always run this first — it is idempotent, and it also generates the `.env`
+file which gives each clone of this repo its own docker compose project name
+(so multiple clones don't fight over the same container):
 
 ```bash
 make dev.up
 ```
+
+IMPORTANT: always interact with the container via `docker compose` (which
+reads `.env`), never via bare `docker` commands with a hardcoded container
+name — the container name is different in every clone.
 
 ### 2a. Run specific unit test files or functions
 
