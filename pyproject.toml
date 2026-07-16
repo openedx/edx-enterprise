@@ -165,6 +165,11 @@ fallback_version = "0.0.0.dev0"
 
 [tool.semantic_release]
 build_command = "pip install build && SETUPTOOLS_SCM_PRETEND_VERSION=$NEW_VERSION python -m build"
+# Already past 1.0 (8.x), so major_on_zero is a no-op today -- it only governs
+# the 0.x -> 1.0.0 transition, not 1.x -> 2.0.0. Set for consistency across the
+# batch and so this repo never auto-jumps to 1.0.0 if it's ever reset to 0.x.
+major_on_zero = false
+allow_zero_version = true
 
 [tool.uv]
 # Every `uv sync`/`uv run` invocation in this repo names an explicit --group.
