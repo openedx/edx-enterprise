@@ -509,8 +509,8 @@ def on_init(app):
         # If we are, assemble the path manually
         bin_path = os.path.abspath(os.path.join(sys.prefix, 'bin'))
         apidoc_path = os.path.join(bin_path, apidoc_path)
-    check_call([apidoc_path, '-o', docs_path, os.path.join(root_path, 'enterprise'),
-                os.path.join(root_path, 'enterprise/migrations')])
+    check_call([apidoc_path, '-o', docs_path, os.path.join(root_path, 'src', 'enterprise'),
+                os.path.join(root_path, 'src', 'enterprise', 'migrations')])
 
 
 def setup(app):

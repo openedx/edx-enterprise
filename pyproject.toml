@@ -155,6 +155,7 @@ include-package-data = true
 readme = {file = ["README.rst", "CHANGELOG.rst"], content-type = "text/x-rst"}
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["enterprise*", "consent*", "integrated_channels*", "enterprise_learner_portal*"]
 exclude = ["*tests*"]
 
