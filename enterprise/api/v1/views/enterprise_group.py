@@ -126,6 +126,11 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
     def update(self, request, *args, **kwargs):
         """
         PATCH /enterprise/api/v1/enterprise-group/<group uuid>
+
+        If renaming to a name that collides with a legacy soft-deleted group
+        (same enterprise_customer), that legacy row is purged first so the
+        rename doesn't hit the unique_together constraint. See
+        ``EnterpriseGroup.purge_legacy_soft_deleted`` for details.
         """
         if requested_customer := self.request.data.get('enterprise_customer'):
             # Essentially checking ``enterprise.can_access_admin_dashboard`` but for the customer the requester is
@@ -134,6 +139,9 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             explicit_access = rules.has_explicit_access_to_dashboard(self.request.user, requested_customer)
             if not implicit_access and not explicit_access:
                 return Response('Unauthorized', status=401)
+        if name := request.data.get('name'):
+            enterprise_customer = requested_customer or self.get_object().enterprise_customer_id
+            models.EnterpriseGroup.purge_legacy_soft_deleted(name=name, enterprise_customer=enterprise_customer)
         return super().update(request, *args, **kwargs)
 
     @permission_required(
@@ -143,7 +151,23 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
     def create(self, request, *args, **kwargs):
         """
         POST /enterprise/api/v1/enterprise-group/
+
+        If a legacy soft-deleted group with the same name and enterprise_customer
+        exists, it is hard-deleted before the new record is created so it doesn't
+        collide with the unique_together constraint. Active groups with the same
+        name are left untouched and continue to be rejected as duplicates.
+
+        Unlike ``DefaultEnterpriseEnrollmentIntention.clean()``, which blocks
+        creation and points admins to restore a soft-deleted record, these legacy
+        rows only exist due to a past bug (groups used to be soft-deleted) and
+        aren't something a customer would want restored, and group admins have no
+        access to the Django admin to do so. Auto-deleting them here is what makes
+        the original bug report self-heal instead of requiring manual cleanup.
         """
+        models.EnterpriseGroup.purge_legacy_soft_deleted(
+            name=request.data.get('name'),
+            enterprise_customer=request.data.get('enterprise_customer'),
+        )
         return super().create(request, *args, **kwargs)
 
     @action(methods=['patch'], detail=False, permission_classes=[permissions.IsAuthenticated])

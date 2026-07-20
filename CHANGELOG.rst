@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.7.1] - 2026-07-17
+---------------------
+* fix: hard delete EnterpriseGroup records instead of soft deleting them (ENT-12073)
+
 [8.7.0] - 2026-07-16
 ---------------------
 * feat: add CalculateEnterpriseDiscountedPrice pipeline step
