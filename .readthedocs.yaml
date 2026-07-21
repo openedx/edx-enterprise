@@ -5,22 +5,20 @@
 # Required: the version of this file's schema.
 version: 2
 
+# uv isn't natively supported by Read the Docs, so drive the whole build
+# ourselves via a custom command (RTD's documented escape hatch for tools
+# it doesn't integrate with directly). Note: this gives up RTD's native
+# fail_on_warning/pdf/epub format support -- -W below replicates
+# fail_on_warning, but PDF/EPUB output would need a separate LaTeX-toolchain
+# setup that RTD otherwise provisions automatically for the `formats:` key.
 build:
-   os: "ubuntu-lts-latest"
-   tools:
-      python: "3.12"
+  os: ubuntu-24.04
+  tools:
+    python: "3.12"
+  commands:
+    - pip install uv
+    - uv sync --group doc
+    - uv run sphinx-build -W -b html docs/ $READTHEDOCS_OUTPUT/html
 
-# Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
-  fail_on_warning: true
-
-# Optionally build your docs in additional formats such as PDF
-formats:
-  - pdf
-  - epub
-
-# Optionally set the version of Python and requirements required to build your docs
-python:
-  install:
-  - requirements: requirements/doc.txt
