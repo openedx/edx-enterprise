@@ -10,8 +10,6 @@
       - It may or may not make a migration depending on exactly what you modified, but it should still be run.
     - This should be run from either a venv with all the lms/edx-enterprise requirements installed or if you checked out edx-enterprise into the src directory used by lms, you can run this command through an lms shell.
         - It would be `./manage.py lms makemigrations` in the shell.
-- [ ] [Version](https://github.com/openedx/edx-enterprise/blob/master/enterprise/__init__.py) bumped
-- [ ] [Changelog](https://github.com/openedx/edx-enterprise/blob/master/CHANGELOG.rst) record added
 - [ ] Translations updated (see docs/internationalization.rst but also this isn't blocking for merge atm)
 
 **Post merge:**
