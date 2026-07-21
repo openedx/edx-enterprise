@@ -152,7 +152,7 @@ dev = [
 include-package-data = true
 
 [tool.setuptools.dynamic]
-readme = {file = ["README.rst", "CHANGELOG.rst"], content-type = "text/x-rst"}
+readme = {file = ["README.rst"], content-type = "text/x-rst"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -173,6 +173,7 @@ major_on_zero = false
 allow_zero_version = true
 
 [tool.uv]
+package = true
 # Every `uv sync`/`uv run` invocation in this repo names an explicit --group.
 # Without this, uv's implicit default group (named "dev") would be synced *in
 # addition* to whatever --group is passed, silently pulling the entire
@@ -537,3 +538,25 @@ DJANGO_SETTINGS_MODULE = "enterprise.settings.test"
 addopts = "--cov enterprise --cov enterprise_learner_portal --cov consent --cov integrated_channels --cov-report term-missing --cov-report xml"
 norecursedirs = [".*", "docs", "requirements", "site-packages", "scripts", "node_modules"]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["enterprise", "consent", "integrated_channels", "enterprise_learner_portal"]
+omit = [
+    "*/settings/*",
+    "*/conf/*",
+    "*/mocks.py",
+    "*/urls.py",
+    "*/migrations/*",
+    "*/admin.py",
+    "*/static/*",
+    "*/templates/*",
+    "*/tests/*",
+    "test_*",
+]
+
+[tool.coverage.html]
+directory = "build/coverage/html"
+
+[tool.coverage.xml]
+output = "build/coverage/coverage.xml"
