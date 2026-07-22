@@ -12,6 +12,10 @@ ENTERPRISE_FILTERS_CONFIG: FiltersConfig = {
         "fail_silently": False,
         "pipeline": ["enterprise.filters.accounts.AccountSettingsEnterpriseReadOnlyFieldsStep"],
     },
+    "org.openedx.learning.course.enrollment.started.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.enrollment.EnterpriseEnrollmentPostProcessor"],
+    },
     "org.openedx.learning.dashboard.render.started.v1": {
         "fail_silently": False,
         "pipeline": ["enterprise.filters.dashboard.DashboardContextEnricher"],
