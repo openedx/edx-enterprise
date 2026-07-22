@@ -46,6 +46,30 @@ ENTERPRISE_FILTERS_CONFIG: FiltersConfig = {
         "fail_silently": False,
         "pipeline": ["enterprise.filters.discounts.DiscountEligibilityEnterpriseStep"],
     },
+    "org.openedx.learning.logistration.context.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.LogistrationContextEnricher"],
+    },
+    "org.openedx.learning.logistration.response.rendered.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.LogistrationCookieSetter"],
+    },
+    "org.openedx.learning.logistration.mfe.redirect.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.EnterpriseMFERedirectVeto"],
+    },
+    "org.openedx.learning.login.form.tpa_overrides.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.LoginFormEnterpriseOverrides"],
+    },
+    "org.openedx.learning.registration.form.tpa_overrides.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.RegistrationFormEnterpriseOverrides"],
+    },
+    "org.openedx.learning.auth.post_login.redirect_url.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.PostLoginEnterpriseRedirect"],
+    },
 }
 
 
