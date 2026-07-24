@@ -419,7 +419,7 @@ openedx-events==11.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-openedx-filters==3.7.0
+openedx-filters==3.8.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
