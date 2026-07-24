@@ -1,5 +1,5 @@
 {
-  "realm": "$(env:REALM_NAME)",
+  "realm": "$(env:SLYTHERIN_REALM)",
   "enabled": true,
   "clientScopes": [
     {
@@ -83,16 +83,31 @@
   ],
   "users": [
     {
-      "username": "$(env:TEST_USERNAME)",
-      "email": "$(env:TEST_EMAIL)",
+      "username": "$(env:SLYTHERIN_LEARNER_USERNAME)",
+      "email": "$(env:SLYTHERIN_LEARNER_EMAIL)",
       "emailVerified": true,
       "enabled": true,
-      "firstName": "$(env:TEST_FIRST_NAME)",
-      "lastName": "$(env:TEST_LAST_NAME)",
+      "firstName": "$(env:SLYTHERIN_LEARNER_FIRST_NAME)",
+      "lastName": "$(env:SLYTHERIN_LEARNER_LAST_NAME)",
       "credentials": [
         {
           "type": "password",
-          "value": "$(env:TEST_PASSWORD)",
+          "value": "testpass",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "$(env:SLYTHERIN_NEWCOMER_USERNAME)",
+      "email": "$(env:SLYTHERIN_NEWCOMER_EMAIL)",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "$(env:SLYTHERIN_NEWCOMER_FIRST_NAME)",
+      "lastName": "$(env:SLYTHERIN_NEWCOMER_LAST_NAME)",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "testpass",
           "temporary": false
         }
       ]

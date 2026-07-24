@@ -42,15 +42,29 @@ Provisioning configures **both** Keycloak and the LMS in a single step:
 
 Under the hood this runs two commands:
 
-1. ``keycloak-config-cli`` imports the realm definition
-   (``keycloak-devstack-realm.json``) into Keycloak, creating a ``devstack``
-   realm with a SAML client and a test user.
-2. ``provision-tpa.py`` runs inside the LMS container to create the matching
-   ``SAMLConfiguration``, ``SAMLProviderConfig``, ``EnterpriseCustomer`` link,
-   and a pre-linked LMS learner account.
+1. ``keycloak-config-cli`` imports every realm definition in
+   ``keycloak-realms/`` into Keycloak.  Each file is one tenant realm (currently
+   ``gryffindor`` and ``slytherin``), each with a SAML client and two test users.
+2. ``provision-tpa.py`` runs inside the LMS container and, for each tenant,
+   creates the matching ``SAMLProviderConfig``, the ``EnterpriseCustomer`` link,
+   branding (logo + colors), and a login-flow LMS learner account.  A single
+   shared ``SAMLConfiguration`` (the LMS service-provider config) is created once.
 
-All shared configuration values (URLs, entity IDs, OIDs, test credentials) live
-in ``keycloak-devstack.env`` so the two sides stay in sync.
+A "tenant" is one Keycloak realm plus one enterprise customer.  The realm name,
+the SAML slug, the ``provider_id`` (``saml-<name>``), and the enterprise slug are
+all the same arbitrary token (e.g. ``gryffindor``), so one memorable name
+identifies everything about the tenant.  Adding a tenant means dropping a new
+``keycloak-realms/<name>.json`` and adding a matching entry to the ``TENANTS``
+list in ``provision-tpa.py``.
+
+Shared configuration (the Keycloak URL, the LMS entity ID, the ACS URL, and the
+attribute OIDs) plus each tenant's SSO usernames live in
+``keycloak-devstack.env``.  The usernames are the single source of truth: the
+realm JSON substitutes them via ``$(env:...)`` and ``provision-tpa.py`` reads the
+same variables, so a username is defined in exactly one place.
+
+The examples below use the ``gryffindor`` tenant; ``slytherin`` behaves
+identically -- substitute its name to test tenant isolation.
 
 Host setup
 ----------
@@ -71,17 +85,17 @@ Testing the SAML login flow
 
 1. Navigate to the SAML login URL:
 
-   ``http://localhost:18000/auth/login/tpa-saml/?auth_entry=login&idp=keycloak-devstack``
+   ``http://localhost:18000/auth/login/tpa-saml/?auth_entry=login&idp=gryffindor``
 
 2. You should be redirected to the Keycloak login page at
-   ``http://edx.devstack.keycloak:8080/realms/devstack/...``.
+   ``http://edx.devstack.keycloak:8080/realms/gryffindor/...``.
 
 3. Log in with the test credentials:
 
-   =========  =========================
-   Username   ``keycloak_learner``
+   =========  =============================
+   Username   ``gryffindor_learner``
    Password   ``testpass``
-   =========  =========================
+   =========  =============================
 
 4. Validate that you were **not** prompted to log into the existing LMS user.
    The ``enterprise_associate_by_email`` pipeline step should discover that the
@@ -89,7 +103,10 @@ Testing the SAML login flow
    enterprise customer, so LMS authentication is skipped.
 
 5. Validate that you have been redirected to the LMS learner dashboard and are
-   logged in as ``keycloak_test_learner``.
+   logged in as ``gryffindor_learner``.  The ``enterprise_associate_by_email``
+   step matches the SSO identity to the LMS account by **email**
+   (``gryffindor_learner@example.com``); the usernames happening to match here is
+   incidental -- association never uses the username.
 
 Testing the SAML disconnect flow
 --------------------------------
@@ -108,12 +125,12 @@ Triggering the disconnect via the Account MFE
 
    http://localhost:1997/#linked-accounts
 
-3. Find the Keycloak Devstack IdP entry (matches
-   SAMLProviderConfig.name) and click **Unlink Keycloak Devstack IdP
+3. Find the Gryffindor IdP entry (matches
+   SAMLProviderConfig.name) and click **Unlink Gryffindor IdP
    account**.
 
 4. The button should settle into the "unconnected" state with a "Sign in with
-   Keycloak Devstack IdP" link. indicating the MFE received a successful
+   Gryffindor IdP" link. indicating the MFE received a successful
    disconnect response.
 
 Verifying the disconnect
@@ -129,7 +146,7 @@ Verifying the disconnect
 
       [THIRD_PARTY_AUTH] Emitting SAMLAccountDisconnected signal for user_id=<id>, backend=tpa-saml
       [ENTERPRISE] _unlink_enterprise_user_from_idp called for user_id=<id>, backend=tpa-saml
-      Enterprise learner {keycloak_learner@example.com} successfully unlinked from Enterprise Customer {<name>}
+      Enterprise learner {gryffindor_learner@example.com} successfully unlinked from Enterprise Customer {<name>}
 
 Resetting state to repeat the test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -142,10 +159,10 @@ The simplest reset is to re-run provisioning:
 
 Then navigate to the SAML login URL again to re-link:
 
-   http://localhost:18000/auth/login/tpa-saml/?auth_entry=login&idp=keycloak-devstack
+   http://localhost:18000/auth/login/tpa-saml/?auth_entry=login&idp=gryffindor
 
 Note: re-running provisioning is necessary because when you clicked the
-**Unlink Keycloak Devstack IdP account** button, the SAML disconnect handler
+**Unlink Gryffindor IdP account** button, the SAML disconnect handler
 did more than just disconnect from the IdP, it also unlinked the
 EnterpriseCustomerUser.  This is only recoverable by an admin or system
 operator, hence the need to use the provision script.  Yes, that means in prod
