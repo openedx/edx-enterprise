@@ -8,7 +8,7 @@ import textwrap
 
 from django.core.management.base import BaseCommand
 
-from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.devstack_api import (
     ensure_enterprise_groups,
     get_or_create_enterprise_catalog,
@@ -16,6 +16,7 @@ from enterprise.devstack_api import (
     get_or_create_enterprise_user,
     get_or_create_site,
     link_user_to_enterprise,
+    seed_global_users,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ class Command(BaseCommand):
     Example usage:
         $ ./manage.py lms seed_enterprise_devstack_data
         $ ./manage.py lms seed_enterprise_devstack_data --enterprise-name "Acme Corp"
+        $ ./manage.py lms seed_enterprise_devstack_data --no-create-users
     """
 
     help = '''
@@ -43,6 +45,14 @@ class Command(BaseCommand):
             default='Test Enterprise',
             help='Name of enterprise to be created. Defaults to "Test Enterprise".'
         )
+        parser.add_argument(
+            '--no-create-users',
+            action='store_true',
+            dest='no_create_users',
+            default=False,
+            help='Skip creating enterprise role users (global and tenant-scoped); '
+                 'only seed the enterprise customer, catalog, and groups.',
+        )
 
     def handle(self, *args, **options):
         enterprise_name = options['enterprise_name']
@@ -55,9 +65,30 @@ class Command(BaseCommand):
         enterprise_customer = get_or_create_enterprise_customer(name=enterprise_name, site=site)
         enterprise_catalog = get_or_create_enterprise_catalog(enterprise_customer)
 
-        LOGGER.info('\nCreating enterprise users and assigning roles...')
+        if options['no_create_users']:
+            LOGGER.info('\nSkipping user creation (--no-create-users).')
+            LOGGER.info(
+                textwrap.dedent(
+                    '''\nSuccessfully seeded a new enterprise with the following data:
+                    \n| Enterprise Customer: %s (%s)
+                    \n| Enterprise Catalog: %s (%s)
+                    '''
+                ),
+                enterprise_customer.name,
+                enterprise_customer.uuid,
+                enterprise_catalog.title,
+                enterprise_catalog.uuid,
+            )
+            return
+
+        # Global operator/worker/super-admin users apply across all enterprises,
+        # so they are seeded once and never linked to a specific enterprise.
+        LOGGER.info('\nCreating global enterprise users...')
+        seed_global_users()
+
+        LOGGER.info('\nCreating tenant-scoped enterprise users and assigning roles...')
         slug = enterprise_customer.slug
-        enterprise_users = [
+        lms_users = [
             get_or_create_enterprise_user(
                 username=f'{ENTERPRISE_LEARNER_ROLE}_{slug}',
                 role=ENTERPRISE_LEARNER_ROLE,
@@ -68,54 +99,22 @@ class Command(BaseCommand):
                 role=ENTERPRISE_ADMIN_ROLE,
                 enterprise_customer=enterprise_customer,
             ),
-            # Super admin with the admin role on all enterprises.
-            get_or_create_enterprise_user(
-                username=ENTERPRISE_ADMIN_ROLE,
-                role=ENTERPRISE_ADMIN_ROLE,
-                applies_to_all_contexts=True,
-            ),
-            get_or_create_enterprise_user(
-                username=ENTERPRISE_OPERATOR_ROLE,
-                role=ENTERPRISE_OPERATOR_ROLE,
-                applies_to_all_contexts=True,
-            ),
-            # Service workers as operators for all enterprises.
-            get_or_create_enterprise_user(
-                username='license-manager_worker',
-                role=ENTERPRISE_OPERATOR_ROLE,
-                applies_to_all_contexts=True,
-            ),
-            get_or_create_enterprise_user(
-                username='enterprise-catalog_worker',
-                role=ENTERPRISE_OPERATOR_ROLE,
-                applies_to_all_contexts=True,
-            ),
-            get_or_create_enterprise_user(
-                username='enterprise_worker',
-                role=ENTERPRISE_OPERATOR_ROLE,
-                applies_to_all_contexts=True,
-            ),
-            get_or_create_enterprise_user(
-                username='ecommerce_worker',
-                role=ENTERPRISE_OPERATOR_ROLE,
-                applies_to_all_contexts=True,
-            ),
         ]
         for i in range(2):
-            enterprise_users.append(get_or_create_enterprise_user(
+            lms_users.append(get_or_create_enterprise_user(
                 username=f'{slug}_learner_{i + 1}',
                 role=ENTERPRISE_LEARNER_ROLE,
                 enterprise_customer=enterprise_customer,
             ))
 
-        LOGGER.info('\nLinking users to enterprise...')
-        enterprise_linked_users = []
-        for enterprise_user in enterprise_users:
-            if enterprise_user is None:
+        LOGGER.info('\nLinking tenant-scoped users to enterprise...')
+        serialized_enterprise_linked_users = []
+        for lms_user in lms_users:
+            if lms_user is None:
                 continue
-            ecu, _ = link_user_to_enterprise(enterprise_user['user'], enterprise_customer)
-            enterprise_linked_users.append({
-                'user_id': ecu.user_id,
+            ecu, _ = link_user_to_enterprise(user=lms_user, enterprise_customer=enterprise_customer)
+            serialized_enterprise_linked_users.append({
+                'lms_user_id': lms_user.id,
                 'enterprise_customer_user_id': ecu.id,
                 'username': ecu.username,
             })
@@ -132,6 +131,6 @@ class Command(BaseCommand):
             enterprise_customer.uuid,
             enterprise_catalog.title,
             enterprise_catalog.uuid,
-            len(enterprise_linked_users),
-            json.dumps(enterprise_linked_users, sort_keys=True, indent=2),
+            len(serialized_enterprise_linked_users),
+            json.dumps(serialized_enterprise_linked_users, sort_keys=True, indent=2),
         )
