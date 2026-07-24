@@ -17,6 +17,12 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.7.3] - 2026-07-27
+---------------------
+* feat: add multiple SSO tenants during devstack provisioning
+
+  * The real reason for the version bump: Added ``assign_system_wide_enterprise_role`` management command and updated other ones.
+
 [8.7.2] - 2026-07-27
 ---------------------
 * chore: upgrade python requirements

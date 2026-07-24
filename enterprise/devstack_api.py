@@ -10,7 +10,7 @@ Python as well as from the CLI.
 """
 
 import logging
-from typing import Any
+import os
 
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
@@ -18,31 +18,28 @@ from opaque_keys.edx.keys import CourseKey
 from django.contrib import auth
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.sites.models import Site
+from django.core.files import File
 from django.db import transaction
 from django.db.utils import IntegrityError
 from django.utils.text import slugify
 
 from consent.models import DataSharingConsent
+from enterprise import roles_api
 from enterprise.constants import (
-    ENTERPRISE_ADMIN_ROLE,
-    ENTERPRISE_CATALOG_ADMIN_ROLE,
-    ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_DATA_API_ACCESS_GROUP,
     ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP,
-    ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
-    ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+    SYSTEM_WIDE_ENTERPRISE_ROLES,
 )
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
+    EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
+    EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
-    EnterpriseFeatureRole,
-    EnterpriseFeatureUserRoleAssignment,
-    SystemWideEnterpriseRole,
-    SystemWideEnterpriseUserRoleAssignment,
+    PendingEnterpriseCustomerUser,
 )
 
 try:
@@ -50,6 +47,11 @@ try:
 except ImportError:
     CourseEnrollment = None
     UserProfile = None
+
+try:
+    from common.djangoapps.third_party_auth.models import SAMLProviderConfig
+except ImportError:
+    SAMLProviderConfig = None
 
 LOGGER = logging.getLogger(__name__)
 User = auth.get_user_model()
@@ -134,18 +136,127 @@ def get_or_create_enterprise_catalog(enterprise_customer: EnterpriseCustomer) ->
     return catalog
 
 
-def get_or_create_user(username: str, is_staff: bool = False) -> AbstractBaseUser:
+def update_or_create_enterprise_branding(
+    enterprise_customer: EnterpriseCustomer,
+    logo_path: str | None = None,
+    primary_color: str | None = None,
+    secondary_color: str | None = None,
+    tertiary_color: str | None = None,
+) -> EnterpriseCustomerBrandingConfiguration:
     """
-    Returns a User with the given username, creating it if needed.
+    Returns the branding configuration for the given customer, creating it if
+    needed, and applies any supplied logo and accent colors.
 
-    New users are created with email "{username}@example.com" and password
-    "edx". A UserProfile row is also ensured when the platform UserProfile
-    model is importable.
+    Args:
+        enterprise_customer: The EnterpriseCustomer to brand (one-to-one).
+        logo_path: Absolute path to a .png logo file to upload. Ignored when the
+          config already has a logo; a warning is logged if the path is supplied
+          but no file exists there.
+        primary_color: Optional primary accent color as a hex string, e.g.
+          "#740001".
+        secondary_color: Optional secondary accent color as a hex string.
+        tertiary_color: Optional tertiary accent color as a hex string.
+
+    Returns:
+        The existing or newly created (and updated) branding configuration.
+    """
+    branding, _ = EnterpriseCustomerBrandingConfiguration.objects.get_or_create(
+        enterprise_customer=enterprise_customer,
+    )
+    if logo_path and not branding.logo:
+        if os.path.isfile(logo_path):
+            with open(logo_path, 'rb') as logo_file:
+                # save=False: persist the image together with the colors below in one save().
+                branding.logo.save(os.path.basename(logo_path), File(logo_file), save=False)
+            LOGGER.info('Set branding logo for %s from %s', enterprise_customer.slug, logo_path)
+        else:
+            LOGGER.warning('Branding logo not found at %s; leaving logo unset', logo_path)
+    if primary_color is not None:
+        branding.primary_color = primary_color
+    if secondary_color is not None:
+        branding.secondary_color = secondary_color
+    if tertiary_color is not None:
+        branding.tertiary_color = tertiary_color
+    branding.save()
+    return branding
+
+
+def create_enterprise_saml_provider(
+    enterprise_customer: EnterpriseCustomer,
+    slug: str,
+    name: str,
+    entity_id: str,
+    metadata_source: str,
+    site: Site | None = None,
+    attr_user_permanent_id: str = '',
+    attr_email: str = '',
+    attr_first_name: str = '',
+    attr_last_name: str = '',
+) -> EnterpriseCustomerIdentityProvider:
+    """
+    Creates a SAML IdP for the given customer and links it to the enterprise.
+
+    Args:
+        enterprise_customer: The EnterpriseCustomer to link the IdP to.
+        slug: The SAMLProviderConfig slug, e.g. "gryffindor".  The provider_id is
+          derived from it by SAMLProviderConfig as "saml-<slug>".
+        name: Human-readable display name for the provider.
+        entity_id: The IdP's SAML entity id (issuer).
+        metadata_source: URL from which to pull the IdP's SAML metadata.
+        site: The Site the provider belongs to.  Defaults to the current site.
+        attr_user_permanent_id: SAML attribute mapped to the user's permanent id.
+        attr_email: SAML attribute mapped to the user's email.
+        attr_first_name: SAML attribute mapped to the user's first name.
+        attr_last_name: SAML attribute mapped to the user's last name.
+
+    Returns:
+        The existing or newly created EnterpriseCustomerIdentityProvider link.
+    """
+    if site is None:
+        site = Site.objects.get_current()
+    provider_config = SAMLProviderConfig(
+        site=site,
+        slug=slug,
+        name=name,
+        entity_id=entity_id,
+        metadata_source=metadata_source,
+        enabled=True,
+        visible=True,
+        skip_registration_form=True,
+        skip_email_verification=True,
+        send_to_registration_first=True,
+        attr_user_permanent_id=attr_user_permanent_id,
+        attr_email=attr_email,
+        attr_first_name=attr_first_name,
+        attr_last_name=attr_last_name,
+    )
+    provider_config.save()
+    ecidp, _ = EnterpriseCustomerIdentityProvider.objects.get_or_create(
+        provider_id=provider_config.provider_id,
+        enterprise_customer=enterprise_customer,
+    )
+    return ecidp
+
+
+def get_or_create_user(
+    username: str,
+    email: str = '',
+    is_staff: bool = False,
+    first_name: str = '',
+    last_name: str = '',
+) -> AbstractBaseUser:
+    """
+    Get or create a User, as well as upserting a corresponding UserProfile.
+
+    Note: New users are created with password "edx"
 
     Args:
         username: The username for the user to look up or create.
-        is_staff: If True, the created user is marked as Django staff. Has
-          no effect when the user already exists.
+        email: Optional email address for the user. Defaults to
+          "{username}@example.com" when omitted.
+        is_staff: If True, the created user is marked as Django staff.
+        first_name: Optional given name.
+        last_name: Optional surname.
 
     Returns:
         The existing or newly created User instance.
@@ -154,18 +265,21 @@ def get_or_create_user(username: str, is_staff: bool = False) -> AbstractBaseUse
         with transaction.atomic():
             user = User.objects.create_user(
                 username=username,
-                email=f'{username}@example.com',
+                email=email or f'{username}@example.com',
                 password='edx',
                 is_staff=is_staff,
+                first_name=first_name,
+                last_name=last_name,
             )
         LOGGER.info('Created user: %s', username)
     except IntegrityError:
         user = User.objects.get(username=username)
         LOGGER.info('Using existing user: %s', username)
 
+    profile_name = f'{first_name} {last_name}'.strip() or 'Test Enterprise User'
     UserProfile.objects.update_or_create(
         user=user,
-        defaults={'name': 'Test Enterprise User'},
+        defaults={'name': profile_name},
     )
 
     return user
@@ -176,42 +290,68 @@ def get_or_create_enterprise_user(
     role: str,
     enterprise_customer: EnterpriseCustomer | None = None,
     applies_to_all_contexts: bool = False,
-) -> dict[str, Any] | None:
+    email: str = '',
+    first_name: str = '',
+    last_name: str = '',
+) -> AbstractBaseUser | None:
     """
-    Creates or retrieves a user with the given enterprise role.
+    Get or create an LMS user with the given enterprise role assignment.
 
-    Adds the user to the appropriate Django groups and creates system-wide
-    and feature role assignments.
+    Note: This does NOT actually link the user to the enterprise.  For learners
+    and customer admins, you'll also need to call link_user_to_enterprise().
 
     Args:
         username: The username for the user to look up or create.
-        role: One of ENTERPRISE_LEARNER_ROLE, ENTERPRISE_ADMIN_ROLE, or
-          ENTERPRISE_OPERATOR_ROLE. Any other value is treated as
-          unrecognised and causes the function to return None.
-        enterprise_customer: The EnterpriseCustomer to scope the role
-          assignment to. Omit (or pass None) together with
-          applies_to_all_contexts=True for operator/super-admin users.
-        applies_to_all_contexts: If True, the system-wide role assignment
-          applies across all enterprise contexts rather than the specific
-          enterprise_customer.
+        role: The name of the system-wide role to assign, e.g. "enterprise_learner".
+        enterprise_customer: The EnterpriseCustomer to scope the role assignment to.
+        applies_to_all_contexts: If True, the system-wide role assignment applies to all enterprises.
+        email: Optional email address, passed through to the created User.
+        first_name: Optional given name, passed through to the created User.
+        last_name: Optional surname, passed through to the created User.
 
     Returns:
-        A dict with "user" and "role" keys describing the resulting
-        assignment, or None if role is not one of the recognised values.
+        The created or retrieved User, or None if role is not one of the
+        recognised values.
     """
-    valid_roles = [ENTERPRISE_LEARNER_ROLE, ENTERPRISE_ADMIN_ROLE, ENTERPRISE_OPERATOR_ROLE]
-    if role not in valid_roles:
+    if role not in SYSTEM_WIDE_ENTERPRISE_ROLES:
         LOGGER.warning('User not created. Role %s not recognised.', role)
         return None
 
     is_staff = role == ENTERPRISE_OPERATOR_ROLE
-    user = get_or_create_user(username, is_staff=is_staff)
+    user = get_or_create_user(
+        username=username,
+        email=email,
+        is_staff=is_staff,
+        first_name=first_name,
+        last_name=last_name,
+    )
 
-    _add_user_to_groups(user, role)
-    _create_system_wide_role_assignment(user, role, enterprise_customer, applies_to_all_contexts)
-    _create_feature_role_assignments(user, role)
+    _add_user_to_legacy_groups(user=user, role=role)
+    roles_api.assign_role(
+        user=user,
+        role_name=role,
+        enterprise_customer=enterprise_customer,
+        applies_to_all_contexts=applies_to_all_contexts,
+    )
 
-    return {'user': user, 'role': role}
+    return user
+
+
+def seed_global_operator_user() -> AbstractBaseUser | None:
+    """
+    Idempotently creates a global enterprise operator user.
+
+    Helpful for authenticating against this user in Postman for testing
+    enterprise API functionality.
+
+    Returns:
+        The created or retrieved User, or None if creation failed.
+    """
+    return get_or_create_enterprise_user(
+        username='enterprise_openedx_operator',
+        role=ENTERPRISE_OPERATOR_ROLE,
+        applies_to_all_contexts=True,
+    )
 
 
 def link_user_to_enterprise(
@@ -221,12 +361,6 @@ def link_user_to_enterprise(
 ) -> tuple[EnterpriseCustomerUser, bool]:
     """
     Creates or updates an EnterpriseCustomerUser linking a user to an enterprise.
-
-    Args:
-        user: The User to link.
-        enterprise_customer: The EnterpriseCustomer to link the user to.
-        active: Whether the link should be marked active. Updates the
-          active flag on an existing link.
 
     Returns:
         A tuple of (ecu, created) where ecu is the EnterpriseCustomerUser
@@ -247,6 +381,23 @@ def link_user_to_enterprise(
     return ecu, created
 
 
+def delete_user_and_enterprise_links(email: str) -> int:
+    """
+    Deletes any LMS user(s) with the given email along with their enterprise
+    associations, returning the number of users deleted.
+
+    Returns:
+        The number of User rows deleted (0 if none matched).
+    """
+    deleted_count = 0
+    for user in User.objects.filter(email=email):
+        EnterpriseCustomerUser.objects.filter(user_id=user.id).delete()
+        user.delete()
+        deleted_count += 1
+    PendingEnterpriseCustomerUser.objects.filter(user_email=email).delete()
+    return deleted_count
+
+
 def enroll_learner_in_course(
     user: AbstractBaseUser,
     course_id: str,
@@ -257,28 +408,25 @@ def enroll_learner_in_course(
     """
     Enrolls a user in a course under an enterprise customer.
 
+    This low-level enrollment helper can never be used in production, but is
+    indispensable for integration test environments and devstack provisioning
+    which cannot always use the standard enrollment code paths.
+
     Creates (idempotently):
-      - a platform CourseEnrollment
-      - an EnterpriseCourseEnrollment
-      - a DataSharingConsent record (granted=grant_dsc)
+      - CourseEnrollment
+      - EnterpriseCourseEnrollment
+      - DataSharingConsent
 
     Args:
         user: The User to enroll.
-        course_id: The course-run key (e.g. "course-v1:edX+DemoX+Demo_Course").
-        enterprise_customer: The EnterpriseCustomer that owns the
-          subsidized enrollment.
-        mode: The CourseEnrollment mode to use when creating the platform
-          enrollment. Has no effect when the platform enrollment already
-          exists.
-        grant_dsc: Whether the DataSharingConsent record should be marked
-          as granted.
+        course_id: The courserun key (e.g. "course-v1:edX+DemoX+Demo_Course").
+        enterprise_customer: The EnterpriseCustomer that owns the subsidized enrollment.
+        mode: The CourseEnrollment mode to use when creating the platform enrollment.
+        grant_dsc: Whether the DataSharingConsent record should be marked as granted.
 
     Raises:
         ValueError: course_id is not a valid course key.
-        EnterpriseCustomerUser.DoesNotExist: user is not already linked to
-            enterprise_customer. Callers must catch this and surface a
-            friendlier message (e.g. by calling link_user_to_enterprise
-            first, or by translating the exception at the CLI boundary).
+        EnterpriseCustomerUser.DoesNotExist: user is not already linked.
     """
     try:
         course_key = CourseKey.from_string(course_id)
@@ -336,43 +484,16 @@ def enroll_learner_in_course(
 # Internal helpers (not part of the public API)
 # ---------------------------------------------------------------------------
 
-def _add_user_to_groups(user: AbstractBaseUser, role: str) -> None:
-    """Adds non-learner users to the enterprise data/enrollment API groups."""
+def _add_user_to_legacy_groups(user: AbstractBaseUser, role: str) -> None:
+    """Adds non-learner users to the enterprise data/enrollment API groups.
+
+    Django groups are a legacy technique to authorize access to certain older
+    enterprise API endpoints, and is distinct from the newer edx-rbac
+    system-wide enterprise roles.  Until all the legacy APIs consumed by
+    frontend-app-admin-portal are modernized to leverage edx-rbac authz, this
+    step to provision the group memberships are still required.
+    """
     if role == ENTERPRISE_LEARNER_ROLE:
         return
     Group.objects.get(name=ENTERPRISE_DATA_API_ACCESS_GROUP).user_set.add(user)
     Group.objects.get(name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP).user_set.add(user)
-
-
-def _create_system_wide_role_assignment(
-    user: AbstractBaseUser,
-    role: str,
-    enterprise_customer: EnterpriseCustomer | None,
-    applies_to_all_contexts: bool,
-) -> None:
-    """Creates a system-wide role assignment if one does not already exist."""
-    system_role, _ = SystemWideEnterpriseRole.objects.get_or_create(name=role)
-    kwargs = {
-        'user': user,
-        'role': system_role,
-        'applies_to_all_contexts': applies_to_all_contexts,
-    }
-    if enterprise_customer is not None:
-        kwargs['enterprise_customer'] = enterprise_customer
-    if not SystemWideEnterpriseUserRoleAssignment.objects.filter(**kwargs).exists():
-        SystemWideEnterpriseUserRoleAssignment.objects.create(**kwargs)
-
-
-def _create_feature_role_assignments(user: AbstractBaseUser, role: str) -> None:
-    """Creates feature role assignments for admin/operator users."""
-    if role == ENTERPRISE_LEARNER_ROLE:
-        return
-    feature_roles = [
-        ENTERPRISE_CATALOG_ADMIN_ROLE,
-        ENTERPRISE_DASHBOARD_ADMIN_ROLE,
-        ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
-        ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
-    ]
-    for feature_role_name in feature_roles:
-        feature_role, _ = EnterpriseFeatureRole.objects.get_or_create(name=feature_role_name)
-        EnterpriseFeatureUserRoleAssignment.objects.get_or_create(user=user, role=feature_role)
