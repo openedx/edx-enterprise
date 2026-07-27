@@ -926,7 +926,7 @@ psutil==7.2.2
     #   edx-django-utils
 psycopg2-binary==2.9.12
     # via -r requirements/edx/kernel.in
-pyasn1==0.6.3
+pyasn1==0.6.4
     # via
     #   pgpy
     #   pyasn1-modules
