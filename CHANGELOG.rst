@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.7.2] - 2026-07-27
+---------------------
+* chore: upgrade python requirements
+
 [8.7.1] - 2026-07-17
 ---------------------
 * fix: hard delete EnterpriseGroup records instead of soft deleting them (ENT-12073)
