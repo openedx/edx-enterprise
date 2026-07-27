@@ -802,7 +802,7 @@ nh3==0.3.6
     # via
     #   -r requirements/edx/kernel.in
     #   xblocks-contrib
-nltk==3.9.4
+nltk==3.10.0
     # via chem
 nodeenv==1.10.0
     # via -r requirements/edx/kernel.in
