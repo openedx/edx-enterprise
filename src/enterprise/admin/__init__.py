@@ -1263,6 +1263,28 @@ class EnterpriseGroupAdmin(admin.ModelAdmin):
 
     autocomplete_fields = ['enterprise_customer']
 
+    def delete_queryset(self, request, queryset):
+        """
+        Hard delete each selected group individually via the model's overridden
+        ``delete()``. Bulk queryset deletes bypass instance-level overrides and
+        would otherwise soft-delete via ``SoftDeletableQuerySet.delete()``.
+        """
+        for group in queryset:
+            group.delete()
+
+    def save_model(self, request, obj, form, change):
+        """
+        Purge any legacy soft-deleted group with this name/customer before saving,
+        so groups created via the Django admin self-heal the same way the group
+        creation API does, instead of hitting a raw unique-constraint IntegrityError.
+        """
+        if not change:
+            models.EnterpriseGroup.purge_legacy_soft_deleted(
+                name=obj.name,
+                enterprise_customer=obj.enterprise_customer_id,
+            )
+        super().save_model(request, obj, form, change)
+
     def members(self, obj):
         """
         Return the non-deleted members of a group

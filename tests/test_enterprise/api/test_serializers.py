@@ -223,8 +223,8 @@ class TestEnterpriseGroupSerializer(APITest):
         assert not serializer.is_valid()
         assert serializer.errors.get('non_field_errors') == [self.duplicate_name_error]
 
-    def test_deleted_duplicate_group_name_returns_custom_error_message(self):
-        """Ensure soft-deleted duplicate group names are also blocked with the same validation message."""
+    def test_deleted_duplicate_group_name_is_allowed(self):
+        """Groups are hard deleted, so a deleted group's name no longer blocks creating a new one."""
         group = factories.EnterpriseGroupFactory(
             enterprise_customer=self.enterprise_customer,
             name=self.group_name,
@@ -232,8 +232,7 @@ class TestEnterpriseGroupSerializer(APITest):
         group.delete()
 
         serializer = self._serialize_group()
-        assert not serializer.is_valid()
-        assert serializer.errors.get('non_field_errors') == [self.duplicate_name_error]
+        assert serializer.is_valid()
 
 
 @mark.django_db

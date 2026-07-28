@@ -815,7 +815,7 @@ class EnterpriseGroupSerializer(serializers.ModelSerializer):
             'accepted_members_count', 'group_type', 'created')
         validators = [
             UniqueTogetherValidator(
-                queryset=models.EnterpriseGroup.all_objects.all(),
+                queryset=models.EnterpriseGroup.objects.all(),
                 fields=('name', 'enterprise_customer'),
                 message='A group with this name already exists. Please enter a unique name to create a new group.',
             )

@@ -8755,14 +8755,13 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.get(url + random_enterprise_query_param)
         assert not response.json().get('results')
 
+        # groups are hard deleted, so the deleted group and its cascaded membership no longer exist
         new_group.delete()
-        new_membership.delete()
         enterprise_unfiltered_response = self.client.get(url)
         assert len(enterprise_unfiltered_response.json().get('results')) == 0
         enterprise_query_param = "?include_deleted=true"
         enterprise_filtered_response = self.client.get(url + enterprise_query_param)
-        assert len(enterprise_filtered_response.json().get('results')) == 1
-        assert learner_filtered_response.json().get('results')[0].get('uuid') == str(new_group.uuid)
+        assert len(enterprise_filtered_response.json().get('results')) == 0
 
     def test_successful_post_group(self):
         """
@@ -8784,6 +8783,66 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.post(url, data=request_data)
         assert response.json().get('name') == 'foobar'
         assert len(EnterpriseGroup.objects.filter(name='foobar')) == 1
+
+    def test_post_group_cleans_up_legacy_soft_deleted_group(self):
+        """
+        Test that creating a group purges any legacy soft-deleted group of the same
+        name/customer, so it doesn't collide with the unique_together constraint.
+        """
+        url = settings.TEST_SERVER + reverse('enterprise-group-list')
+        new_customer = EnterpriseCustomerFactory()
+        legacy_group = EnterpriseGroupFactory(enterprise_customer=new_customer, name='foobar')
+        legacy_group.is_removed = True
+        legacy_group.save()
+        assert EnterpriseGroup.all_objects.filter(name='foobar', is_removed=True).count() == 1
+
+        request_data = {
+            'enterprise_customer': str(new_customer.uuid),
+            'name': 'foobar',
+        }
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, new_customer.pk)
+        response = self.client.post(url, data=request_data)
+        assert response.status_code == 201
+        assert EnterpriseGroup.all_objects.filter(name='foobar', is_removed=True).count() == 0
+        assert EnterpriseGroup.objects.filter(name='foobar', uuid=response.json().get('uuid')).count() == 1
+
+    def test_post_group_malformed_enterprise_customer_returns_400(self):
+        """
+        Test that a malformed enterprise_customer value returns a 400 validation error
+        rather than an unhandled 500 from the legacy soft-deleted group cleanup lookup.
+        """
+        url = settings.TEST_SERVER + reverse('enterprise-group-list')
+        request_data = {
+            'enterprise_customer': 'not-a-uuid',
+            'name': 'foobar',
+        }
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, 'not-a-uuid')
+        response = self.client.post(url, data=request_data)
+        assert response.status_code == 400
+
+    def test_post_group_cleanup_runs_even_if_create_later_fails(self):
+        """
+        Test that the legacy soft-deleted group cleanup happens even if the create
+        request ultimately fails validation for an unrelated reason (e.g. a missing
+        required field), since the cleanup runs before the serializer validates.
+        """
+        url = settings.TEST_SERVER + reverse('enterprise-group-list')
+        new_customer = EnterpriseCustomerFactory()
+        legacy_group = EnterpriseGroupFactory(enterprise_customer=new_customer, name='foobar')
+        legacy_group.is_removed = True
+        legacy_group.save()
+        assert EnterpriseGroup.all_objects.filter(name='foobar', is_removed=True).count() == 1
+
+        request_data = {
+            'enterprise_customer': str(new_customer.uuid),
+            'name': 'foobar',
+            'group_type': 'not-a-valid-group-type',
+        }
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, new_customer.pk)
+        response = self.client.post(url, data=request_data)
+        assert response.status_code == 400
+        assert EnterpriseGroup.all_objects.filter(name='foobar', is_removed=True).count() == 0
+        assert EnterpriseGroup.objects.filter(name='foobar').count() == 0
 
     def test_duplicate_group_name_returns_custom_error(self):
         """
@@ -8868,6 +8927,25 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.patch(url, data=request_data)
         assert response.json().get('name') == str(new_name)
 
+    def test_update_group_name_cleans_up_legacy_soft_deleted_group(self):
+        """
+        Test that renaming a group to a name that collides with a legacy
+        soft-deleted group purges that legacy row instead of hitting a raw
+        IntegrityError from the unique_together constraint.
+        """
+        legacy_group = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer, name='legacy-name')
+        legacy_group.is_removed = True
+        legacy_group.save()
+
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-detail',
+            kwargs={'pk': self.group_1.uuid},
+        )
+        response = self.client.patch(url, data={'name': 'legacy-name'})
+        assert response.status_code == 200
+        assert response.json().get('name') == 'legacy-name'
+        assert EnterpriseGroup.all_objects.filter(name='legacy-name', is_removed=True).count() == 0
+
     def test_successful_delete_group(self):
         """
         Test deleting a group record
@@ -8880,9 +8958,9 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         response = self.client.delete(url)
         assert response.status_code == 204
+        # groups are hard deleted (history is retained via django-simple-history)
         assert EnterpriseGroup.available_objects.filter(uuid=group_to_delete_uuid).count() == 0
-        assert EnterpriseGroup.all_objects.filter(uuid=group_to_delete_uuid).count() == 1
-        # if a group gets soft deleted, we still cascade and actually delete the memberships
+        assert EnterpriseGroup.all_objects.filter(uuid=group_to_delete_uuid).count() == 0
         assert EnterpriseGroupMembership.available_objects.filter(group=group_to_delete_uuid).count() == 0
         assert EnterpriseGroupMembership.all_objects.filter(group=group_to_delete_uuid).count() == 0
 

@@ -4773,6 +4773,47 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         unique_together = (("name", "enterprise_customer"),)
         ordering = ['-modified']
 
+    def delete(self, *args, **kwargs):
+        """
+        Hard delete groups instead of the default soft delete, relying on
+        django-simple-history (``self.history``) for the audit trail.
+        """
+        # Always hard delete, even if a caller explicitly passes soft=True.
+        kwargs['soft'] = False
+        super().delete(*args, **kwargs)
+
+    @classmethod
+    def purge_legacy_soft_deleted(cls, name, enterprise_customer):
+        """
+        Hard delete any legacy soft-deleted group with the given name and
+        enterprise_customer, so it doesn't collide with the unique_together
+        constraint when a new group with the same name is created.
+
+        Groups used to be soft-deleted, leaving rows behind that can conflict
+        with this constraint even though they're not visible in the admin or
+        API by default. Used by both the group creation API and the Django
+        admin, since bulk queryset deletes and the admin "Add" form don't go
+        through the model-level hard delete on their own.
+
+        Silently no-ops on a malformed ``enterprise_customer`` (e.g. not a
+        valid UUID), leaving normal field validation to surface that error.
+        """
+        try:
+            existing = cls.all_objects.filter(
+                name=name,
+                enterprise_customer=enterprise_customer,
+                is_removed=True,
+            )
+            deleted_count, _ = existing.delete()
+            if deleted_count:
+                LOGGER.info(
+                    'Hard-deleted %d legacy soft-deleted EnterpriseGroup record(s) with name "%s" '
+                    'for enterprise_customer %s before creating a new one.',
+                    deleted_count, name, enterprise_customer,
+                )
+        except (ValidationError, ValueError):
+            pass
+
     def _get_filtered_ecu_ids(self, user_query):
         """
         Filter a group's enterprise customer user members by their User email.

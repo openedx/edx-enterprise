@@ -2867,17 +2867,29 @@ class TestEnterpriseGroup(unittest.TestCase):
         with raises(Exception):
             factories.EnterpriseGroupFactory(name="foobar", enterprise_customer=group_1.enterprise_customer)
 
-    def test_enterprise_group_soft_delete(self):
+    def test_enterprise_group_hard_delete(self):
         """
-        Test ``EnterpriseGroup`` soft deletion property.
+        Test ``EnterpriseGroup`` deletion is a hard delete, not a soft delete.
         """
         group = factories.EnterpriseGroupFactory()
 
         assert EnterpriseGroup.all_objects.count() == 1
         assert EnterpriseGroup.available_objects.count() == 1
         group.delete()
-        assert EnterpriseGroup.all_objects.count() == 1
+        assert EnterpriseGroup.all_objects.count() == 0
         assert EnterpriseGroup.available_objects.count() == 0
+
+    def test_enterprise_group_hard_delete_preserves_history(self):
+        """
+        Test that hard deleting an ``EnterpriseGroup`` still records the deletion
+        in its django-simple-history audit trail.
+        """
+        group = factories.EnterpriseGroupFactory()
+        group_uuid = group.uuid
+        group.delete()
+
+        history_records = EnterpriseGroup.history.filter(uuid=group_uuid).order_by('history_date')
+        assert history_records.last().history_type == '-'
 
 
 @mark.django_db
