@@ -104,13 +104,13 @@ jshint: ## run Javascript linting
 	./node_modules/jshint/bin/jshint spec
 
 test: clean ## run python tests
-	py.test
+	uv run py.test
 
 jasmine: ## run javascript tests
-	jasmine
+	uv run jasmine
 
 diff_cover: test
-	diff-cover coverage.xml
+	uv run diff-cover coverage.xml
 
 validate: clean static test jasmine quality ## run all tests and quality checks
 
@@ -118,27 +118,27 @@ quality: pylint pycodestyle isort-check jshint pii_check ## run all quality chec
 
 pylint: ## Lint python code
 	touch tests/__init__.py
-	pylint -j 1 src/enterprise src/enterprise_learner_portal --clear-cache-post-run=y
-	pylint -j 1 src/consent src/integrated_channels --clear-cache-post-run=y
-	pylint -j 1 test_utils requirements/sync_platform_constraints.py --clear-cache-post-run=y
-	pylint -j 1 tests -v --clear-cache-post-run=y
+	uv run pylint -j 1 src/enterprise src/enterprise_learner_portal --clear-cache-post-run=y
+	uv run pylint -j 1 src/consent src/integrated_channels --clear-cache-post-run=y
+	uv run pylint -j 1 test_utils requirements/sync_platform_constraints.py --clear-cache-post-run=y
+	uv run pylint -j 1 tests -v --clear-cache-post-run=y
 	rm tests/__init__.py
 
 pycodestyle: ## Check python code style
-	pycodestyle src/enterprise src/enterprise_learner_portal src/consent src/integrated_channels tests test_utils
+	uv run pycodestyle src/enterprise src/enterprise_learner_portal src/consent src/integrated_channels tests test_utils
 
 pii_check: pii_clean
-	code_annotations django_find_annotations --config_file .pii_annotations.yml --lint --report --coverage
+	uv run code_annotations django_find_annotations --config_file .pii_annotations.yml --lint --report --coverage
 
 pii_clean:
 	rm -rf pii_report
 	mkdir -p pii_report
 
 isort: ## call isort on packages/files that are checked in quality tests
-	isort --skip migrations tests test_utils src/enterprise src/enterprise_learner_portal src/consent src/integrated_channels manage.py
+	uv run isort --skip migrations tests test_utils src/enterprise src/enterprise_learner_portal src/consent src/integrated_channels manage.py
 
 isort-check: ## call isort on packages/files that are checked in quality tests
-	isort --skip migrations --check-only --diff tests test_utils src/enterprise src/enterprise_learner_portal src/consent src/integrated_channels manage.py
+	uv run isort --skip migrations --check-only --diff tests test_utils src/enterprise src/enterprise_learner_portal src/consent src/integrated_channels manage.py
 
 ########################################################################
 # Docker shortcuts for managing a local test/quality container.        #
