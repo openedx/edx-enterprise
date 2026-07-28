@@ -147,6 +147,16 @@ ENTERPRISE_OPERATOR_ROLE = 'enterprise_openedx_operator'
 SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE = 'enterprise_catalog_admin'
 SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE = 'enterprise_provisioning_admin'
 
+# All recognised system-wide enterprise role names, used to validate role
+# assignment requests.
+SYSTEM_WIDE_ENTERPRISE_ROLES = frozenset({
+    ENTERPRISE_LEARNER_ROLE,
+    ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_OPERATOR_ROLE,
+    SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
+    SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
+})
+
 ENTERPRISE_DASHBOARD_ADMIN_ROLE = 'dashboard_admin'
 ENTERPRISE_CATALOG_ADMIN_ROLE = 'catalog_admin'
 ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE = 'enrollment_api_admin'

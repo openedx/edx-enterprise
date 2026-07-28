@@ -37,7 +37,7 @@ services:
     env_file: keycloak-devstack.env
     volumes:
       - ./keycloak-devstack.properties:/opt/keycloak-config-cli.properties:ro
-      - ./keycloak-devstack-realm.json:/config/keycloak-devstack-realm.json:ro
+      - ./keycloak-realms:/config:ro
     command: --spring.config.additional-location=/opt/keycloak-config-cli.properties
     networks:
       - devstack_default

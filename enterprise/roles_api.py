@@ -3,14 +3,21 @@ Python API for doing CRUD operations on roles and user role assignments.
 """
 from cache_memoize import cache_memoize
 
+from django.contrib.auth.base_user import AbstractBaseUser
+
 from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
     SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
+    SYSTEM_WIDE_ENTERPRISE_ROLES,
 )
-from enterprise.models import SystemWideEnterpriseRole, SystemWideEnterpriseUserRoleAssignment
+from enterprise.models import EnterpriseCustomer, SystemWideEnterpriseRole, SystemWideEnterpriseUserRoleAssignment
+
+
+class UnknownSystemWideRoleError(Exception):
+    """Raised when an unrecognised system-wide role name is requested."""
 
 
 # django-cache-memoize lets us explicitly declare a prefix
@@ -65,13 +72,48 @@ def roles_by_name():
     }
 
 
+def assign_role(
+    user: AbstractBaseUser,
+    role_name: str,
+    enterprise_customer: EnterpriseCustomer | None = None,
+    applies_to_all_contexts: bool = False,
+) -> tuple[SystemWideEnterpriseUserRoleAssignment, bool]:
+    """
+    Idempotently assigns the named system-wide role to the given user.
+
+    ``applies_to_all_contexts`` is only applied when the assignment is created;
+    it is not part of the lookup, so a repeat call returns the existing row
+    rather than attempting a duplicate insert.
+
+    Args:
+        user: The User to assign the role to.
+        role_name: The name of the system-wide role, e.g. "enterprise_learner".
+        enterprise_customer: The EnterpriseCustomer to scope the assignment to.
+        applies_to_all_contexts: If True, the assignment applies across all enterprises.
+
+    Returns:
+        A tuple of (assignment, created).
+
+    Raises:
+        UnknownSystemWideRoleError: if ``role_name`` is not a recognised role.
+    """
+    if role_name not in SYSTEM_WIDE_ENTERPRISE_ROLES:
+        raise UnknownSystemWideRoleError(role_name)
+    return SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+        user=user,
+        role=get_or_create_system_wide_role(role_name),
+        enterprise_customer=enterprise_customer,
+        defaults={'applies_to_all_contexts': applies_to_all_contexts},
+    )
+
+
 def assign_learner_role(user, enterprise_customer=None, applies_to_all_contexts=False):
     """
     Assigns the given user the `enterprise_learner` role in the given customer.
     """
-    return SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
-        user=user,
-        role=learner_role(),
+    return assign_role(
+        user,
+        ENTERPRISE_LEARNER_ROLE,
         enterprise_customer=enterprise_customer,
         applies_to_all_contexts=applies_to_all_contexts,
     )
@@ -81,9 +123,9 @@ def assign_admin_role(user, enterprise_customer=None, applies_to_all_contexts=Fa
     """
     Assigns the given user the `enterprise_admin` role in the given customer.
     """
-    return SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
-        user=user,
-        role=admin_role(),
+    return assign_role(
+        user,
+        ENTERPRISE_ADMIN_ROLE,
         enterprise_customer=enterprise_customer,
         applies_to_all_contexts=applies_to_all_contexts,
     )

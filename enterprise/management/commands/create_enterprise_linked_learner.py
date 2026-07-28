@@ -57,7 +57,7 @@ class Command(BaseCommand):
                 "Passing the same enterprise twice would overwrite the link and flip it inactive."
             )
 
-        user = get_or_create_user(username)
+        user = get_or_create_user(username=username)
 
         for index, name in enumerate(enterprise_names):
             try:
