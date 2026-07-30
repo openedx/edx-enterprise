@@ -169,6 +169,20 @@ build_command = "pip install build && SETUPTOOLS_SCM_PRETEND_VERSION=$NEW_VERSIO
 # batch and so this repo never auto-jumps to 1.0.0 if it's ever reset to 0.x.
 major_on_zero = false
 allow_zero_version = true
+# This repo's tags are bare "X.Y.Z" (no "v" prefix) -- confirmed via
+# `git tag --sort=-v:refname`, e.g. 8.7.2, 8.7.1, 8.7.0. PSR's default
+# tag_format is "v{version}", which would silently fail to recognize any of
+# these as a prior release and compute the next version as if starting from
+# scratch.
+tag_format = "{version}"
+
+[tool.semantic_release.changelog]
+mode = "update"
+insertion_flag = ".. changelog-insertion-marker"
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.rst"
+output_format = "rst"
 
 [tool.uv]
 package = true
