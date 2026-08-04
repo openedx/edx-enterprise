@@ -12,11 +12,11 @@ aniso8601==10.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   tincan
-anyio==4.14.1
+anyio==4.14.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   httpx
-asgiref==3.11.1
+asgiref==3.12.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django
@@ -46,7 +46,7 @@ celery==5.6.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-certifi==2026.6.17
+certifi==2026.7.22
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   httpcore
@@ -155,7 +155,7 @@ django-fernet-fields-v2==0.9
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-filter==25.2
+django-filter==26.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -184,7 +184,7 @@ django-push-notifications==3.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-ace
-django-simple-history==3.12.0
+django-simple-history==3.13.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -278,14 +278,14 @@ firebase-admin==7.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-ace
-google-api-core[grpc]==2.31.0
+google-api-core[grpc]==2.33.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.55.1
+google-auth==2.56.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
@@ -301,7 +301,7 @@ google-cloud-firestore==2.28.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
-google-cloud-storage==3.12.0
+google-cloud-storage==3.13.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
@@ -319,13 +319,13 @@ googleapis-common-protos==1.75.0
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
     #   grpcio-status
-grpcio==1.82.0
+grpcio==1.83.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
     #   google-cloud-firestore
     #   grpcio-status
-grpcio-status==1.82.0
+grpcio-status==1.83.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
@@ -333,7 +333,7 @@ h11==0.16.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   httpcore
-h2==4.3.0
+h2==4.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   httpx
@@ -448,11 +448,11 @@ pillow==12.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-prompt-toolkit==3.0.52
+prompt-toolkit==3.0.53
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   click-repl
-proto-plus==1.28.0
+proto-plus==1.28.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
@@ -469,7 +469,7 @@ psutil==7.2.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
-pyasn1==0.6.3
+pyasn1==0.6.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   pgpy
@@ -521,7 +521,7 @@ python3-saml==1.16.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-pytz==2026.2
+pytz==2026.3.post1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -583,7 +583,7 @@ social-auth-app-django==5.4.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-social-auth-core==5.0.2
+social-auth-core==4.9.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   social-auth-app-django
@@ -599,7 +599,7 @@ stevedore==5.9.0
     #   edx-ace
     #   edx-django-utils
     #   edx-opaque-keys
-testfixtures==12.2.0
+testfixtures==12.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -620,7 +620,7 @@ typing-extensions==4.16.0
     #   grpcio
     #   jwcrypto
     #   testfixtures
-tzdata==2026.2
+tzdata==2026.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   kombu
