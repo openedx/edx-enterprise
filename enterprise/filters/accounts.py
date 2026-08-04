@@ -1,5 +1,5 @@
 """
-Pipeline step for determining read-only account settings fields.
+Pipeline steps for account-related filters.
 """
 import logging
 
@@ -12,6 +12,13 @@ try:
     from common.djangoapps import third_party_auth
 except ImportError:
     third_party_auth = None
+
+# TODO: In ENT-11576 This function will be migrated from the platform's enterprise_support module
+# into edx-enterprise, eliminating this cross-boundary import.
+try:
+    from openedx.features.enterprise_support.utils import is_enterprise_learner
+except ImportError:
+    is_enterprise_learner = None
 
 from enterprise.models import EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser
 
@@ -112,3 +119,26 @@ class AccountSettingsEnterpriseReadOnlyFieldsStep(PipelineStep):
 
         # Logical branch #2 and #3
         return {"readonly_fields": readonly_fields | enterprise_readonly, "user": user}
+
+
+class ActivationEmailEnterpriseContextEnricher(PipelineStep):
+    """
+    Adds ``is_enterprise_learner`` to the activation email's message context.
+
+    This step is intended to be registered as a pipeline step for the
+    ``org.openedx.learning.account.activation.email.compose.v1`` filter.
+    """
+
+    def run_filter(self, user, message_context):  # pylint: disable=arguments-differ
+        """
+        Add the enterprise learner flag to the activation email message context.
+
+        Arguments:
+            user (User): the Django User the activation email is being composed for.
+            message_context (dict): context dictionary used to render the activation email.
+
+        Returns:
+            dict: updated pipeline data with ``user`` and ``message_context`` keys.
+        """
+        message_context['is_enterprise_learner'] = is_enterprise_learner(user)
+        return {"user": user, "message_context": message_context}

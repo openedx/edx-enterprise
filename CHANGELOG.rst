@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.10.0] - 2026-09-03
+---------------------
+* feat: Implement AccountActivationEmailComposed filter
+
 [8.9.4] - 2026-08-27
 ---------------------
 * fix: add Django admin helper text for ``enable_demo_data_for_analytics_and_lpr`` explaining that
