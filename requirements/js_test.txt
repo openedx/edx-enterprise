@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-annotated-doc==0.0.4
+annotated-doc==0.0.5
     # via typer
 attrs==26.1.0
     # via
@@ -98,7 +98,7 @@ trio==0.33.0
     #   trio-websocket
 trio-websocket==0.12.2
     # via selenium
-typer==0.27.0
+typer==0.27.1
     # via typer-slim
 typer-slim==0.24.0
     # via jaraco-text
