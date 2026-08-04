@@ -78,6 +78,10 @@ ENTERPRISE_FILTERS_CONFIG: FiltersConfig = {
         "fail_silently": False,
         "pipeline": ["enterprise.filters.logistration.PostLoginEnterpriseRedirect"],
     },
+    "org.openedx.authentication.account_activation.email.context.generated.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.ActivationEmailEnterpriseContextEnricher"],
+    },
 }
 
 

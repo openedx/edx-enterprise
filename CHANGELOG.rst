@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.14.0] - 2026-09-16
+----------------------
+* feat: Add ``ActivationEmailEnterpriseContextEnricher`` pipeline step for the
+  ``AccountActivationEmailContextGenerated`` filter (ENT-11816)
+
 [8.13.0] - 2026-09-14
 ----------------------
 * Changed ``SupportEnterpriseEnrollmentDataInjector`` to accept/return the full enrollments list
