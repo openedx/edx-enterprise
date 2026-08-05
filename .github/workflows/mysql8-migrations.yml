@@ -33,17 +33,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libxmlsec1-dev
-    - name: Get pip cache dir
-      id: pip-cache-dir
-      run: |
-        echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
-    - name: Cache pip dependencies
-      id: cache-dependencies
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+    - name: Install uv
+      uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
       with:
-        path: ${{ steps.pip-cache-dir.outputs.dir }}
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/pip_tools.txt') }}
-        restore-keys: ${{ runner.os }}-pip-
+        enable-cache: true
 
     - name: Ubuntu and sql Versions
       run: |
@@ -51,13 +44,11 @@ jobs:
         mysql -V
     - name: Install Python dependencies
       run: |
-        pip install -qr requirements/dev.txt --exists-action w
-        pip-sync requirements/test-master.txt requirements/dev.txt requirements/private.* requirements/test.txt
-        pip uninstall -y mysqlclient
-        pip install --no-binary mysqlclient mysqlclient
-        pip uninstall -y xmlsec
-        pip install --no-binary xmlsec xmlsec
-        pip install backports.zoneinfo
+        uv sync --group dev
+        uv pip uninstall mysqlclient
+        uv pip install --no-binary mysqlclient mysqlclient
+        uv pip uninstall xmlsec
+        uv pip install --no-binary xmlsec xmlsec
     - name: Initiate Services
       run: |
         sudo /etc/init.d/mysql start
@@ -78,5 +69,5 @@ jobs:
       run: |
         echo "CREATE DATABASE IF NOT EXISTS enterprise;" | sudo mysql -u root
         echo "Running the migrations."
-        python manage.py migrate --settings=enterprise.settings.test
+        uv run python manage.py migrate --settings=enterprise.settings.test
         echo "use mysql; select * from user;" | sudo mysql -u root
