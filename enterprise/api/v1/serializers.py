@@ -255,9 +255,12 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_academies', 'enable_one_academy', 'active_integrations',
             'show_videos_in_learner_portal_search_results',
             'default_language', 'country', 'enable_slug_login', 'enable_learner_credit_message_box',
+            'show_non_production_banner',
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
+    # Derived from the customer type, which is only configurable via Django admin.
+    show_non_production_banner = serializers.BooleanField(read_only=True)
     site = SiteField(required=True)
     branding_configuration = serializers.SerializerMethodField()
     enterprise_customer_catalogs = serializers.SerializerMethodField()
