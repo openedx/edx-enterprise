@@ -1,0 +1,45 @@
+scripts/provision-integration-test-ENT-11568.sh
+  s_ee09f6084a28ba::t_ac474822bc785a 100,103-106,108-109,117,137,142,149-166,174-201,204,207-215,224,228,240,242,244-252
+  s_ee09f6084a28ba::t_a295fa1098c45b 111-113,115-116,136,138-139,147,167-168,206,221-223,226,229
+  s_ee09f6084a28ba::t_cdd222e68f9d2d 70
+  s_ee09f6084a28ba::t_f1359779de9106 118-119,128-129
+  s_ee09f6084a28ba::t_6a1a569263e0f3 6
+  s_ee09f6084a28ba::t_d6d2b2c9d4ab70 120-125,145
+  s_ee09f6084a28ba::t_caa3527cfb0302 8
+  s_ee09f6084a28ba::t_334f8121ccd391 9-10
+  s_ee09f6084a28ba::t_16340775714196 67-69
+  s_ee09f6084a28ba::t_3a6c1db6fdba44 71-72
+  s_ee09f6084a28ba::t_2065293e2d3a1b 126-127
+  s_ee09f6084a28ba::t_d16b8286049b4b 135
+  s_ee09f6084a28ba::t_f9b8429ff791c0 141
+  s_ee09f6084a28ba::t_b4d01c0c57af84 143-144
+  s_ee09f6084a28ba::t_e2e56febf31bd2 146
+  s_ee09f6084a28ba::t_6cfe431741a2d8 148
+  s_ee09f6084a28ba::t_f830a77635a02a 169-173
+  s_ee09f6084a28ba::t_e9c93a2c999da6 202-203
+  s_ee09f6084a28ba::t_c6168c62d0be64 205
+  s_ee09f6084a28ba::t_8d4e852bbb2016 216-220
+  s_ee09f6084a28ba::t_44cbde232cb05f 225
+  s_ee09f6084a28ba::t_91b4b99e0c34d0 227
+  s_ee09f6084a28ba::t_67ac897ec54f44 230-232
+  s_ee09f6084a28ba::t_b19f36961ba8e1 237-239
+  s_ee09f6084a28ba::t_f5dd0d71ad7763 241
+  s_ee09f6084a28ba::t_87fc21c5038989 243
+  s_ee09f6084a28ba::t_cc2de798c0aa18 253
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "c25f1fb1f173505e30ac0239e7f1ab92577880b4",
+  "prompts": {},
+  "sessions": {
+    "s_ee09f6084a28ba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e4b093a3-5167-414a-9fc9-a94b440d3e27",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Troy Sankey <tsankey@2u.com>"
+    }
+  }
+}
