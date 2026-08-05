@@ -309,3 +309,6 @@ GROUP_TYPE_CHOICES = (
 ENTITY_ID_REGEX = r"<(\w+:)?EntityDescriptor.*?entityID=['\"](.*?)['\"].*?>"
 # Max learners included in the Admin Manage Learners page
 DJANGO_ADMIN_MANAGE_LEARNERS_LIMIT = 10000
+
+# Enterprise customer types
+NON_PRODUCTION_CUSTOMER_TYPE = 'Non-production'

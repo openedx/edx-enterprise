@@ -57,6 +57,7 @@ from enterprise.constants import (
     GROUP_TYPE_CHOICES,
     GROUP_TYPE_FLEX,
     MAX_INVITE_KEYS,
+    NON_PRODUCTION_CUSTOMER_TYPE,
     DefaultColors,
     FulfillmentTypes,
     json_serialized_course_modes,
@@ -318,7 +319,11 @@ class EnterpriseCustomer(TimeStampedModel):
         EnterpriseCustomerType,
         verbose_name=_('Customer Type'),
         default=get_default_customer_type,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        help_text=_(
+            'Selecting the "Non-production" customer type displays a banner in the administrator and learner '
+            'portals indicating that this is not a production portal.'
+        )
     )
 
     disable_expiry_messaging_for_learner_credit = models.BooleanField(
@@ -679,6 +684,24 @@ class EnterpriseCustomer(TimeStampedModel):
         Determine whether the enterprise customer has enabled the ability to report/pass-back audit track data.
         """
         return self.enable_audit_enrollment and self.enable_audit_data_reporting
+
+    @property
+    def is_non_production_customer(self):
+        """
+        Determine whether this enterprise customer is configured as a non-production customer.
+        """
+        return self.customer_type is not None and self.customer_type.name == NON_PRODUCTION_CUSTOMER_TYPE
+
+    @property
+    def show_non_production_banner(self):
+        """
+        Determine whether the non-production portal banner should be displayed for this enterprise customer.
+
+        The customer type is the single source of truth: assigning the ``Non-production`` customer type
+        surfaces the banner, and switching back to a production type immediately hides it again. There is
+        no separate opt-in toggle.
+        """
+        return self.is_non_production_customer
 
     @property
     def serialized(self):
