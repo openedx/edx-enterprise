@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.8.0] - 2026-08-04
+---------------------
+* feat: add non-production portal banner configuration
+
 [8.7.3] - 2026-07-27
 ---------------------
 * feat: add multiple SSO tenants during devstack provisioning
