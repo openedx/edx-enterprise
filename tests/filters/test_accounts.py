@@ -5,7 +5,13 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase, override_settings
 
-from enterprise.filters.accounts import AccountSettingsEnterpriseReadOnlyFieldsStep
+from enterprise.filters.accounts import (
+    AccountSettingsEnterpriseReadOnlyFieldsStep,
+    ActivationEmailEnterpriseContextEnricher,
+    ActivationRedirectEnterpriseStep,
+)
+from enterprise.models import EnterpriseCustomerUser
+from test_utils.factories import EnterpriseCustomerUserFactory, UserFactory
 
 
 class TestAccountSettingsEnterpriseReadOnlyFieldsStep(TestCase):
@@ -260,3 +266,109 @@ class TestAccountSettingsEnterpriseReadOnlyFieldsStep(TestCase):
         self.assertNotIn('name', result["readonly_fields"])
         self.assertIn('email', result["readonly_fields"])
         mock_user_social_auth.objects.filter.assert_not_called()
+
+
+def _is_enterprise_learner_via_db(user):
+    """
+    Stand-in for the platform's ``is_enterprise_learner``: a real DB lookup against
+    ``EnterpriseCustomerUser`` rather than a canned boolean. The real function lives in
+    ``openedx.features.enterprise_support.utils`` (ENT-11576 tracks migrating it into
+    edx-enterprise) and isn't importable outside a full LMS install, so it must still be
+    patched here — but the patched behavior is driven by real factory-created rows.
+    """
+    return EnterpriseCustomerUser.objects.filter(user_id=user.id).exists()
+
+
+_IS_ENTERPRISE_LEARNER_PATH = 'enterprise.filters.accounts.is_enterprise_learner'
+
+
+class TestActivationEmailEnterpriseContextEnricher(TestCase):
+    """
+    Tests for ActivationEmailEnterpriseContextEnricher pipeline step.
+    """
+
+    def _make_step(self):
+        return ActivationEmailEnterpriseContextEnricher(
+            "org.openedx.learning.account.activation.email.compose.v1",
+            [],
+        )
+
+    @patch(_IS_ENTERPRISE_LEARNER_PATH, side_effect=_is_enterprise_learner_via_db)
+    def test_flags_enterprise_linked_user(self, _mock_is_enterprise_learner):
+        """
+        A user linked to an enterprise customer gets is_enterprise_learner=True in the
+        message context.
+        """
+        user = UserFactory()
+        EnterpriseCustomerUserFactory(user_id=user.id)
+        message_context = {'key': 'abc123'}
+
+        step = self._make_step()
+        result = step.run_filter(user=user, message_context=message_context)
+
+        self.assertTrue(result['message_context']['is_enterprise_learner'])
+        self.assertIs(result['user'], user)
+
+    @patch(_IS_ENTERPRISE_LEARNER_PATH, side_effect=_is_enterprise_learner_via_db)
+    def test_does_not_flag_unlinked_user(self, _mock_is_enterprise_learner):
+        """
+        A user with no enterprise link gets is_enterprise_learner=False in the message context.
+        """
+        user = UserFactory()
+        message_context = {'key': 'abc123'}
+
+        step = self._make_step()
+        result = step.run_filter(user=user, message_context=message_context)
+
+        self.assertFalse(result['message_context']['is_enterprise_learner'])
+
+
+class TestActivationRedirectEnterpriseStep(TestCase):
+    """
+    Tests for ActivationRedirectEnterpriseStep pipeline step.
+    """
+
+    def _make_step(self):
+        return ActivationRedirectEnterpriseStep(
+            "org.openedx.learning.account.activation.completed.v1",
+            [],
+        )
+
+    @patch(_IS_ENTERPRISE_LEARNER_PATH, side_effect=_is_enterprise_learner_via_db)
+    def test_preserves_redirect_for_enterprise_learner(self, _mock_is_enterprise_learner):
+        """
+        An enterprise-linked user with a redirect_url keeps it.
+        """
+        user = UserFactory()
+        EnterpriseCustomerUserFactory(user_id=user.id)
+
+        step = self._make_step()
+        result = step.run_filter(user=user, redirect_url='https://example.com/next')
+
+        self.assertEqual(result['redirect_url'], 'https://example.com/next')
+
+    @patch(_IS_ENTERPRISE_LEARNER_PATH, side_effect=_is_enterprise_learner_via_db)
+    def test_clears_redirect_for_non_enterprise_learner(self, _mock_is_enterprise_learner):
+        """
+        A non-enterprise user's redirect_url is cleared so the caller falls back to the
+        dashboard.
+        """
+        user = UserFactory()
+
+        step = self._make_step()
+        result = step.run_filter(user=user, redirect_url='https://example.com/next')
+
+        self.assertEqual(result['redirect_url'], '')
+
+    @patch(_IS_ENTERPRISE_LEARNER_PATH, side_effect=_is_enterprise_learner_via_db)
+    def test_clears_when_no_redirect_url(self, _mock_is_enterprise_learner):
+        """
+        Even for an enterprise learner, an empty redirect_url stays empty.
+        """
+        user = UserFactory()
+        EnterpriseCustomerUserFactory(user_id=user.id)
+
+        step = self._make_step()
+        result = step.run_filter(user=user, redirect_url='')
+
+        self.assertEqual(result['redirect_url'], '')
