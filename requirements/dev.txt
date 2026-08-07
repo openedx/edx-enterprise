@@ -329,6 +329,7 @@ docutils==0.21.2
     # via
     #   -r requirements/doc.txt
     #   doc8
+    #   myst-parser
     #   pydata-sphinx-theme
     #   readme-renderer
     #   restructuredtext-lint
@@ -596,8 +597,10 @@ jinja2==3.1.6
     #   -r requirements/test.txt
     #   code-annotations
     #   diff-cover
+    #   myst-parser
     #   pydata-sphinx-theme
     #   sphinx
+    #   sphinxcontrib-mermaid
 jsondiff==2.2.1
     # via
     #   -r requirements/doc.txt
@@ -631,6 +634,11 @@ lxml[html-clean]==5.3.2
     #   xmlsec
 lxml-html-clean==0.4.4
     # via lxml
+markdown-it-py==4.2.0
+    # via
+    #   -r requirements/doc.txt
+    #   mdit-py-plugins
+    #   myst-parser
 markupsafe==3.0.3
     # via
     #   -r requirements/doc.txt
@@ -639,6 +647,14 @@ markupsafe==3.0.3
     #   jinja2
 mccabe==0.7.0
     # via pylint
+mdit-py-plugins==0.6.1
+    # via
+    #   -r requirements/doc.txt
+    #   myst-parser
+mdurl==0.1.2
+    # via
+    #   -r requirements/doc.txt
+    #   markdown-it-py
 mock==5.2.0
     # via -r requirements/test.txt
 model-bakery==1.24.0
@@ -651,6 +667,8 @@ msgpack==1.2.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   cachecontrol
+myst-parser==5.1.0
+    # via -r requirements/doc.txt
 nh3==0.3.6
     # via
     #   -r requirements/doc.txt
@@ -673,7 +691,7 @@ openedx-events==11.2.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-openedx-filters==3.8.0
+openedx-filters==3.9.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -911,7 +929,9 @@ pyyaml==6.0.3
     #   drf-yasg
     #   edx-i18n-tools
     #   jsondiff
+    #   myst-parser
     #   responses
+    #   sphinxcontrib-mermaid
 readme-renderer==45.0
     # via -r requirements/doc.txt
 requests==2.34.2
@@ -1019,8 +1039,10 @@ sphinx==8.2.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
+    #   myst-parser
     #   pydata-sphinx-theme
     #   sphinx-book-theme
+    #   sphinxcontrib-mermaid
 sphinx-book-theme==1.4.0
     # via -r requirements/doc.txt
 sphinxcontrib-applehelp==2.0.0
@@ -1039,6 +1061,8 @@ sphinxcontrib-jsmath==1.0.1
     # via
     #   -r requirements/doc.txt
     #   sphinx
+sphinxcontrib-mermaid==2.1.0
+    # via -r requirements/doc.txt
 sphinxcontrib-qthelp==2.0.0
     # via
     #   -r requirements/doc.txt
