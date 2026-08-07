@@ -1,0 +1,27 @@
+requirements/dev.txt
+  s_36ffe2f7109ad6::t_0a88d360c89063 332,600,603,637-641,650-657,670-671,694,932,934,1042,1045,1064-1065
+requirements/doc.txt
+  s_36ffe2f7109ad6::t_6de669c54ed728 198,367,370,388-391,396-399,404-405,418,534-535,601,604,615-616
+requirements/edx-platform-constraints.txt
+  s_36ffe2f7109ad6::t_85c1131dfebd72 862
+requirements/test-master.txt
+  s_36ffe2f7109ad6::t_965937fd86bf0f 422
+requirements/test.txt
+  s_36ffe2f7109ad6::t_cf0162b56a52b2 397
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "cca29e572ccf29631889bbbd135ab88b55d84d57",
+  "prompts": {},
+  "sessions": {
+    "s_36ffe2f7109ad6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a37d08a6-99bd-422e-bf12-daa8d1671caf",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Troy Sankey <tsankey@2u.com>"
+    }
+  }
+}
