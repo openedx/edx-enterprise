@@ -160,7 +160,7 @@ exclude = ["*tests*"]
 [tool.setuptools_scm]
 version_scheme = "only-version"
 local_scheme = "no-local-version"
-fallback_version = "0.0.0.dev0"
+fallback_version = "0.0.0"
 
 [tool.semantic_release]
 build_command = "pip install build && SETUPTOOLS_SCM_PRETEND_VERSION=$NEW_VERSION python -m build"
