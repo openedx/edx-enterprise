@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.9.0] - 2026-08-10
+---------------------
+* feat: add non-production portal banner configuration
+
 [8.8.0] - 2026-08-07
 ---------------------
 * feat: add pipeline steps for logistration filters

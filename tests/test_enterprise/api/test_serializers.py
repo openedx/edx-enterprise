@@ -32,10 +32,11 @@ from enterprise.api.v1.serializers import (
     EnterpriseUserSerializer,
     ImmutableStateSerializer,
 )
-from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE, NON_PRODUCTION_CUSTOMER_TYPE
 from enterprise.models import (
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerSupportUsersView,
+    EnterpriseCustomerType,
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
@@ -188,6 +189,30 @@ class TestEnterpriseCustomerSerializer(BaseSerializerTestWithEnterpriseRoleAssig
         expected_auth_org_id = self.enterprise_customer_1.auth_org_id
         serialized_auth_org_id = serializer.data['auth_org_id']
         self.assertEqual(serialized_auth_org_id, expected_auth_org_id)
+
+    def test_serialize_non_production_banner_hidden_for_production_customer_type(self):
+        serializer = EnterpriseCustomerSerializer(self.enterprise_customer_1)
+        self.assertFalse(serializer.data['show_non_production_banner'])
+
+    def test_serialize_non_production_banner_shown_for_non_production_customer_type(self):
+        """
+        Assigning the ``Non-production`` customer type is the only thing needed to surface the banner.
+        """
+        non_production_type, __ = EnterpriseCustomerType.objects.get_or_create(name=NON_PRODUCTION_CUSTOMER_TYPE)
+        self.enterprise_customer_1.customer_type = non_production_type
+        self.enterprise_customer_1.save()
+
+        serializer = EnterpriseCustomerSerializer(self.enterprise_customer_1)
+        self.assertTrue(serializer.data['show_non_production_banner'])
+
+    def test_non_production_banner_field_is_read_only(self):
+        serializer = EnterpriseCustomerSerializer(
+            self.enterprise_customer_1,
+            data={'show_non_production_banner': True},
+            partial=True,
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertNotIn('show_non_production_banner', serializer.validated_data)
 
 
 @mark.django_db
