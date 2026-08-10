@@ -408,7 +408,7 @@ constraint-dependencies = [
     "openedx-django-require==3.0.0",
     "openedx-django-wiki==3.1.2",
     "openedx-events==11.2.0",
-    "openedx-filters==3.7.0",
+    "openedx-filters==3.9.0",
     "openedx-forum==0.4.3",
     "optimizely-sdk==5.5.0",
     "ora2==7.1.0",

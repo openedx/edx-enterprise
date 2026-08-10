@@ -215,7 +215,7 @@ constraints = [
     { name = "openedx-django-require", specifier = "==3.0.0" },
     { name = "openedx-django-wiki", specifier = "==3.1.2" },
     { name = "openedx-events", specifier = "==11.2.0" },
-    { name = "openedx-filters", specifier = "==3.7.0" },
+    { name = "openedx-filters", specifier = "==3.9.0" },
     { name = "openedx-forum", specifier = "==0.4.3" },
     { name = "optimizely-sdk", specifier = "==5.5.0" },
     { name = "ora2", specifier = "==7.1.0" },
@@ -2815,16 +2815,16 @@ wheels = [
 
 [[package]]
 name = "openedx-filters"
-version = "3.7.0"
+version = "3.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "edx-opaque-keys" },
     { name = "setuptools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/47/c8/d4b0838db8f6a99f1b47029b23515ab2d714e2680f805f6be0ede37df419/openedx_filters-3.7.0.tar.gz", hash = "sha256:a71e8cf34ff54c6304aa649c1b6063e9607c0ea8e17c6e6510b10585dcade529", size = 45678, upload-time = "2026-06-24T17:35:22.564Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ed/54/34ff71ff7ac30feff9b76f4961b1ad1561010d2b218afb30c44ac2e81361/openedx_filters-3.9.0.tar.gz", hash = "sha256:928c159c9d215172f82cc894a06ada805b7a0c53a3ab1d148efefa1209efe4d5", size = 51210, upload-time = "2026-08-07T00:39:07.819Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/59/860d68c79894a19fd0e5945dfeb55e84c93b039445c7d61e91dae9835fac/openedx_filters-3.7.0-py2.py3-none-any.whl", hash = "sha256:f76f3db6620d74bdb8e06222de8142efc0333544c79912b4a05c05114806a3d6", size = 43067, upload-time = "2026-06-24T17:35:21.367Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/98/eccd5dd4e25996209ddb623c74c219f0961c92cd6fed1b630483bc872039/openedx_filters-3.9.0-py2.py3-none-any.whl", hash = "sha256:a29bfd0c897d53f5567bf6205ffbb3ea2688aacbbb9c3f5071010d3ab3534412", size = 50085, upload-time = "2026-08-07T00:39:06.47Z" },
 ]
 
 [[package]]
