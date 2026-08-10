@@ -19,6 +19,24 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.8.0] - 2026-08-07
+---------------------
+* feat: add pipeline steps for logistration filters
+
+[8.7.3] - 2026-07-27
+---------------------
+* feat: add multiple SSO tenants during devstack provisioning
+
+  * The real reason for the version bump: Added ``assign_system_wide_enterprise_role`` management command and updated other ones.
+
+[8.7.2] - 2026-07-27
+---------------------
+* chore: upgrade python requirements
+
+[8.7.1] - 2026-07-17
+---------------------
+* fix: hard delete EnterpriseGroup records instead of soft deleting them (ENT-12073)
+
 [8.7.0] - 2026-07-16
 ---------------------
 * feat: add CalculateEnterpriseDiscountedPrice pipeline step
