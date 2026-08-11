@@ -42,6 +42,7 @@ from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
+    NON_PRODUCTION_CUSTOMER_TYPE,
 )
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.models import (
@@ -55,6 +56,7 @@ from enterprise.models import (
     EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerSsoConfiguration,
+    EnterpriseCustomerType,
     EnterpriseCustomerUser,
     EnterpriseGroup,
     EnterpriseGroupMembership,
@@ -372,6 +374,36 @@ class TestEnterpriseCustomer(unittest.TestCase):
         ent_idp_two = factories.EnterpriseCustomerIdentityProviderFactory(enterprise_customer=customer)
         assert customer.identity_providers[0] == ent_idp_one
         assert customer.identity_providers[1] == ent_idp_two
+
+    @ddt.data(
+        # (customer type name, is_non_production_customer / show_non_production_banner)
+        (NON_PRODUCTION_CUSTOMER_TYPE, True),
+        ('Enterprise', False),
+        ('Bulk Purchase', False),
+    )
+    @ddt.unpack
+    def test_non_production_banner_properties(self, customer_type_name, expected_non_production):
+        """
+        The banner is shown exactly when the customer type is ``Non-production``.
+        """
+        customer_type, __ = EnterpriseCustomerType.objects.get_or_create(name=customer_type_name)
+        customer = factories.EnterpriseCustomerFactory(customer_type=customer_type)
+        assert customer.is_non_production_customer == expected_non_production
+        assert customer.show_non_production_banner == expected_non_production
+
+    def test_non_production_banner_hidden_after_switching_customer_type(self):
+        """
+        Switching a non-production customer back to a production type immediately hides the banner.
+        """
+        non_production_type, __ = EnterpriseCustomerType.objects.get_or_create(name=NON_PRODUCTION_CUSTOMER_TYPE)
+        production_type, __ = EnterpriseCustomerType.objects.get_or_create(name='Enterprise')
+        customer = factories.EnterpriseCustomerFactory(customer_type=non_production_type)
+        assert customer.show_non_production_banner
+
+        customer.customer_type = production_type
+        customer.save()
+
+        assert not customer.show_non_production_banner
 
     def test_tpa_hint_with_no_identity_provider_attached(self):
         """
