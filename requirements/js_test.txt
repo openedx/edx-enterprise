@@ -78,7 +78,7 @@ pyyaml==6.0.3
     # via jasmine
 rich==15.0.0
     # via typer
-selenium==4.46.0
+selenium==4.47.0
     # via jasmine
 shellingham==1.5.4
     # via typer
@@ -92,7 +92,7 @@ tempora==5.12.0
     # via
     #   -r requirements/js_test.in
     #   portend
-trio==0.33.0
+trio==0.34.0
     # via
     #   selenium
     #   trio-websocket
