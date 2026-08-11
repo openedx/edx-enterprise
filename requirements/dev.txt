@@ -104,7 +104,7 @@ cffi==2.1.0
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-chardet==7.4.3
+chardet==7.5.1
     # via
     #   -r requirements/test.txt
     #   diff-cover
@@ -157,7 +157,7 @@ code-annotations==3.0.0
     #   edx-toggles
 colorama==0.4.6
     # via tox
-coverage[toml]==7.15.3
+coverage[toml]==7.15.4
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -183,7 +183,7 @@ defusedxml==0.7.1
     #   djangorestframework-xml
     #   python3-openid
     #   social-auth-core
-diff-cover==10.4.1
+diff-cover==10.5.0
     # via -r requirements/test.txt
 dill==0.4.1
     # via pylint
@@ -742,7 +742,7 @@ pip-tools==7.6.0
     #   -r requirements/dev.in
 pkginfo==1.12.1.2
     # via twine
-platformdirs==4.11.0
+platformdirs==4.11.2
     # via
     #   pylint
     #   tox
@@ -876,7 +876,7 @@ pytest==9.1.1
     #   pytest-django
 pytest-cov==7.1.0
     # via -r requirements/test.txt
-pytest-django==4.12.0
+pytest-django==4.14.0
     # via -r requirements/test.txt
 python-dateutil==2.9.0.post0
     # via
@@ -1031,7 +1031,7 @@ social-auth-core==4.9.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   social-auth-app-django
-soupsieve==2.9.1
+soupsieve==2.9.2
     # via
     #   -r requirements/doc.txt
     #   beautifulsoup4
@@ -1110,7 +1110,7 @@ tomlkit==0.15.1
     # via
     #   edx-lint
     #   pylint
-tox==4.58.0
+tox==4.59.0
     # via -r requirements/dev.in
 tqdm==4.70.0
     # via twine
@@ -1128,6 +1128,7 @@ typing-extensions==4.16.0
     #   grpcio
     #   jwcrypto
     #   testfixtures
+    #   tox
 tzdata==2026.3
     # via
     #   -r requirements/doc.txt
@@ -1166,7 +1167,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==21.7.1
+virtualenv==21.7.4
     # via tox
 wcwidth==0.8.2
     # via
