@@ -44,11 +44,7 @@ jobs:
         mysql -V
     - name: Install Python dependencies
       run: |
-        uv sync --group dev
-        uv pip uninstall mysqlclient
-        uv pip install --no-binary mysqlclient mysqlclient
-        uv pip uninstall xmlsec
-        uv pip install --no-binary xmlsec xmlsec
+        uv sync --group dev --no-binary-package mysqlclient --no-binary-package xmlsec
     - name: Initiate Services
       run: |
         sudo /etc/init.d/mysql start

@@ -50,8 +50,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          uv sync --group dev
-          uv pip install psycopg2-binary
+          uv sync --group dev --group postgresql
 
       - name: Run migrations
         env:

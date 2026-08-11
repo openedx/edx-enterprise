@@ -122,6 +122,8 @@ doc = [
     "readme_renderer",
     "Sphinx",
     "sphinx-book-theme",
+    "sphinxcontrib-mermaid",
+    "myst-parser",
     "build",
     "twine",
 ]
@@ -135,6 +137,12 @@ js_test = [
     "jaraco.functools",
     "jasmine",
     "tempora",
+]
+# Only needed by the postgresql-migrations.yml CI job, which runs the test suite
+# against Postgres instead of the default MySQL backend. Not part of `dev` since
+# nothing else in this repo needs it.
+postgresql = [
+    "psycopg2-binary",
 ]
 dev = [
     {include-group = "test-master"},
