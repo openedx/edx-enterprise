@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.9.1] - 2026-08-13
+---------------------
+* fix: filter non-consented enrollments from People Management [ENT-12136]
+
 [8.9.0] - 2026-08-10
 ---------------------
 * feat: add non-production portal banner configuration
