@@ -6,7 +6,7 @@
 #
 packaging==26.3
     # via wheel
-wheel==0.47.0
+wheel==0.48.0
     # via -r requirements/pip.in
 
 # The following packages are considered to be unsafe in a requirements file:

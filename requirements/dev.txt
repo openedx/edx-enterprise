@@ -431,7 +431,7 @@ fastavro==1.12.2
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   openedx-events
-filelock==3.32.2
+filelock==3.32.3
     # via
     #   python-discovery
     #   tox
@@ -742,7 +742,7 @@ pip-tools==7.6.0
     #   -r requirements/dev.in
 pkginfo==1.12.1.2
     # via twine
-platformdirs==4.11.2
+platformdirs==4.11.3
     # via
     #   pylint
     #   tox
@@ -886,7 +886,7 @@ python-dateutil==2.9.0.post0
     #   celery
     #   edx-ace
     #   freezegun
-python-discovery==1.5.1
+python-discovery==1.5.2
     # via
     #   tox
     #   virtualenv
@@ -1110,7 +1110,7 @@ tomlkit==0.15.1
     # via
     #   edx-lint
     #   pylint
-tox==4.59.0
+tox==4.60.0
     # via -r requirements/dev.in
 tqdm==4.70.0
     # via twine
@@ -1181,7 +1181,7 @@ webencodings==0.5.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   bleach
-wheel==0.47.0
+wheel==0.48.0
     # via
     #   -r requirements/dev.in
     #   pip-tools
