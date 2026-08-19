@@ -1,5 +1,3 @@
-.. changelog-insertion-marker
-
 Change Log
 ==========
 
