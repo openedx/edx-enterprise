@@ -10489,6 +10489,13 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
         mock_objects.filter.return_value = [verified_enrollment, audit_enrollment]
         mock_get_course_overviews.return_value = {}
         mock_serializer.return_value.data = []
+        for enrollment in (verified_enrollment, audit_enrollment):
+            factories.DataSharingConsentFactory(
+                username=self.user.username,
+                enterprise_customer=self.enterprise_customer,
+                course_id=enrollment.course_id,
+                granted=True,
+            )
 
         response = self.client.get(self.url, {
             'lms_user_id': self.user.id,
@@ -10557,6 +10564,13 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
         mock_objects.filter.return_value = [verified_enrollment, audit_enrollment]
         mock_get_course_overviews.return_value = {}
         mock_serializer.return_value.data = []
+        for enrollment in (verified_enrollment, audit_enrollment):
+            factories.DataSharingConsentFactory(
+                username=self.user.username,
+                enterprise_customer=self.enterprise_customer,
+                course_id=enrollment.course_id,
+                granted=True,
+            )
 
         response = self.client.get(self.url, {
             'lms_user_id': self.user.id,
@@ -10570,6 +10584,59 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
         self.assertEqual(len(enrollments_passed), 2)
         self.assertIn(verified_enrollment, enrollments_passed)
         self.assertIn(audit_enrollment, enrollments_passed)
+
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
+    @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.models.EnterpriseCourseEnrollment.objects')
+    def test_only_consented_enrollments_are_returned(
+        self, mock_objects, mock_get_course_overviews, mock_serializer, mock_catalog_api_client,
+        _mock_course_catalog_api_service_client,
+    ):
+        """
+        Ensure enrollments without granted data sharing consent are excluded from the results.
+        """
+        # The non-consented course must be in the catalog for consent to actually be required;
+        # otherwise `consent_required()` would return False regardless of the missing consent record.
+        mock_catalog_api_client.return_value.enterprise_contains_content_items.return_value = (
+            fake_catalog_api.get_fake_enterprise_contains_content_items_response(contains_content_items=True)
+        )
+        admin_user = UserFactory.create(is_active=True, is_staff=True)
+        admin_user.set_password("123")
+        admin_user.save()
+        self.client.login(username=admin_user.username, password="123")
+
+        consented_enrollment = mock.MagicMock()
+        consented_enrollment.course_enrollment = mock.MagicMock()
+        consented_enrollment.is_audit_enrollment = False
+        consented_enrollment.course_id = 'course-v1:edX+Consented+2025'
+
+        non_consented_enrollment = mock.MagicMock()
+        non_consented_enrollment.course_enrollment = mock.MagicMock()
+        non_consented_enrollment.is_audit_enrollment = False
+        non_consented_enrollment.course_id = 'course-v1:edX+NonConsented+2025'
+
+        mock_objects.filter.return_value = [consented_enrollment, non_consented_enrollment]
+        mock_get_course_overviews.return_value = {}
+        mock_serializer.return_value.data = []
+        factories.DataSharingConsentFactory(
+            username=self.user.username,
+            enterprise_customer=self.enterprise_customer,
+            course_id=consented_enrollment.course_id,
+            granted=True,
+        )
+
+        response = self.client.get(self.url, {
+            'lms_user_id': self.user.id,
+            'enterprise_uuid': self.enterprise_customer.uuid,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        call_args = mock_serializer.call_args
+        enrollments_passed = call_args[0][0]
+        self.assertEqual(len(enrollments_passed), 1)
+        self.assertEqual(enrollments_passed[0], consented_enrollment)
 
     @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
     @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
