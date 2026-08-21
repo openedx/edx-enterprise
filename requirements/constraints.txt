@@ -28,8 +28,3 @@ pylint<4
 # supports pip up to 26.1), which breaks `make upgrade`. Remove this once a
 # newer pip-tools release restores pip 26.2+ compatibility.
 pip<26.2
-
-# Pin pip-tools to the version verified compatible with the pip<26.2 constraint
-# above; a newer pip-tools release could require a newer pip and reintroduce
-# the `make upgrade` breakage this constraint set was added to fix.
-pip-tools==7.6.0

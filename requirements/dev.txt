@@ -736,10 +736,8 @@ pillow==12.3.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-pip-tools==7.6.0
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/dev.in
+pip-tools==7.6.1
+    # via -r requirements/dev.in
 pkginfo==1.12.1.2
     # via twine
 platformdirs==4.11.3
