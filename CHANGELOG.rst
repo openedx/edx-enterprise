@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.9.2] - 2026-08-21
+---------------------
+* build: unpin pip-tools in constraints.txt
+* fix: configure pii-terms to unblock pylint after edx-lint 6.2.0 upgrade
+
 [8.9.1] - 2026-08-13
 ---------------------
 * fix: filter non-consented enrollments from People Management [ENT-12136]

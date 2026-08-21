@@ -20,7 +20,7 @@ glob2==0.7
     # via jasmine-core
 h11==0.16.0
     # via wsproto
-idna==3.18
+idna==3.19
     # via trio
 jaraco-classes==3.4.0
     # via -r requirements/js_test.in
@@ -68,7 +68,7 @@ outcome==1.3.0.post0
     #   trio-websocket
 portend==3.2.1
     # via cherrypy
-pygments==2.20.0
+pygments==2.21.0
     # via rich
 pysocks==1.7.1
     # via urllib3

@@ -11,3 +11,10 @@ disable+ =
     missing-timeout,
     use-yield-from,
     too-many-positional-arguments,
+
+[PII]
+# edx-lint 6.2.0+ requires this to be set or pylint crashes (pii-annotation-checker).
+# Matches edx-lint's own shipped default.
+pii-terms =
+    email,
+    username

@@ -12,15 +12,13 @@ packaging==26.3
     # via
     #   build
     #   wheel
-pip-tools==7.6.0
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/pip-tools.in
+pip-tools==7.6.1
+    # via -r requirements/pip-tools.in
 pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
-wheel==0.47.0
+wheel==0.48.0
     # via pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:
