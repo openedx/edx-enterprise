@@ -389,4 +389,11 @@ int-import-graph =
 [EXCEPTIONS]
 overgeneral-exceptions = builtins.Exception
 
+[PII]
+# edx-lint 6.2.0+ requires this to be set or pylint crashes (pii-annotation-checker).
+# Matches edx-lint's own shipped default.
+pii-terms =
+	email,
+	username
+
 # 54077c76e994996b5dcfc894527265ff056e760f

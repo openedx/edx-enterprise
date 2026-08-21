@@ -297,6 +297,8 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # "username" substring match is a false positive: this is a boolean UI-masking flag, not username data.
     replace_sensitive_sso_username = models.BooleanField(
         verbose_name="Replace sensitive SSO username",
         default=False,
@@ -497,6 +499,8 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Display Demo data from analyitcs and learner progress report for demo customer.")
     )
 
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # TODO: contact_email is real PII; this model's .. no_pii: annotation needs a proper PII-retirement review.
     contact_email = models.EmailField(
         verbose_name="Customer admin contact email:",
         null=True,
@@ -3387,6 +3391,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         (FREQUENCY_TYPE_WEEKLY, FREQUENCY_TYPE_WEEKLY),
     )
 
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # "EMAIL" substring match is a false positive: this is a `choices` string constant, not a data field.
     DELIVERY_METHOD_EMAIL = 'email'
     DELIVERY_METHOD_SFTP = 'sftp'
     DELIVERY_METHOD_CHOICES = (
@@ -3483,6 +3489,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         verbose_name=_("Report Type"),
         help_text=_("The type this report should be sent as, e.g. CSV.")
     )
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # TODO: email is real PII; this model's .. no_pii: annotation needs a proper PII-retirement review.
     email = MultiEmailField(
         blank=True,
         verbose_name=_("Email"),
@@ -3539,6 +3547,9 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         help_text=_("If the delivery method is sftp, the port on the host to connect to."),
         default=22,
     )
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # TODO: sftp_username is a real credential/username value; this model's .. no_pii: annotation needs a
+    # proper PII-retirement review.
     sftp_username = models.CharField(
         max_length=256,
         blank=True,
@@ -4530,12 +4541,16 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         max_length=128,
     )
 
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # "email" substring match is a false positive: stores an IdP attribute key name, not an email value.
     email_attribute = models.CharField(
         blank=True,
         null=True,
         max_length=128,
     )
 
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # "username" substring match is a false positive: stores an IdP attribute key name, not a username value.
     username_attribute = models.CharField(
         blank=True,
         null=True,
@@ -5125,9 +5140,15 @@ class EnterpriseCustomerSupportUsersView(models.Model):
             User) for retirement info.
     """
     enterprise_customer_id = models.UUIDField(primary_key=False)
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # Already explained above: this View surfaces PII pulled from PendingEnterpriseCustomerUser/User, which
+    # carry the real retirement annotations; it does not itself store or replicate the data.
     user_email = models.EmailField(primary_key=True, null=False, blank=False)
     is_pending = models.BooleanField(default=False)
     user_id = models.PositiveIntegerField(null=False, blank=False)
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # Already explained above: this View surfaces PII pulled from PendingEnterpriseCustomerUser/User, which
+    # carry the real retirement annotations; it does not itself store or replicate the data.
     username = models.CharField(max_length=150)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)

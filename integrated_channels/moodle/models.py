@@ -56,6 +56,9 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         )
     )
 
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # TODO: decrypted_username is a real credential/username value; this model's .. no_pii: annotation needs
+    # a proper PII-retirement review.
     decrypted_username = EncryptedCharField(
         max_length=255,
         verbose_name="Encrypted Webservice Username",
@@ -88,6 +91,8 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         """
         Set the encrypted username.
         """
+        # pylint: disable=pii-invalid-no-pii-annotation
+        # TODO: see decrypted_username field definition above.
         self.decrypted_username = value
 
     decrypted_password = EncryptedCharField(
