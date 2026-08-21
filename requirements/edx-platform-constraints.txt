@@ -653,7 +653,7 @@ gunicorn==26.0.0
     # via -r requirements/edx/kernel.in
 h11==0.16.0
     # via httpcore
-h2==4.4.0
+h2==4.4.1
     # via httpx
 help-tokens==4.0.0
     # via -r requirements/edx/kernel.in
