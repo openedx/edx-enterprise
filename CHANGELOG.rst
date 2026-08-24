@@ -17,6 +17,14 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.9.3] - 2026-08-24
+---------------------
+* feat: Implement ``OVERRIDE_PROGRAMS_GET_ENTERPRISE_COURSE_IDS`` pluggable override to enhance programs API
+
+  * Implement an override for the pluggable override ``OVERRIDE_PROGRAMS_GET_ENTERPRISE_COURSE_IDS``
+    so the programs listing endpoint can narrow a learner's enrollments to a single enterprise
+    customer without importing enterprise models. (ENT-11575)
+
 [8.9.2] - 2026-08-21
 ---------------------
 * build: unpin pip-tools in constraints.txt
