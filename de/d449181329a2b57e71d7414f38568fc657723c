@@ -1,0 +1,45 @@
+tests/test_enterprise/test_overrides_programs.py
+  s_36ffe2f7109ad6::t_79cca5dad2249f 94
+  s_36ffe2f7109ad6::t_7fecced728069a 107
+  s_36ffe2f7109ad6::t_bf13e34b4fd539 1-3,5-13,15-27,30,34-80,82,84-91,93,95,101-106
+  s_36ffe2f7109ad6::t_64725b8aa5d0e6 96-100
+  s_36ffe2f7109ad6::t_40bbb2526d59fd 4,14,28-29,31-33,81,83,92
+enterprise/overrides/programs.py
+  s_0c1fb42deff9a1::t_d1e048db5f76e4 29
+  s_0c1fb42deff9a1::t_71bad8f0f7fd21 20
+  s_0c1fb42deff9a1::t_a8bc21e07f170a 19,22,24-27,34-35
+  s_36ffe2f7109ad6::t_641415e1bfe10a 1-18,23,28,30-33,36-42
+  s_0c1fb42deff9a1::t_07065b2b645b79 21
+enterprise/overrides/learner_home.py
+  s_0c1fb42deff9a1::t_062ec8daaeea19 43-45
+enterprise/settings/common.py
+  s_36ffe2f7109ad6::t_27edead9071fbc 122-124
+  s_0c1fb42deff9a1::t_a8bc21e07f170a 114-115
+enterprise/overrides/course_home_progress.py
+  s_0c1fb42deff9a1::t_a8bc21e07f170a 12,14
+  s_0c1fb42deff9a1::t_8e9fdeec27c312 19-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "ded449181329a2b57e71d7414f38568fc657723c",
+  "prompts": {},
+  "sessions": {
+    "s_0c1fb42deff9a1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "87931368-ba27-4fa1-a6e8-bd9108bc1f5a",
+        "model": "claude-opus-5"
+      },
+      "human_author": null
+    },
+    "s_36ffe2f7109ad6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a37d08a6-99bd-422e-bf12-daa8d1671caf",
+        "model": "claude-opus-5"
+      },
+      "human_author": null
+    }
+  }
+}
