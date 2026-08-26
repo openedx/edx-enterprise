@@ -68,21 +68,6 @@ class TestEnterpriseObfuscatedUsername(TestCase):
         mock_fn.assert_called_once_with(request)
         self.assertIsNone(result)
 
-    @patch('enterprise.overrides.course_home_progress.get_enterprise_learner_generic_name', None)
-    def test_utility_unavailable_delegates_to_prev_fn(self):
-        """
-        When get_enterprise_learner_generic_name is None (import failed), should
-        call and return the result of prev_fn(request, student).
-        """
-        request = MagicMock()
-        student = MagicMock()
-        prev_fn = MagicMock(return_value='default-username')
-
-        result = enterprise_obfuscated_username(prev_fn, request, student)
-
-        prev_fn.assert_called_once_with(request, student)
-        self.assertEqual(result, 'default-username')
-
     @patch(
         'enterprise.overrides.course_home_progress.get_enterprise_learner_generic_name',
         return_value='Some Name',

@@ -111,12 +111,16 @@ def plugin_settings(settings):
     if not getattr(settings, 'ENABLE_ENTERPRISE_INTEGRATION', False):
         return
 
+    # Register pluggable overrides.
+    # These map override hook points within the platform to enterprise implementations.
     settings.OVERRIDE_COURSE_HOME_PROGRESS_USERNAME = (
         'enterprise.overrides.course_home_progress.enterprise_obfuscated_username'
     )
-
     settings.OVERRIDE_LEARNER_HOME_GET_ENTERPRISE_CUSTOMER = (
         'enterprise.overrides.learner_home.enterprise_get_enterprise_customer'
+    )
+    settings.OVERRIDE_PROGRAMS_GET_ENTERPRISE_COURSE_IDS = (
+        'enterprise.overrides.programs.enterprise_get_enterprise_course_ids'
     )
 
     pipeline = getattr(settings, 'SOCIAL_AUTH_PIPELINE', None)

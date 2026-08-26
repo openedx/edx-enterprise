@@ -1,10 +1,6 @@
 """
-Pluggable override for the learner home enterprise customer lookup.
-
-Wired up to ``OVERRIDE_LEARNER_HOME_GET_ENTERPRISE_CUSTOMER`` in
-``enterprise.settings.common.plugin_settings``.
+Pluggable override implementation for the learner home enterprise customer lookup.
 """
-import logging
 from typing import Optional, TypedDict
 
 from rest_framework.request import Request
@@ -20,8 +16,6 @@ try:
 except ImportError:
     enterprise_customer_from_session_or_learner_data = None
     get_enterprise_learner_data_from_db = None
-
-log = logging.getLogger(__name__)
 
 
 class EnterpriseCustomerData(TypedDict):
@@ -46,8 +40,9 @@ def enterprise_get_enterprise_customer(
     """
     Return the enterprise customer dict for the given user, or None.
 
-    This function overrides the default ``get_enterprise_customer`` implementation in
-    ``lms/djangoapps/learner_home/views.py`` via the pluggable override mechanism.
+    Pluggable override hook point:
+    - hook function: `get_enterprise_customer()`
+    - platform path: `lms/djangoapps/learner_home/views.py`
 
     Arguments:
         prev_fn: the previous (default) implementation. Unused; retained for
