@@ -44,13 +44,29 @@ jobs:
           git_committer_name: "github-actions"
           git_committer_email: "actions@users.noreply.github.com"
           changelog: "false"
+          # Commit, tag, push and build, but don't create the GitHub release.
+          # We create it ourselves in the next step so that the distributions
+          # are attached before the release is published. See that step for why.
+          vcs_release: "false"
 
-      - name: Publish | Upload to GitHub Release Assets
-        uses: python-semantic-release/publish-action@310a9983a0ae878b29f3aac778d7c77c1db27378 # v10.5.3
+      # This repo has immutable releases enabled, which freezes a release's
+      # assets the moment it is published, so assets cannot be attached
+      # afterwards. `gh release create` handles this by creating the release as
+      # a draft, uploading the assets, and only then publishing it:
+      # https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases
+      - name: Publish | Create GitHub Release with Assets
         if: steps.release.outputs.released == 'true'
-        with:
-          github_token: ${{ secrets.OPENEDX_SEMANTIC_RELEASE_GITHUB_TOKEN }}
-          tag: ${{ steps.release.outputs.tag }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NOTES: ${{ steps.release.outputs.release_notes }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          printf '%s' "$RELEASE_NOTES" > "$RUNNER_TEMP/release_notes.md"
+          gh release create "$TAG" \
+            --verify-tag \
+            --title "$TAG" \
+            --notes-file "$RUNNER_TEMP/release_notes.md" \
+            dist/*
 
       - name: Upload | Distribution Artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
