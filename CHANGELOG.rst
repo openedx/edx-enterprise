@@ -17,6 +17,12 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.9.4] - 2026-08-27
+---------------------
+* fix: add Django admin helper text for ``enable_demo_data_for_analytics_and_lpr`` explaining that
+  demo data only appears when the enterprise user is also registered as an admin on the analytics
+  demo portal
+
 [8.9.3] - 2026-08-24
 ---------------------
 * feat: Implement ``OVERRIDE_PROGRAMS_GET_ENTERPRISE_COURSE_IDS`` pluggable override to enhance programs API
