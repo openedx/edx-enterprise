@@ -496,7 +496,11 @@ class EnterpriseCustomer(TimeStampedModel):
     enable_demo_data_for_analytics_and_lpr = models.BooleanField(
         verbose_name="Enable demo data from analytics and lpr",
         default=False,
-        help_text=_("Display Demo data from analyitcs and learner progress report for demo customer.")
+        help_text=_(
+            "Display demo data from analytics and the learner progress report for demo customers. "
+            "Dummy data will only appear if the enterprise user is also registered as an admin on the "
+            "analytics demo portal. Contact the support team or use Django admin to set this up."
+        )
     )
 
     # pylint: disable=pii-invalid-no-pii-annotation
