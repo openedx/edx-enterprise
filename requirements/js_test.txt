@@ -78,7 +78,7 @@ pyyaml==6.0.3
     # via jasmine
 rich==15.0.0
     # via typer
-selenium==4.47.0
+selenium==4.48.0
     # via jasmine
 shellingham==1.5.4
     # via typer
