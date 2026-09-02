@@ -63,14 +63,19 @@ WORKDIR /edx/app/edx-enterprise
 
 RUN python3.12 -m venv $VIRTUAL_ENV
 
-# Copy the requirements explicitly even though we copy everything below
+# uv installs into $UV_PROJECT_ENVIRONMENT instead of its default .venv, so it
+# reuses the venv created above (kept on PATH by the ENV lines further up).
+ENV UV_PROJECT_ENVIRONMENT="${VIRTUAL_ENV}"
+
+# Copy the dependency manifests explicitly even though we copy everything below
 # this prevents the image cache from busting unless the dependencies have changed.
-COPY requirements/ /edx/app/edx-enterprise/requirements/
+COPY pyproject.toml uv.lock /edx/app/edx-enterprise/
 COPY package.json /edx/app/edx-enterprise/package.json
 COPY package-lock.json /edx/app/edx-enterprise/package-lock.json
 
 # Fetch and install dependencies.
-RUN pip install -r requirements/dev.txt
+RUN pip install uv
+RUN uv sync --group dev --frozen
 RUN pip install nodeenv
 
 # Set up a Node environment and install Node requirements.

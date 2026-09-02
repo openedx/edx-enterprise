@@ -40,7 +40,7 @@ def root(*args):
     """
     Return the absolute path to some file from the project's root.
     """
-    return abspath(join(abspath(here('../..')), *args))
+    return abspath(join(abspath(here('../../..')), *args))
 
 
 DATABASES = {
@@ -104,7 +104,7 @@ SITE_NAME = 'localhost:18000/'
 SESSION_ENGINE = "django.contrib.sessions.backends.file"
 
 LOCALE_PATHS = [
-    root("enterprise", "conf", "locale"),
+    root("src", "enterprise", "conf", "locale"),
 ]
 
 MAKO_TEMPLATES = {
@@ -124,9 +124,9 @@ TEMPLATES = [
     },
 ]
 
-REPO_ROOT = root('enterprise')
+REPO_ROOT = root('src', 'enterprise')
 
-STATIC_ROOT = root('enterprise/assets')
+STATIC_ROOT = root('src', 'enterprise/assets')
 
 STATIC_URL = '/enterprise/static/'
 

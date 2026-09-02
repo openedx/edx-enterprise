@@ -17,7 +17,7 @@ src_files:
   - node_modules/jasmine-ajax/lib/mock-ajax.js
   - node_modules/bootstrap/dist/js/bootstrap.min.js
   - spec/vendor/analytics-mock.js
-  - enterprise/static/enterprise/js/*.js
+  - src/enterprise/static/enterprise/js/*.js
 
 # stylesheets
 #
