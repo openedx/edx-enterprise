@@ -1,6 +1,6 @@
 """
 Your project description goes here.
 """
-from importlib.metadata import version
+from importlib.metadata import version as get_version
 
-__version__ = version("edx-enterprise")
+__version__ = get_version("edx-enterprise")
