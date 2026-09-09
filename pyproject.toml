@@ -8,7 +8,7 @@ description = "Your project description goes here"
 requires-python = ">=3.12"
 license = "AGPL-3.0-or-later"
 authors = [
-    {name = "edX", email = "oscm@edx.org"},
+    {name = "Open edX Project", email = "oscm@openedx.org"},
 ]
 keywords = [
     "Django",
