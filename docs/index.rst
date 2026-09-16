@@ -23,11 +23,6 @@ Contents:
    modules
 
 .. toctree::
-   :maxdepth: 1
-
-   changelog
-
-.. toctree::
    :glob:
    :maxdepth: 1
    :caption: Decisions
