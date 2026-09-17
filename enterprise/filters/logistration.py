@@ -31,6 +31,7 @@ try:
         build_enterprise_branding_for_authn_mfe,
         get_enterprise_slug_login_url,
         handle_enterprise_cookies_for_logistration,
+        is_enterprise_learner,
         update_logistration_context_for_enterprise,
     )
 except ImportError:
@@ -41,6 +42,7 @@ except ImportError:
     build_enterprise_branding_for_authn_mfe = None
     get_enterprise_slug_login_url = None
     handle_enterprise_cookies_for_logistration = None
+    is_enterprise_learner = None
     update_logistration_context_for_enterprise = None
 
 log = logging.getLogger(__name__)
@@ -300,3 +302,32 @@ class PostLoginEnterpriseRedirect(PipelineStep):
             return {'redirect_url': selection_url, 'user': user}
 
         return {'redirect_url': redirect_url, 'user': user}
+
+
+class ActivationEmailEnterpriseContextEnricher(PipelineStep):
+    """
+    Adds ``is_enterprise_learner`` to the activation email's message context.
+
+    This step is intended to be registered as a pipeline step for the
+    ``org.openedx.authentication.account_activation.email.context.generated.v1`` filter.
+    """
+
+    def run_filter(  # pylint: disable=arguments-differ
+        self, user: Any, message_context: dict[str, Any]
+    ) -> dict[str, Any]:
+        """
+        Add the enterprise learner flag to the activation email message context.
+
+        Arguments:
+            user (User): the Django User the activation email is being composed for.
+            message_context (dict): context dictionary used to render the activation email.
+
+        Returns:
+            dict: updated pipeline data with ``user`` and ``message_context`` keys.
+        """
+        log.info(
+            "ActivationEmailEnterpriseContextEnricher running: user_id=%s",
+            user.id,
+        )
+        message_context['is_enterprise_learner'] = is_enterprise_learner(user)
+        return {"user": user, "message_context": message_context}
