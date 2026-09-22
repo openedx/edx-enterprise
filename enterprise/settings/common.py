@@ -151,13 +151,22 @@ def plugin_settings(settings):
     settings.OVERRIDE_PROGRAMS_GET_ENTERPRISE_COURSE_IDS = (
         'enterprise.overrides.programs.enterprise_get_enterprise_course_ids'
     )
-    # This one is appended rather than assigned: an OVERRIDE_* setting holds a whole chain of
-    # implementations, and ours delegates to the previous one, so an operator-configured
-    # override must survive.
+    # These overrides are appended rather than assigned directly. The above
+    # should probably be migrated to append-style too eventually.
     _append_override(
         settings,
         'OVERRIDE_PROGRAM_NUDGE_SUGGESTED_COURSE_URL',
         'enterprise.overrides.program_nudge_email.enterprise_suggested_course_url',
+    )
+    _append_override(
+        settings,
+        'OVERRIDE_GET_LEARNER_DISPLAY_USERNAME',
+        'enterprise.overrides.branding.enterprise_learner_generic_name',
+    )
+    _append_override(
+        settings,
+        'OVERRIDE_GET_ENTERPRISE_LEARNER_PORTAL_LINK',
+        'enterprise.overrides.branding.enterprise_learner_portal_link',
     )
 
     pipeline = getattr(settings, 'SOCIAL_AUTH_PIPELINE', None)
