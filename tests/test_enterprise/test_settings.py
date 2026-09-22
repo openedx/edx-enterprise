@@ -7,7 +7,12 @@ from types import SimpleNamespace
 import ddt
 import pytest
 
-from enterprise.settings.common import ENTERPRISE_FILTERS_CONFIG, _merge_filters_config, plugin_settings
+from enterprise.settings.common import (
+    ENTERPRISE_FILTERS_CONFIG,
+    _append_override,
+    _merge_filters_config,
+    plugin_settings,
+)
 
 
 class TestPluginSettingsPipelineInjection(unittest.TestCase):
@@ -238,3 +243,41 @@ class TestEnterpriseFiltersConfig(unittest.TestCase):
             assert actual_filter_config.get("fail_silently") == expected_filter_config.get("fail_silently")
             for expected_step in expected_filter_config.get("pipeline", []):
                 assert expected_step in actual_filter_config.get("pipeline", [])
+
+
+@ddt.ddt
+class TestAppendOverride(unittest.TestCase):
+    """
+    Unit tests for the ``_append_override`` helper.
+    """
+
+    OVERRIDE_SETTING = 'OVERRIDE_SOMETHING'
+    OVERRIDE_NEW = 'pkg.overrides.impl_NEW'
+    OVERRIDE_A = 'pkg.overrides.impl_A'
+    OVERRIDE_B = 'pkg.overrides.impl_B'
+
+    @ddt.data(
+        # Setting absent entirely → ours becomes the whole chain.
+        {'existing': None, 'expected': [OVERRIDE_NEW]},
+        # Empty list → ours becomes the whole chain.
+        {'existing': [], 'expected': [OVERRIDE_NEW]},
+        # A single dotted path (the string form the setting also accepts) → normalized and kept first.
+        {'existing': OVERRIDE_A, 'expected': [OVERRIDE_A, OVERRIDE_NEW]},
+        # Already registered as a bare string → left untouched, since the setting accepts that form.
+        {'existing': OVERRIDE_NEW, 'expected': OVERRIDE_NEW},
+        # An existing list → preserved in order, ours appended last.
+        {'existing': [OVERRIDE_A, OVERRIDE_B], 'expected': [OVERRIDE_A, OVERRIDE_B, OVERRIDE_NEW]},
+        # Already registered → no duplicate.
+        {'existing': [OVERRIDE_NEW], 'expected': [OVERRIDE_NEW]},
+        # Already registered mid-chain → left where it is, not moved to the end.
+        {'existing': [OVERRIDE_A, OVERRIDE_NEW, OVERRIDE_B], 'expected': [OVERRIDE_A, OVERRIDE_NEW, OVERRIDE_B]},
+    )
+    @ddt.unpack
+    def test_append_scenarios(self, existing, expected):
+        settings = SimpleNamespace()
+        if existing is not None:
+            setattr(settings, self.OVERRIDE_SETTING, existing)
+
+        _append_override(settings, self.OVERRIDE_SETTING, self.OVERRIDE_NEW)
+
+        assert getattr(settings, self.OVERRIDE_SETTING) == expected
