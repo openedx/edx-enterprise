@@ -17,6 +17,12 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.15.0] - 2026-09-21
+----------------------
+* feat: Add ``enterprise_learner_generic_name`` and ``enterprise_learner_portal_link``
+  pluggable override implementations for the platform's branding API, so the LMS header,
+  user dropdowns and progress page no longer import from ``enterprise_support`` (ENT-12353)
+
 [8.14.0] - 2026-09-16
 ----------------------
 * feat: Add ``ActivationEmailEnterpriseContextEnricher`` pipeline step for the

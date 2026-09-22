@@ -109,6 +109,27 @@ def _merge_filters_config(existing: FiltersConfig, additions: FiltersConfig) -> 
             }
 
 
+def _append_override(settings, setting_name, override_path):
+    """
+    Append an override implementation to an OVERRIDE_* setting, preserving any existing ones.
+
+    An OVERRIDE_* setting accepts either a single dotted path or a list of them, each wrapped
+    around the previous one. Appending keeps whatever an operator (or another plugin) already
+    configured, and places ours last so it is the entry point of the chain.
+
+    Args:
+        settings: The Django settings module being configured.
+        setting_name (str): Name of the OVERRIDE_* setting.
+        override_path (str): Dotted path of the implementation to append.
+    """
+    existing = getattr(settings, setting_name, [])
+    if isinstance(existing, str):
+        existing = [existing]
+    if override_path in existing:
+        return
+    setattr(settings, setting_name, [*existing, override_path])
+
+
 def plugin_settings(settings):
     """
     Override platform settings for the enterprise app.
@@ -133,6 +154,19 @@ def plugin_settings(settings):
     )
     settings.OVERRIDE_PROGRAMS_GET_ENTERPRISE_COURSE_IDS = (
         'enterprise.overrides.programs.enterprise_get_enterprise_course_ids'
+    )
+    # These two are appended rather than assigned: an OVERRIDE_* setting holds a whole chain of
+    # implementations, and both of ours delegate to the previous one, so an operator-configured
+    # override must survive.
+    _append_override(
+        settings,
+        'OVERRIDE_GET_LEARNER_GENERIC_NAME',
+        'enterprise.overrides.branding.enterprise_learner_generic_name',
+    )
+    _append_override(
+        settings,
+        'OVERRIDE_GET_ENTERPRISE_LEARNER_PORTAL_LINK',
+        'enterprise.overrides.branding.enterprise_learner_portal_link',
     )
 
     pipeline = getattr(settings, 'SOCIAL_AUTH_PIPELINE', None)

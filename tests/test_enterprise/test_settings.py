@@ -238,3 +238,71 @@ class TestEnterpriseFiltersConfig(unittest.TestCase):
             assert actual_filter_config.get("fail_silently") == expected_filter_config.get("fail_silently")
             for expected_step in expected_filter_config.get("pipeline", []):
                 assert expected_step in actual_filter_config.get("pipeline", [])
+
+
+GENERIC_NAME_OVERRIDE = 'enterprise.overrides.branding.enterprise_learner_generic_name'
+PORTAL_LINK_OVERRIDE = 'enterprise.overrides.branding.enterprise_learner_portal_link'
+
+
+@ddt.ddt
+class TestBrandingOverrideRegistration(unittest.TestCase):
+    """
+    Tests for the branding OVERRIDE_* registrations in plugin_settings().
+
+    Both branding overrides delegate to the previous implementation, so registering them
+    must preserve any override an operator already configured rather than replace it.
+    """
+
+    @ddt.data(
+        {'setting_name': 'OVERRIDE_GET_LEARNER_GENERIC_NAME', 'expected_path': GENERIC_NAME_OVERRIDE},
+        {'setting_name': 'OVERRIDE_GET_ENTERPRISE_LEARNER_PORTAL_LINK', 'expected_path': PORTAL_LINK_OVERRIDE},
+    )
+    @ddt.unpack
+    def test_override_registered_when_unset(self, setting_name, expected_path):
+        """With nothing configured, the enterprise implementation is the whole chain."""
+        settings = SimpleNamespace(ENABLE_ENTERPRISE_INTEGRATION=True)
+
+        plugin_settings(settings)
+
+        assert getattr(settings, setting_name) == [expected_path]
+
+    @ddt.data(
+        {'setting_name': 'OVERRIDE_GET_LEARNER_GENERIC_NAME', 'expected_path': GENERIC_NAME_OVERRIDE},
+        {'setting_name': 'OVERRIDE_GET_ENTERPRISE_LEARNER_PORTAL_LINK', 'expected_path': PORTAL_LINK_OVERRIDE},
+    )
+    @ddt.unpack
+    def test_override_appends_to_operator_string(self, setting_name, expected_path):
+        """An operator's single dotted path is kept, with ours appended after it."""
+        settings = SimpleNamespace(ENABLE_ENTERPRISE_INTEGRATION=True)
+        setattr(settings, setting_name, 'operator.overrides.custom')
+
+        plugin_settings(settings)
+
+        assert getattr(settings, setting_name) == ['operator.overrides.custom', expected_path]
+
+    @ddt.data(
+        {'setting_name': 'OVERRIDE_GET_LEARNER_GENERIC_NAME', 'expected_path': GENERIC_NAME_OVERRIDE},
+        {'setting_name': 'OVERRIDE_GET_ENTERPRISE_LEARNER_PORTAL_LINK', 'expected_path': PORTAL_LINK_OVERRIDE},
+    )
+    @ddt.unpack
+    def test_override_registration_is_idempotent(self, setting_name, expected_path):
+        """Running plugin_settings() twice must not register the same implementation twice."""
+        settings = SimpleNamespace(ENABLE_ENTERPRISE_INTEGRATION=True)
+
+        plugin_settings(settings)
+        plugin_settings(settings)
+
+        assert getattr(settings, setting_name) == [expected_path]
+
+    @ddt.data(
+        {'setting_name': 'OVERRIDE_GET_LEARNER_GENERIC_NAME'},
+        {'setting_name': 'OVERRIDE_GET_ENTERPRISE_LEARNER_PORTAL_LINK'},
+    )
+    @ddt.unpack
+    def test_override_not_registered_when_integration_disabled(self, setting_name):
+        """Nothing is registered when enterprise integration is off."""
+        settings = SimpleNamespace(ENABLE_ENTERPRISE_INTEGRATION=False)
+
+        plugin_settings(settings)
+
+        assert not hasattr(settings, setting_name)
