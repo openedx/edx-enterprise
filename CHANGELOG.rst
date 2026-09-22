@@ -17,6 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.15.0] - 2026-09-21
+----------------------
+* feat: Add ``enterprise_suggested_course_url`` pluggable override implementation for the
+  program nudge email's suggested course link, so the platform's
+  ``send_program_course_nudge_email`` command no longer imports from ``enterprise_support``
+  (ENT-12352)
+
 [8.14.0] - 2026-09-16
 ----------------------
 * feat: Add ``ActivationEmailEnterpriseContextEnricher`` pipeline step for the
