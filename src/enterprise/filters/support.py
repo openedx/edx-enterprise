@@ -1,6 +1,8 @@
 """
 Pipeline steps for the support views filters.
 """
+from typing import Any
+
 from crum import get_current_request
 from openedx_filters.filters import PipelineStep
 
@@ -47,16 +49,16 @@ class SupportEnterpriseEnrollmentDataInjector(PipelineStep):
     """
     Inject enterprise course enrollment data into the support enrollment view.
 
-    Builds a dict of enterprise course enrollments (with data-sharing consent records)
-    keyed by course_id.
+    Attaches enterprise course enrollment records (with data-sharing consent records) to each
+    matching enrollment dict via a new `enterprise_course_enrollments` key.
 
     This step is intended to be registered as a pipeline step for the
     ``org.openedx.learning.support.enrollment.data.requested.v1`` filter.
     """
 
-    def run_filter(self, enrollment_data, user):  # pylint: disable=arguments-differ
+    def run_filter(self, enrollments_data: list[dict], user: Any) -> dict:  # pylint: disable=arguments-differ
         """
-        Populate enrollment_data with enterprise course enrollment records for the user.
+        Attach enterprise course enrollment records to each matching enrollment dict in place.
         """
         enterprise_course_enrollments = get_enterprise_course_enrollments(user)
         consents = get_data_sharing_consents(user)
@@ -66,12 +68,18 @@ class SupportEnterpriseEnrollmentDataInjector(PipelineStep):
             for consent in consents
         }
 
+        enterprise_data_by_course_id = {}
         for ecr in enterprise_course_enrollments:
             serialized = EnterpriseCourseEnrollmentSerializer(ecr).data
             course_id = ecr.course_id
             enterprise_customer_id = ecr.enterprise_customer_user.enterprise_customer_id
             key = f'{course_id}-{enterprise_customer_id}'
             serialized['data_sharing_consent'] = consent_by_key.get(key)
-            enrollment_data.setdefault(course_id, []).append(serialized)
+            enterprise_data_by_course_id.setdefault(course_id, []).append(serialized)
 
-        return {'enrollment_data': enrollment_data, 'user': user}
+        for enrollment in enrollments_data:
+            enrollment['enterprise_course_enrollments'] = enterprise_data_by_course_id.get(
+                enrollment['course_id'], []
+            )
+
+        return {'enrollments_data': enrollments_data, 'user': user}

@@ -88,28 +88,30 @@ class TestSupportEnterpriseEnrollmentDataInjector(TestCase):
 
     @patch('enterprise.filters.support.get_data_sharing_consents')
     @patch('enterprise.filters.support.get_enterprise_course_enrollments')
-    def test_returns_enrollment_data_unchanged_when_no_enrollments(self, mock_get_enrollments, mock_get_consents):
+    def test_attaches_empty_list_when_no_enterprise_enrollments(self, mock_get_enrollments, mock_get_consents):
         """
-        When the user has no enterprise course enrollments, enrollment_data is unchanged.
+        When the user has no enterprise course enrollments, each enrollment gets an empty list.
         """
         mock_get_enrollments.return_value = []
         mock_get_consents.return_value = []
         user = UserFactory()
+        enrollments = [{'course_id': 'course-v1:edX+DemoX+Demo_Course'}]
         step = self._make_step()
 
-        result = step.run_filter(enrollment_data={}, user=user)
+        result = step.run_filter(enrollments_data=enrollments, user=user)
 
-        assert result == {'enrollment_data': {}, 'user': user}
+        assert result['enrollments_data'][0]['enterprise_course_enrollments'] == []
+        assert result['user'] is user
 
     @patch('enterprise.filters.support.EnterpriseCourseEnrollmentSerializer')
     @patch('enterprise.filters.support.get_data_sharing_consents')
     @patch('enterprise.filters.support.get_enterprise_course_enrollments')
-    def test_enriches_enrollment_data_with_enterprise_enrollments(
+    def test_attaches_enterprise_enrollments_to_matching_enrollment(
         self, mock_get_enrollments, mock_get_consents, mock_serializer_class,
     ):
         """
-        Enterprise course enrollments are serialized and keyed by course_id, with a matching
-        data-sharing-consent record attached.
+        Enterprise course enrollments are serialized and attached to the matching enrollment
+        dict in place, with a matching data-sharing-consent record attached.
         """
         user = UserFactory()
         enterprise_customer = EnterpriseCustomerFactory()
@@ -125,11 +127,12 @@ class TestSupportEnterpriseEnrollmentDataInjector(TestCase):
         mock_get_enrollments.return_value = [ecr]
         mock_get_consents.return_value = [consent]
         mock_serializer_class.return_value.data = {'course_id': course_id, 'saved_for_later': False}
+        enrollments = [{'course_id': course_id}]
 
         step = self._make_step()
-        result = step.run_filter(enrollment_data={}, user=user)
+        result = step.run_filter(enrollments_data=enrollments, user=user)
 
-        entries = result['enrollment_data'][course_id]
+        entries = result['enrollments_data'][0]['enterprise_course_enrollments']
         assert len(entries) == 1
         entry = entries[0]
         assert entry['course_id'] == course_id
@@ -156,23 +159,26 @@ class TestSupportEnterpriseEnrollmentDataInjector(TestCase):
         mock_get_enrollments.return_value = [ecr]
         mock_get_consents.return_value = []
         mock_serializer_class.return_value.data = {'course_id': course_id}
+        enrollments = [{'course_id': course_id}]
 
         step = self._make_step()
-        result = step.run_filter(enrollment_data={}, user=user)
+        result = step.run_filter(enrollments_data=enrollments, user=user)
 
-        assert result['enrollment_data'][course_id][0]['data_sharing_consent'] is None
+        assert result['enrollments_data'][0]['enterprise_course_enrollments'][0]['data_sharing_consent'] is None
 
     @patch('enterprise.filters.support.get_data_sharing_consents')
     @patch('enterprise.filters.support.get_enterprise_course_enrollments')
-    def test_preserves_existing_enrollment_data_keys(self, mock_get_enrollments, mock_get_consents):
+    def test_preserves_existing_enrollment_keys(self, mock_get_enrollments, mock_get_consents):
         """
-        Pre-existing keys in enrollment_data (for courses with no enterprise enrollment) survive.
+        Pre-existing keys on each enrollment dict survive alongside the new attached key.
         """
         mock_get_enrollments.return_value = []
         mock_get_consents.return_value = []
         user = UserFactory()
+        enrollments = [{'course_id': 'some-other-course', 'mode': 'audit'}]
         step = self._make_step()
 
-        result = step.run_filter(enrollment_data={'some-other-course': []}, user=user)
+        result = step.run_filter(enrollments_data=enrollments, user=user)
 
-        assert result['enrollment_data'] == {'some-other-course': []}
+        assert result['enrollments_data'][0]['mode'] == 'audit'
+        assert result['enrollments_data'][0]['enterprise_course_enrollments'] == []
