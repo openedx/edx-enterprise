@@ -17,6 +17,15 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.15.0] - 2026-09-24
+----------------------
+
+- feat: remove the ``EnterpriseEnrollmentViewProcessor`` pipeline step.
+  It was designed to replace platform logic which handled a code path that ONLY
+  served Enterprise Coupon fulfillment. Coupons, however, were sunsetted in
+  September 2025, so there was never any point in creating the pipeline step in
+  the first place. (ENT-12366)
+
 [8.14.0] - 2026-09-16
 ----------------------
 * feat: Add ``ActivationEmailEnterpriseContextEnricher`` pipeline step for the
