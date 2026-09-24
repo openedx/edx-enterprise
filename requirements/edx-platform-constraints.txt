@@ -1161,7 +1161,7 @@ social-auth-app-django==5.4.1
     #   -r requirements/edx/kernel.in
     #   edx-auth-backends
     #   edx-enterprise
-social-auth-core==4.9.1
+social-auth-core==5.0.0
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/edx/kernel.in
