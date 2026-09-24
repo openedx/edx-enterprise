@@ -76,12 +76,7 @@ coverage: clean ## generate and view HTML coverage report
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	uv sync --group doc
-	PYTHONPATH=$(CURDIR) uv run doc8 --ignore-path docs/_build --ignore-path docs/decisions README.rst docs
-	rm -f docs/enterprise.rst
-	rm -f docs/modules.rst
-	PYTHONPATH=$(CURDIR) uv run make -C docs clean
-	PYTHONPATH=$(CURDIR) uv run make -C docs html
+	uv run tox -e docs
 	$(BROWSER) docs/_build/html/index.html
 
 compile-requirements: ## generate the uv.lock file without upgrading packages
@@ -112,7 +107,7 @@ test: clean ## run python tests
 	uv run py.test
 
 jasmine: ## run javascript tests
-	uv run jasmine
+	uv run tox -e jasmine
 
 diff_cover: test
 	uv run diff-cover coverage.xml
@@ -133,17 +128,17 @@ pycodestyle: ## Check python code style
 	uv run pycodestyle src/enterprise src/enterprise_learner_portal src/consent src/integrated_channels tests test_utils
 
 pii_check: pii_clean
-	uv run code_annotations django_find_annotations --config_file .pii_annotations.yml --lint --report --coverage
+	uv run tox -e pii_check
 
 pii_clean:
 	rm -rf pii_report
 	mkdir -p pii_report
 
 isort: ## call isort on packages/files that are checked in quality tests
-	uv run isort --skip migrations tests test_utils src/enterprise src/enterprise_learner_portal src/consent src/integrated_channels manage.py
+	uv run tox -e isort
 
 isort-check: ## call isort on packages/files that are checked in quality tests
-	uv run isort --skip migrations --check-only --diff tests test_utils src/enterprise src/enterprise_learner_portal src/consent src/integrated_channels manage.py
+	uv run tox -e isort-check
 
 ########################################################################
 # Docker shortcuts for managing a local test/quality container.        #
