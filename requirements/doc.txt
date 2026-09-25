@@ -8,7 +8,7 @@ accessible-pygments==0.0.5
     # via pydata-sphinx-theme
 alabaster==1.0.0
     # via sphinx
-amqp==5.3.1
+amqp==5.4.0
     # via
     #   -r requirements/test-master.txt
     #   kombu
@@ -16,7 +16,7 @@ aniso8601==10.0.1
     # via
     #   -r requirements/test-master.txt
     #   tincan
-anyio==4.14.2
+anyio==4.15.1
     # via
     #   -r requirements/test-master.txt
     #   httpx
@@ -40,7 +40,7 @@ bcrypt==5.0.0
     #   paramiko
 beautifulsoup4==4.15.0
     # via pydata-sphinx-theme
-billiard==4.2.4
+billiard==4.3.0
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -58,16 +58,16 @@ certifi==2026.7.22
     #   httpcore
     #   httpx
     #   requests
-cffi==2.1.0
+cffi==2.1.1 ; platform_python_implementation != "PyPy"
     # via
     #   -r requirements/test-master.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.9
+charset-normalizer==3.5.1
     # via
     #   -r requirements/test-master.txt
     #   requests
-click==8.4.2
+click==8.5.0
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -84,7 +84,7 @@ click-plugins==1.1.1.2
     # via
     #   -r requirements/test-master.txt
     #   celery
-click-repl==0.3.0
+click-repl==0.4.0
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -92,7 +92,7 @@ code-annotations==3.0.0
     # via
     #   -r requirements/test-master.txt
     #   edx-toggles
-cryptography==49.0.0
+cryptography==50.0.1
     # via
     #   -r requirements/test-master.txt
     #   django-fernet-fields-v2
@@ -108,7 +108,7 @@ defusedxml==0.7.1
     #   djangorestframework-xml
     #   python3-openid
     #   social-auth-core
-django==5.2.16
+django==5.2.17
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -139,7 +139,7 @@ django-cache-memoize==0.2.1
     # via -r requirements/test-master.txt
 django-config-models==3.0.0
     # via -r requirements/test-master.txt
-django-countries==9.0.0
+django-countries==9.1.0
     # via -r requirements/test-master.txt
 django-crum==0.7.9
     # via
@@ -167,7 +167,7 @@ django-push-notifications==3.3.0
     # via
     #   -r requirements/test-master.txt
     #   edx-ace
-django-simple-history==3.13.0
+django-simple-history==3.12.0
     # via -r requirements/test-master.txt
 django-waffle==5.0.0
     # via
@@ -175,7 +175,7 @@ django-waffle==5.0.0
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
-djangorestframework==3.17.1
+djangorestframework==3.17.2
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -214,7 +214,7 @@ edx-ace==1.15.0
     #   edx-braze-client
 edx-api-doc-tools==3.0.0
     # via -r requirements/test-master.txt
-edx-braze-client==1.1.3
+edx-braze-client==1.1.4
     # via
     #   -r requirements/doc.in
     #   -r requirements/test-master.txt
@@ -222,7 +222,7 @@ edx-ccx-keys==2.0.2
     # via
     #   -r requirements/test-master.txt
     #   openedx-events
-edx-django-utils==8.0.1
+edx-django-utils==8.0.2
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -232,7 +232,7 @@ edx-django-utils==8.0.1
     #   edx-rest-api-client
     #   edx-toggles
     #   openedx-events
-edx-drf-extensions==10.6.0
+edx-drf-extensions==10.9.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
@@ -245,7 +245,7 @@ edx-opaque-keys[django]==4.0.0
     #   openedx-filters
 edx-rbac==3.0.0
     # via -r requirements/test-master.txt
-edx-rest-api-client==7.0.0
+edx-rest-api-client==7.1.0
     # via -r requirements/test-master.txt
 edx-toggles==6.0.0
     # via -r requirements/test-master.txt
@@ -253,40 +253,40 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==40.36.0
+faker==40.39.0
     # via factory-boy
 fastavro==1.12.2
     # via
     #   -r requirements/test-master.txt
     #   openedx-events
-firebase-admin==7.5.0
+firebase-admin==7.6.0
     # via
     #   -r requirements/test-master.txt
     #   edx-ace
-google-api-core[grpc]==2.33.0
+google-api-core[grpc]==2.38.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.56.2
+google-auth==2.58.0
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-cloud-core==2.6.0
+google-cloud-core==2.7.0
     # via
     #   -r requirements/test-master.txt
     #   google-cloud-firestore
     #   google-cloud-storage
-google-cloud-firestore==2.28.0
+google-cloud-firestore==2.31.0 ; platform_python_implementation != "PyPy"
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
-google-cloud-storage==3.13.0
+google-cloud-storage==3.14.1
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
@@ -295,22 +295,22 @@ google-crc32c==1.8.0
     #   -r requirements/test-master.txt
     #   google-cloud-storage
     #   google-resumable-media
-google-resumable-media==2.10.0
+google-resumable-media==2.10.2
     # via
     #   -r requirements/test-master.txt
     #   google-cloud-storage
-googleapis-common-protos==1.75.0
+googleapis-common-protos==1.75.3
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
     #   grpcio-status
-grpcio==1.83.0
+grpcio==1.84.0 ; platform_python_implementation != "PyPy"
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
     #   google-cloud-firestore
     #   grpcio-status
-grpcio-status==1.83.0
+grpcio-status==1.84.0 ; platform_python_implementation != "PyPy"
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -318,7 +318,7 @@ h11==0.16.0
     # via
     #   -r requirements/test-master.txt
     #   httpcore
-h2==4.4.0
+h2==4.4.1
     # via
     #   -r requirements/test-master.txt
     #   httpx
@@ -338,13 +338,13 @@ hyperframe==6.1.0
     # via
     #   -r requirements/test-master.txt
     #   h2
-idna==3.18
+idna==3.20
     # via
     #   -r requirements/test-master.txt
     #   anyio
     #   httpx
     #   requests
-imagesize==2.0.0
+imagesize==2.0.1
     # via sphinx
 inflection==0.5.1
     # via
@@ -372,7 +372,7 @@ jsondiff==2.2.1
     # via -r requirements/test-master.txt
 jsonfield==3.2.0
     # via -r requirements/test-master.txt
-jwcrypto==1.5.8
+jwcrypto==1.6.1
     # via
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
@@ -397,13 +397,13 @@ mdit-py-plugins==0.6.1
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
-msgpack==1.2.1
+msgpack==1.2.2
     # via
     #   -r requirements/test-master.txt
     #   cachecontrol
 myst-parser==5.1.0
     # via -r requirements/doc.in
-nh3==0.3.6
+nh3==0.3.7
     # via readme-renderer
 oauthlib==3.3.1
     # via
@@ -411,13 +411,17 @@ oauthlib==3.3.1
     #   django-oauth-toolkit
     #   requests-oauthlib
     #   social-auth-core
-openedx-atlas==0.7.0
+openedx-atlas==0.7.1
     # via -r requirements/test-master.txt
 openedx-events==11.2.0
     # via -r requirements/test-master.txt
-openedx-filters==3.9.0
+openedx-filters==3.14.0
     # via -r requirements/test-master.txt
-packaging==26.2
+opentelemetry-api==1.44.0
+    # via
+    #   -r requirements/test-master.txt
+    #   google-api-core
+packaging==26.3
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
@@ -442,12 +446,12 @@ prompt-toolkit==3.0.53
     # via
     #   -r requirements/test-master.txt
     #   click-repl
-proto-plus==1.28.2
+proto-plus==1.28.4
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
     #   google-cloud-firestore
-protobuf==7.35.1
+protobuf==7.36.2
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -468,7 +472,7 @@ pyasn1-modules==0.4.2
     # via
     #   -r requirements/test-master.txt
     #   google-auth
-pycparser==3.0
+pycparser==3.0 ; implementation_name != "PyPy" and platform_python_implementation != "PyPy"
     # via
     #   -r requirements/test-master.txt
     #   cffi
@@ -482,7 +486,7 @@ pygments==2.21.0
     #   pytest
     #   readme-renderer
     #   sphinx
-pyjwt[crypto]==2.13.0
+pyjwt[crypto]==2.14.0
     # via
     #   -r requirements/test-master.txt
     #   drf-jwt
@@ -510,11 +514,11 @@ python-ipware==3.0.0
     # via
     #   -r requirements/test-master.txt
     #   django-ipware
-python-slugify==8.0.4
+python-slugify==9.1.0
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
-python3-openid==3.2.0 ; python_version >= "3"
+python3-openid==3.2.0
     # via
     #   -r requirements/test-master.txt
     #   social-auth-core
@@ -533,7 +537,7 @@ pyyaml==6.0.3
     #   jsondiff
     #   myst-parser
     #   sphinxcontrib-mermaid
-readme-renderer==45.0
+readme-renderer==46.0
     # via -r requirements/doc.in
 requests==2.34.2
     # via
@@ -571,7 +575,7 @@ semantic-version==2.10.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-simplejson==4.1.1
+simplejson==4.1.2
     # via
     #   -r requirements/test-master.txt
     #   sailthru-client
@@ -592,7 +596,7 @@ social-auth-core==4.9.1
     # via
     #   -r requirements/test-master.txt
     #   social-auth-app-django
-soupsieve==2.9.2
+soupsieve==2.10
     # via beautifulsoup4
 sphinx==8.2.3
     # via
@@ -612,17 +616,17 @@ sphinxcontrib-htmlhelp==2.1.0
     # via sphinx
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
-sphinxcontrib-mermaid==2.1.0
+sphinxcontrib-mermaid==2.1.1
     # via -r requirements/doc.in
 sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-sqlparse==0.5.5
+sqlparse==0.6.0
     # via
     #   -r requirements/test-master.txt
     #   django
-stevedore==5.9.0
+stevedore==5.9.1
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
@@ -643,12 +647,14 @@ typing-extensions==4.16.0
     #   -r requirements/test-master.txt
     #   anyio
     #   beautifulsoup4
+    #   click-repl
     #   django-countries
     #   edx-opaque-keys
     #   grpcio
     #   jwcrypto
+    #   opentelemetry-api
     #   testfixtures
-tzdata==2026.3
+tzdata==2026.4
     # via
     #   -r requirements/test-master.txt
     #   kombu
@@ -662,7 +668,7 @@ uritemplate==4.2.0
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
-urllib3==2.7.0
+urllib3==2.8.0
     # via
     #   -r requirements/test-master.txt
     #   requests
@@ -672,11 +678,11 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.8.2
+wcwidth==0.8.4
     # via
     #   -r requirements/test-master.txt
     #   prompt-toolkit
-webencodings==0.5.1
+webencodings==0.6.1
     # via
     #   -r requirements/test-master.txt
     #   bleach
