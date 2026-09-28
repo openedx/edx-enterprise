@@ -12,7 +12,7 @@ except:
 webbrowser.open("file://" + pathname2url(os.path.abspath(sys.argv[1])))
 endef
 export BROWSER_PYSCRIPT
-BROWSER := uv run python -c "$$BROWSER_PYSCRIPT"
+BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 # pylint depends on this environment variable.
 export DJANGO_SETTINGS_MODULE = enterprise.settings.test
@@ -76,7 +76,7 @@ coverage: clean ## generate and view HTML coverage report
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	uv run tox -e docs
+	tox -e docs
 	$(BROWSER) docs/_build/html/index.html
 
 compile-requirements: ## generate the uv.lock file without upgrading packages
@@ -104,13 +104,13 @@ jshint: ## run Javascript linting
 	./node_modules/jshint/bin/jshint spec
 
 test: clean ## run python tests
-	uv run py.test
+	py.test
 
 jasmine: ## run javascript tests
-	uv run tox -e jasmine
+	tox -e jasmine
 
 diff_cover: test
-	uv run diff-cover coverage.xml
+	diff-cover coverage.xml
 
 validate: clean static test jasmine quality ## run all tests and quality checks
 
@@ -118,27 +118,27 @@ quality: pylint pycodestyle isort-check jshint pii_check ## run all quality chec
 
 pylint: ## Lint python code
 	touch tests/__init__.py
-	uv run pylint -j 1 src/enterprise src/enterprise_learner_portal --clear-cache-post-run=y
-	uv run pylint -j 1 src/consent src/integrated_channels --clear-cache-post-run=y
-	uv run pylint -j 1 test_utils requirements/sync_platform_constraints.py --clear-cache-post-run=y
-	uv run pylint -j 1 tests -v --clear-cache-post-run=y
+	pylint -j 1 src/enterprise src/enterprise_learner_portal --clear-cache-post-run=y
+	pylint -j 1 src/consent src/integrated_channels --clear-cache-post-run=y
+	pylint -j 1 test_utils requirements/sync_platform_constraints.py --clear-cache-post-run=y
+	pylint -j 1 tests -v --clear-cache-post-run=y
 	rm tests/__init__.py
 
 pycodestyle: ## Check python code style
-	uv run pycodestyle src/enterprise src/enterprise_learner_portal src/consent src/integrated_channels tests test_utils
+	pycodestyle src/enterprise src/enterprise_learner_portal src/consent src/integrated_channels tests test_utils
 
 pii_check: pii_clean
-	uv run tox -e pii_check
+	tox -e pii_check
 
 pii_clean:
 	rm -rf pii_report
 	mkdir -p pii_report
 
 isort: ## call isort on packages/files that are checked in quality tests
-	uv run tox -e isort
+	tox -e isort
 
 isort-check: ## call isort on packages/files that are checked in quality tests
-	uv run tox -e isort-check
+	tox -e isort-check
 
 ########################################################################
 # Docker shortcuts for managing a local test/quality container.        #
