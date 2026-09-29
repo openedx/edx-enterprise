@@ -6,22 +6,12 @@ from typing import Any
 from crum import get_current_request
 from openedx_filters.filters import PipelineStep
 
-# This import will be replaced with an internal path in ENT-11576 when
-# enterprise_support is migrated into edx-enterprise.
-try:
-    from openedx.features.enterprise_support.api import enterprise_customer_for_request
-except ImportError:
-    enterprise_customer_for_request = None
-
-# This import will be replaced with an internal path in ENT-11576 when
-# enterprise_support is migrated into edx-enterprise.
-try:
-    from openedx.features.enterprise_support.api import get_data_sharing_consents, get_enterprise_course_enrollments
-    from openedx.features.enterprise_support.serializers import EnterpriseCourseEnrollmentSerializer
-except ImportError:
-    get_data_sharing_consents = None
-    get_enterprise_course_enrollments = None
-    EnterpriseCourseEnrollmentSerializer = None
+from enterprise.platform_support.api import (
+    enterprise_customer_for_request,
+    get_data_sharing_consents,
+    get_enterprise_course_enrollments,
+)
+from enterprise.platform_support.serializers import EnterpriseCourseEnrollmentSerializer
 
 
 class SupportContactEnterpriseTagStep(PipelineStep):
