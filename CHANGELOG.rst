@@ -17,6 +17,27 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.17.0] - 2026-09-29
+----------------------
+* feat: Add ``enterprise_learner_generic_name`` and ``enterprise_learner_portal_link``
+  pluggable override implementations for the platform's branding API, so the LMS header,
+  user dropdowns and progress page no longer import from ``enterprise_support`` (ENT-12353)
+
+[8.16.0] - 2026-09-28
+----------------------
+* feat: remove the ``EnterpriseEnrollmentViewProcessor`` pipeline step.
+  It was designed to replace platform logic which handled a code path that ONLY
+  served Enterprise Coupon fulfillment. Coupons, however, were sunsetted in
+  September 2025, so there was never any point in creating the pipeline step in
+  the first place. (ENT-12366)
+
+[8.15.0] - 2026-09-21
+----------------------
+* feat: Add ``enterprise_suggested_course_url`` pluggable override implementation for the
+  program nudge email's suggested course link, so the platform's
+  ``send_program_course_nudge_email`` command no longer imports from ``enterprise_support``
+  (ENT-12352)
+
 [8.14.0] - 2026-09-16
 ----------------------
 * feat: Add ``ActivationEmailEnterpriseContextEnricher`` pipeline step for the
