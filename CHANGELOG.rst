@@ -17,6 +17,22 @@ Unreleased
 ----------
 * nothing unreleased
 
+[9.0.0] - 2026-09-29
+---------------------
+* feat!: Move openedx-platform's ``openedx/features/enterprise_support/`` package into this
+  repo as ``enterprise.platform_support``, and repoint the 22 deferred
+  ``openedx.features.enterprise_support`` imports across 17 modules at the new internal
+  path. The package's own openedx-platform imports are now tolerant of the platform being
+  absent. The package's five signal handlers move into ``enterprise.signals``, so they now
+  log under that logger name; the three bound to openedx-platform grade and unenrollment
+  signals are connected by ``EnterpriseConfig.ready()`` in the LMS only, as the dropped
+  ``EnterpriseSupportConfig`` was never installed in Studio. The moved package
+  reconciles openedx-platform ``master`` with ``edx/release-ulmo``, keeping the latter's
+  ``build_enterprise_branding_for_authn_mfe``, its ``enterprise_slug`` sidebar key, its
+  ``ENABLE_LEGACY_INTEGRATED_CHANNELS`` switch and its null-safe SSO pipeline lookup; the
+  ``ENABLE_ENTERPRISE_INTEGRATION`` check now honors both the top-level setting used by
+  ``master`` and the ``FEATURES`` entry used by ``release-ulmo`` (ENT-11576)
+
 [8.17.0] - 2026-09-29
 ----------------------
 * feat: Add ``enterprise_learner_generic_name`` and ``enterprise_learner_portal_link``

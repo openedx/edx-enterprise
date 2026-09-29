@@ -5,10 +5,12 @@ Django signal handlers.
 from logging import getLogger
 from typing import Any
 
+from openedx_events.learning.signals import COURSE_ENROLLMENT_CHANGED, COURSE_UNENROLLMENT_COMPLETED
+from slumber.exceptions import HttpClientError
 from social_core.backends.saml import SAMLAuth
 
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, User  # pylint: disable=imported-auth-user
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
@@ -18,6 +20,9 @@ from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.decorators import disable_for_loaddata
+from enterprise.platform_support.api import enterprise_customer_for_request
+from enterprise.platform_support.tasks import clear_enterprise_customer_data_consent_share_cache
+from enterprise.platform_support.utils import clear_data_consent_share_cache, is_enterprise_learner
 from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
     NotConnectedToOpenEdX,
@@ -35,25 +40,26 @@ from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfigurat
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 
 try:
-    from common.djangoapps.student.models import CourseEnrollment
-    from openedx.core.djangoapps.user_api.accounts.signals import USER_RETIRE_LMS_CRITICAL
-    from openedx_events.learning.signals import COURSE_ENROLLMENT_CHANGED, COURSE_UNENROLLMENT_COMPLETED
-
-except ImportError:
-    CourseEnrollment = None
-    COURSE_ENROLLMENT_CHANGED = None
-    COURSE_UNENROLLMENT_COMPLETED = None
-    USER_RETIRE_LMS_CRITICAL = None
-
-try:
     from common.djangoapps.third_party_auth.provider import Registry
 except ImportError:
     Registry = None
 
 try:
-    from openedx.features.enterprise_support.api import enterprise_customer_for_request
+    from openedx.core.djangoapps.commerce.utils import ecommerce_api_client
 except ImportError:
-    enterprise_customer_for_request = None
+    ecommerce_api_client = None
+
+# This is a temporary import path while we transition from integrated_channels to channel_integrations
+if getattr(settings, 'ENABLE_LEGACY_INTEGRATED_CHANNELS', True):
+    from integrated_channels.integrated_channel.tasks import (
+        transmit_single_learner_data,
+        transmit_single_subsection_learner_data,
+    )
+else:
+    from channel_integrations.integrated_channel.tasks import (  # pylint: disable=import-error
+        transmit_single_learner_data,
+        transmit_single_subsection_learner_data,
+    )
 
 logger = getLogger(__name__)
 _UNSAVED_FILEFIELD = 'unsaved_filefield'
@@ -368,6 +374,7 @@ def delete_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
             break
 
 
+@receiver(COURSE_ENROLLMENT_CHANGED)
 def course_enrollment_changed_receiver(sender, **kwargs):     # pylint: disable=unused-argument
     """
     Handle when a course enrollment is (de/re)activated.
@@ -386,6 +393,7 @@ def course_enrollment_changed_receiver(sender, **kwargs):     # pylint: disable=
     # In that case, the `enterprise_unenrollment_receiver` signal handler below will run.
 
 
+@receiver(COURSE_UNENROLLMENT_COMPLETED)
 def enterprise_unenrollment_receiver(sender, **kwargs):     # pylint: disable=unused-argument
     """
     Mark the EnterpriseCourseEnrollment object as unenrolled when a user unenrolls from a course.
@@ -459,17 +467,6 @@ def generate_default_orchestration_record_display_name(sender, instance, **kwarg
             instance.display_name = f'SSO-config-{instance.identity_provider}-{num_records_for_customer + 1}'
 
 
-# Don't connect this receiver if we dont have access to CourseEnrollment model
-if CourseEnrollment is not None:
-    post_save.connect(create_enterprise_enrollment_receiver, sender=CourseEnrollment)
-
-if COURSE_UNENROLLMENT_COMPLETED is not None:
-    COURSE_UNENROLLMENT_COMPLETED.connect(enterprise_unenrollment_receiver)
-
-if COURSE_ENROLLMENT_CHANGED is not None:
-    COURSE_ENROLLMENT_CHANGED.connect(course_enrollment_changed_receiver)
-
-
 def retire_user_from_pending_enterprise_customer_user(sender, user, retired_email, **kwargs):  # pylint: disable=unused-argument
     """
     Handle USER_RETIRE_LMS_CRITICAL signal: retire PendingEnterpriseCustomerUser email address.
@@ -487,10 +484,6 @@ def retire_user_from_pending_enterprise_customer_user(sender, user, retired_emai
     ).exclude(
         user_email=retired_email,
     ).update(user_email=retired_email)
-
-
-if USER_RETIRE_LMS_CRITICAL is not None:
-    USER_RETIRE_LMS_CRITICAL.connect(retire_user_from_pending_enterprise_customer_user)
 
 
 def _unlink_enterprise_user_from_idp(request: HttpRequest, user: AbstractUser, idp_backend_name: str) -> None:
@@ -555,3 +548,99 @@ def handle_social_auth_disconnect(
     if not getattr(settings, 'ENABLE_ENTERPRISE_INTEGRATION', False):
         return
     _unlink_enterprise_user_from_idp(request, user, saml_backend.name)
+
+
+@receiver(post_save, sender=models.EnterpriseCourseEnrollment)
+def update_dsc_cache_on_course_enrollment(sender, instance, **kwargs):  # pylint: disable=unused-argument
+    """
+        clears data_sharing_consent_needed cache after Enterprise Course Enrollment
+    """
+    clear_data_consent_share_cache(
+        instance.enterprise_customer_user.user_id,
+        instance.course_id,
+        str(instance.enterprise_customer_user.enterprise_customer.uuid)
+    )
+
+
+@receiver(pre_save, sender=models.EnterpriseCustomer)
+def update_dsc_cache_on_enterprise_customer_update(sender, instance, **kwargs):
+    """
+        clears data_sharing_consent_needed cache after enable_data_sharing_consent flag is changed.
+    """
+    old_instance = sender.objects.filter(pk=instance.uuid).first()
+    if old_instance:   # instance already exists, so it's updating.
+        new_value = instance.enable_data_sharing_consent
+        old_value = old_instance.enable_data_sharing_consent
+        if new_value != old_value:
+            kwargs = {'enterprise_customer_uuid': str(instance.uuid)}
+            result = clear_enterprise_customer_data_consent_share_cache.apply_async(kwargs=kwargs)
+            logger.info("DSC: Created {task_name}[{task_id}] with arguments {kwargs}".format(  # noqa: UP032
+                task_name=clear_enterprise_customer_data_consent_share_cache.name,
+                task_id=result.task_id,
+                kwargs=kwargs,
+            ))
+
+
+def handle_enterprise_learner_passing_grade(sender, user, course_id, **kwargs):  # pylint: disable=unused-argument
+    """
+    Listen for a learner passing a course, transmit data to relevant integrated channel
+    """
+    if is_enterprise_learner(user):
+        kwargs = {
+            'username': str(user.username),
+            'course_run_id': str(course_id)
+        }
+
+        transmit_single_learner_data.apply_async(kwargs=kwargs)
+
+
+def handle_enterprise_learner_subsection(sender, user, course_id, subsection_id, subsection_grade, **kwargs):  # pylint: disable=unused-argument
+    """
+    Listen for an enterprise learner completing a subsection, transmit data to relevant integrated channel.
+    """
+    if is_enterprise_learner(user):
+        kwargs = {
+            'username': str(user.username),
+            'course_run_id': str(course_id),
+            'subsection_id': str(subsection_id),
+            'grade': str(subsection_grade),
+        }
+
+        transmit_single_subsection_learner_data.apply_async(kwargs=kwargs)
+
+
+def refund_order_voucher(sender, course_enrollment, skip_refund=False, **kwargs):  # pylint: disable=unused-argument
+    """
+        Call the /api/v2/enterprise/coupons/create_refunded_voucher/ API to create new voucher and assign it to user.
+    """
+
+    if skip_refund:
+        return
+    if not course_enrollment.refundable():
+        return
+    if not course_enrollment.is_order_voucher_refundable():
+        return
+    if not models.EnterpriseCourseEnrollment.objects.filter(
+        enterprise_customer_user__user_id=course_enrollment.user_id,
+        course_id=str(course_enrollment.course.id)
+    ).exists():
+        return
+
+    service_user = User.objects.get(username=settings.ECOMMERCE_SERVICE_WORKER_USERNAME)
+
+    # TODO: Replace ecommerce_api_client with get_ecommerce_api_client after completing ENT-6112
+    # https://2u-internal.atlassian.net/browse/ENT-6112
+    client = ecommerce_api_client(service_user)
+    order_number = course_enrollment.get_order_attribute_value('order_number')
+    if order_number:
+        error_message = "Encountered {} from ecommerce while creating refund voucher. Order={}, enrollment={}, user={}"
+        try:
+            client.enterprise.coupons.create_refunded_voucher.post({"order": order_number})
+        except HttpClientError as ex:
+            logger.info(
+                error_message.format(type(ex).__name__, order_number, course_enrollment, course_enrollment.user)
+            )
+        except Exception as ex:  # pylint: disable=broad-except
+            logger.exception(
+                error_message.format(type(ex).__name__, order_number, course_enrollment, course_enrollment.user)
+            )

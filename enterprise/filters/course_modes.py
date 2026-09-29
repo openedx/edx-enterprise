@@ -12,12 +12,7 @@ try:
 except ImportError:
     get_course_final_price = None
 
-# This import will be replaced with internal paths when enterprise_support is
-# migrated into edx-enterprise.q
-try:
-    from openedx.features.enterprise_support.api import enterprise_customer_for_request
-except ImportError:
-    enterprise_customer_for_request = None
+from enterprise.platform_support.api import enterprise_customer_for_request
 
 log = logging.getLogger(__name__)
 
