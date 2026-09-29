@@ -517,11 +517,11 @@ class TestPostLoginEnterpriseRedirect(TestCase):
 
 def _is_enterprise_learner_via_db(user):
     """
-    Stand-in for the platform's ``is_enterprise_learner``: a real DB lookup against
-    ``EnterpriseCustomerUser`` rather than a canned boolean. The real function lives in
-    ``openedx.features.enterprise_support.utils`` (ENT-11576 tracks migrating it into
-    edx-enterprise) and isn't importable outside a full LMS install, so it must still be
-    patched here — but the patched behavior is driven by real factory-created rows.
+    Stand-in for ``enterprise.platform_support.utils.is_enterprise_learner``: a real DB
+    lookup against ``EnterpriseCustomerUser`` rather than a canned boolean. The real
+    function short-circuits on ``enterprise_enabled()``, which these tests do not
+    configure, so it is patched here — but the patched behavior is driven by real
+    factory-created rows.
     """
     return EnterpriseCustomerUser.objects.filter(user_id=user.id).exists()
 

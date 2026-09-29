@@ -18,6 +18,7 @@ from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.decorators import disable_for_loaddata
+from enterprise.platform_support.api import enterprise_customer_for_request
 from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
     NotConnectedToOpenEdX,
@@ -49,11 +50,6 @@ try:
     from common.djangoapps.third_party_auth.provider import Registry
 except ImportError:
     Registry = None
-
-try:
-    from openedx.features.enterprise_support.api import enterprise_customer_for_request
-except ImportError:
-    enterprise_customer_for_request = None
 
 logger = getLogger(__name__)
 _UNSAVED_FILEFIELD = 'unsaved_filefield'
