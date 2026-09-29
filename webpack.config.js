@@ -1,6 +1,6 @@
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const context = path.join(__dirname, 'enterprise/static/enterprise');
+const context = path.join(__dirname, 'src/enterprise/static/enterprise');
 
 module.exports = {
     context: context,
