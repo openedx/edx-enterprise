@@ -17,6 +17,16 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.18.1] - 2026-10-22
+----------------------
+* fix: The MariaDB UUID conversions in ``blackboard`` 0025, ``canvas`` 0041 and
+  ``integrated_channel`` 0037 altered the enterprise-integrated-channels tables
+  (``blackboard_channel_*``, ``canvas_channel_*``, ``channel_integration_*``)
+  instead of this package's own, so ``migrate`` failed on a fresh MariaDB
+  database and left these apps' UUID columns as char(32). They now name this
+  package's tables, and new migrations convert those tables on databases that
+  already applied the old versions.
+
 [8.18.0] - 2026-10-08
 ----------------------
 * feat: grant implied data sharing consent for enterprise customers with externally managed consent,
