@@ -3,8 +3,9 @@ Convert this app's UUIDField columns from char(32) to uuid on MariaDB.
 
 0037_mariadb_uuid_conversion was released altering the channel_integration_*
 tables, the enterprise-integrated-channels copies of this app's tables, which
-that package converts in its own migrations. Those tables have no ordering
-guarantee against 0037, and this app's own columns kept char(32). 0037 now
+that package converts in its own migrations. Nothing creates those tables
+before 0037, so a fresh migrate only succeeds when Django happens to order
+them first, and this app's own columns kept char(32). 0037 now
 names this app's tables; this migration converts them on databases that
 applied the old version. MODIFY to the type a column already has changes
 nothing, so it is also safe after the corrected 0037.
