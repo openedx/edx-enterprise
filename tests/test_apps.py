@@ -2,19 +2,66 @@
 Tests for the `edx-enterprise` models module.
 """
 
+import sys
+import types
 import unittest
 from unittest import mock
 
 from pytest import mark
 
 from django.contrib import auth
-from django.db.models.signals import pre_migrate
+from django.db.models.signals import post_save, pre_migrate
+from django.dispatch import Signal
 
 import enterprise
 import integrated_channels
-from test_utils.factories import EnterpriseCustomerFactory, UserFactory
+from enterprise.constants import (
+    COURSE_ASSESSMENT_GRADE_CHANGED_DISPATCH_UID,
+    COURSE_GRADE_NOW_PASSED_DISPATCH_UID,
+    UNENROLL_DONE_DISPATCH_UID,
+    USER_POST_SAVE_DISPATCH_UID,
+)
+from enterprise.platform_support import signals as platform_support_signals
+from test_utils.factories import (
+    EnterpriseCourseEnrollmentFactory,
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerUserFactory,
+    UserFactory,
+)
 
 User = auth.get_user_model()
+
+
+def _fake_platform_signal_modules():
+    """
+    Build the ``sys.modules`` entries that make the openedx-platform signals importable.
+
+    ``EnterpriseConfig._connect_platform_support_signals()`` imports three signals that
+    only exist inside an LMS install, so standing them up as real ``Signal`` instances is
+    the only way to exercise the connecting half of that method from this repo.
+    """
+    modules = {}
+    for dotted_path in (
+        'common',
+        'common.djangoapps',
+        'common.djangoapps.student',
+        'openedx',
+        'openedx.core',
+        'openedx.core.djangoapps',
+        'openedx.core.djangoapps.signals',
+    ):
+        modules[dotted_path] = types.ModuleType(dotted_path)
+
+    student_signals = types.ModuleType('common.djangoapps.student.signals')
+    student_signals.UNENROLL_DONE = Signal()
+    modules['common.djangoapps.student.signals'] = student_signals
+
+    platform_signals = types.ModuleType('openedx.core.djangoapps.signals.signals')
+    platform_signals.COURSE_ASSESSMENT_GRADE_CHANGED = Signal()
+    platform_signals.COURSE_GRADE_NOW_PASSED = Signal()
+    modules['openedx.core.djangoapps.signals.signals'] = platform_signals
+
+    return modules
 
 
 @mark.django_db
@@ -33,6 +80,10 @@ class TestEnterpriseConfig(unittest.TestCase):
         patcher.start()
         self.app_config = enterprise.apps.EnterpriseConfig('enterprise', enterprise)
         self.addCleanup(patcher.stop)
+        # ``ready()`` connects with a dispatch_uid, which Django refuses to connect twice.
+        # Without this teardown the first test to call ``ready()`` would leave its own mock
+        # wired up for every later test in the class.
+        self.addCleanup(post_save.disconnect, sender=User, dispatch_uid=USER_POST_SAVE_DISPATCH_UID)
 
     def test_ready_connects_user_post_save_handler(self):
         self.app_config.ready()
@@ -59,6 +110,65 @@ class TestEnterpriseConfig(unittest.TestCase):
         UserFactory()
 
         assert not self.post_save_mock.called
+
+    @mock.patch('enterprise.platform_support.signals.clear_data_consent_share_cache')
+    def test_ready_activates_platform_support_model_signal_handlers(self, clear_cache_mock):
+        """
+        ``ready()`` activates the handlers bound to this app's own model signals.
+
+        These replace what openedx-platform's dropped ``EnterpriseSupportConfig.ready()``
+        used to wire up by importing ``enterprise_support.signals``.
+        """
+        self.app_config.ready()
+
+        enterprise_customer_user = EnterpriseCustomerUserFactory()
+        enrollment = EnterpriseCourseEnrollmentFactory(enterprise_customer_user=enterprise_customer_user)
+
+        clear_cache_mock.assert_called_once_with(
+            enterprise_customer_user.user_id,
+            enrollment.course_id,
+            str(enterprise_customer_user.enterprise_customer.uuid),
+        )
+
+    def test_ready_connects_platform_support_platform_signal_handlers(self):
+        """
+        ``ready()`` connects the three handlers bound to openedx-platform signals.
+        """
+        fake_modules = _fake_platform_signal_modules()
+        with mock.patch.dict(sys.modules, fake_modules):
+            self.app_config.ready()
+
+            unenroll_done = fake_modules['common.djangoapps.student.signals'].UNENROLL_DONE
+            platform_signals = fake_modules['openedx.core.djangoapps.signals.signals']
+
+            connected = {
+                lookup_key[0]: receiver
+                for signal in (
+                    unenroll_done,
+                    platform_signals.COURSE_ASSESSMENT_GRADE_CHANGED,
+                    platform_signals.COURSE_GRADE_NOW_PASSED,
+                )
+                for lookup_key, receiver, *_ in signal.receivers
+            }
+
+        assert set(connected) == {
+            COURSE_GRADE_NOW_PASSED_DISPATCH_UID,
+            COURSE_ASSESSMENT_GRADE_CHANGED_DISPATCH_UID,
+            UNENROLL_DONE_DISPATCH_UID,
+        }
+        assert connected[COURSE_GRADE_NOW_PASSED_DISPATCH_UID]() is (
+            platform_support_signals.handle_enterprise_learner_passing_grade
+        )
+        assert connected[COURSE_ASSESSMENT_GRADE_CHANGED_DISPATCH_UID]() is (
+            platform_support_signals.handle_enterprise_learner_subsection
+        )
+        assert connected[UNENROLL_DONE_DISPATCH_UID]() is platform_support_signals.refund_order_voucher
+
+    def test_ready_tolerates_absent_platform_signals(self):
+        """
+        ``ready()`` is a no-op for the platform-bound handlers when the platform is absent.
+        """
+        self.app_config._connect_platform_support_signals()  # pylint: disable=protected-access
 
 
 @mark.django_db

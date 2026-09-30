@@ -12,6 +12,12 @@ USER_POST_SAVE_DISPATCH_UID = "enterprise.user_post_save_upgrade_pending_enterpr
 # enterprise identity provider.
 SAML_ACCOUNT_DISCONNECTED_DISPATCH_UID = "enterprise.handle_social_auth_disconnect"
 
+# We listen to a handful of openedx-platform signals from ``enterprise.platform_support.signals``.
+# These are the unique identifiers used to ensure each receiver is only connected once.
+COURSE_GRADE_NOW_PASSED_DISPATCH_UID = "new_passing_enterprise_learner"
+COURSE_ASSESSMENT_GRADE_CHANGED_DISPATCH_UID = "enterprise.handle_enterprise_learner_subsection"
+UNENROLL_DONE_DISPATCH_UID = "enterprise.refund_order_voucher"
+
 
 # Data sharing consent messages
 CONSENT_REQUEST_PROMPT = _(

@@ -60,11 +60,7 @@ from enterprise.constants import (
     CourseModes,
 )
 from enterprise.logging import getEnterpriseLogger
-
-try:
-    from openedx.features.enterprise_support.enrollments.utils import lms_update_or_create_enrollment
-except ImportError:
-    lms_update_or_create_enrollment = None
+from enterprise.platform_support.enrollments.utils import lms_update_or_create_enrollment
 
 try:
     from openedx.core.djangoapps.course_groups.models import CourseUserGroup

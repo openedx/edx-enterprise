@@ -7,15 +7,10 @@ from rest_framework.request import Request
 
 from django.contrib.auth.models import AbstractBaseUser
 
-# Will be replaced with an internal path in ENT-11576.
-try:
-    from openedx.features.enterprise_support.api import (
-        enterprise_customer_from_session_or_learner_data,
-        get_enterprise_learner_data_from_db,
-    )
-except ImportError:
-    enterprise_customer_from_session_or_learner_data = None
-    get_enterprise_learner_data_from_db = None
+from enterprise.platform_support.api import (
+    enterprise_customer_from_session_or_learner_data,
+    get_enterprise_learner_data_from_db,
+)
 
 
 class EnterpriseCustomerData(TypedDict):
