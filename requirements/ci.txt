@@ -27,15 +27,15 @@ pluggy==1.6.0
     # via tox
 pyproject-api==1.11.0
     # via tox
-python-discovery==1.5.2
+python-discovery==1.6.1
     # via
     #   tox
     #   virtualenv
 tomli-w==1.2.0
     # via tox
 tox==4.60.0
-    # via -r requirements/ci.in
+    # via -r ci.in
 typing-extensions==4.16.0
     # via tox
-virtualenv==21.7.4
+virtualenv==21.7.13
     # via tox

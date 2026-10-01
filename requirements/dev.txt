@@ -6,35 +6,35 @@
 #
 accessible-pygments==0.0.5
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   pydata-sphinx-theme
 alabaster==1.0.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   sphinx
 amqp==5.3.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   kombu
 aniso8601==10.0.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   tincan
 anyio==4.14.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   httpx
 asgiref==3.12.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   django
     #   django-countries
 astroid==3.3.11
@@ -43,82 +43,82 @@ astroid==3.3.11
     #   pylint-celery
 attrs==26.1.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-ace
     #   openedx-events
 babel==2.18.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   pydata-sphinx-theme
     #   sphinx
 bcrypt==5.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   paramiko
 beautifulsoup4==4.15.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   pydata-sphinx-theme
 billiard==4.2.4
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   celery
 bleach==6.4.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 build==1.5.0
     # via pip-tools
 cachecontrol==0.14.4
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   firebase-admin
 cachetools==7.1.7
     # via tox
 celery==5.6.3
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 certifi==2026.7.22
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   httpcore
     #   httpx
     #   requests
 cffi==2.1.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   cryptography
     #   pynacl
 chardet==7.6.0
     # via
-    #   -r requirements/test.txt
+    #   -r test.txt
     #   diff-cover
 charset-normalizer==3.4.9
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   requests
 click==8.4.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   celery
     #   click-didyoumean
     #   click-log
@@ -130,42 +130,42 @@ click==8.4.2
     #   pip-tools
 click-didyoumean==0.3.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   celery
 click-log==0.4.0
     # via edx-lint
 click-plugins==1.1.1.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   celery
 click-repl==0.3.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   celery
 code-annotations==3.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-lint
     #   edx-toggles
 colorama==0.4.6
     # via tox
 coverage[toml]==7.15.4
     # via
-    #   -r requirements/test.txt
+    #   -r test.txt
     #   pytest-cov
 cryptography==49.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   django-fernet-fields-v2
     #   google-auth
     #   jwcrypto
@@ -174,26 +174,25 @@ cryptography==49.0.0
     #   pyjwt
     #   social-auth-core
 ddt==1.3.1
-    # via -r requirements/test.txt
+    # via -r test.txt
 defusedxml==0.7.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   djangorestframework-xml
     #   python3-openid
     #   social-auth-core
 diff-cover==10.5.1
-    # via -r requirements/test.txt
+    # via -r test.txt
 dill==0.4.1
     # via pylint
 distlib==0.4.3
     # via virtualenv
 django==5.2.16
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
     #   django-config-models
     #   django-crum
     #   django-fernet-fields-v2
@@ -223,89 +222,89 @@ django==5.2.16
     #   social-auth-app-django
 django-cache-memoize==0.2.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 django-config-models==3.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 django-countries==9.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 django-crum==0.7.9
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-django-utils
     #   edx-rbac
     #   edx-toggles
 django-fernet-fields-v2==0.9
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 django-filter==26.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 django-ipware==7.0.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 django-mock-queries==2.3.0
-    # via -r requirements/test.txt
+    # via -r test.txt
 django-model-utils==5.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-rbac
 django-multi-email-field==0.8.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 django-oauth-toolkit==1.7.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 django-object-actions==5.1.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 django-push-notifications==3.3.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-ace
 django-simple-history==3.13.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 django-waffle==5.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
 djangorestframework==3.17.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   django-config-models
     #   django-mock-queries
     #   drf-jwt
@@ -314,20 +313,20 @@ djangorestframework==3.17.1
     #   edx-drf-extensions
 djangorestframework-xml==2.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 dnspython==2.8.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   pymongo
 doc8==2.0.0
-    # via -r requirements/doc.txt
+    # via -r doc.txt
 docutils==0.21.2
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   doc8
     #   myst-parser
     #   pydata-sphinx-theme
@@ -336,44 +335,44 @@ docutils==0.21.2
     #   sphinx
 drf-jwt==1.19.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-drf-extensions
 drf-yasg==1.21.15
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-api-doc-tools
 edx-ace==1.15.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-braze-client
 edx-api-doc-tools==3.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 edx-braze-client==1.1.3
     # via
-    #   -r requirements/dev.in
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r dev.in
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 edx-ccx-keys==2.0.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   openedx-events
 edx-django-utils==8.0.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   django-config-models
     #   edx-ace
     #   edx-braze-client
@@ -383,53 +382,53 @@ edx-django-utils==8.0.1
     #   openedx-events
 edx-drf-extensions==10.6.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-rbac
 edx-i18n-tools==2.0.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 edx-lint==6.2.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 edx-opaque-keys[django]==4.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-ccx-keys
     #   edx-drf-extensions
     #   openedx-events
     #   openedx-filters
 edx-rbac==3.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 edx-rest-api-client==7.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 edx-toggles==6.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 factory-boy==3.3.3
     # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/doc.txt
-    #   -r requirements/test.txt
+    #   -c constraints.txt
+    #   -r doc.txt
+    #   -r test.txt
 faker==40.36.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test.txt
     #   factory-boy
 fastavro==1.12.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   openedx-events
 filelock==3.32.3
     # via
@@ -438,163 +437,163 @@ filelock==3.32.3
     #   virtualenv
 firebase-admin==7.5.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-ace
 freezegun==1.5.5
-    # via -r requirements/test.txt
+    # via -r test.txt
 google-api-core[grpc]==2.33.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   firebase-admin
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
 google-auth==2.56.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   google-api-core
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
 google-cloud-core==2.6.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   google-cloud-firestore
     #   google-cloud-storage
 google-cloud-firestore==2.28.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   firebase-admin
 google-cloud-storage==3.13.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   firebase-admin
 google-crc32c==1.8.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   google-cloud-storage
     #   google-resumable-media
 google-resumable-media==2.10.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   google-cloud-storage
 googleapis-common-protos==1.75.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   google-api-core
     #   grpcio-status
 grpcio==1.83.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   google-api-core
     #   google-cloud-firestore
     #   grpcio-status
 grpcio-status==1.83.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   google-api-core
 h11==0.16.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   httpcore
 h2==4.4.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   httpx
 hpack==4.2.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   h2
 httpcore==1.0.9
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   httpx
 httpx[http2]==0.28.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   firebase-admin
 hyperframe==6.1.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   h2
 idna==3.18
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   anyio
     #   httpx
     #   requests
 imagesize==2.0.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   sphinx
 inflection==0.5.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   drf-yasg
 iniconfig==2.3.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test.txt
     #   pytest
 invoke==3.0.3
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   paramiko
 isodate==0.7.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   python3-saml
 isort==6.1.0
     # via
-    #   -r requirements/dev.in
+    #   -r dev.in
     #   pylint
 jinja2==3.1.6
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   code-annotations
     #   diff-cover
     #   myst-parser
@@ -603,31 +602,31 @@ jinja2==3.1.6
     #   sphinxcontrib-mermaid
 jsondiff==2.2.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 jsonfield==3.2.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 jwcrypto==1.5.8
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   django-oauth-toolkit
 kombu==5.6.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   celery
 lxml[html-clean]==5.3.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-i18n-tools
     #   lxml-html-clean
     #   python3-saml
@@ -636,71 +635,71 @@ lxml-html-clean==0.4.4
     # via lxml
 markdown-it-py==4.2.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   mdit-py-plugins
     #   myst-parser
 markupsafe==3.0.3
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   jinja2
 mccabe==0.7.0
     # via pylint
 mdit-py-plugins==0.6.1
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   myst-parser
 mdurl==0.1.2
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   markdown-it-py
 mock==5.2.0
-    # via -r requirements/test.txt
+    # via -r test.txt
 model-bakery==1.24.0
     # via
-    #   -r requirements/test.txt
+    #   -r test.txt
     #   django-mock-queries
 msgpack==1.2.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   cachecontrol
 myst-parser==5.1.0
-    # via -r requirements/doc.txt
+    # via -r doc.txt
 nh3==0.3.6
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   readme-renderer
 oauthlib==3.3.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   django-oauth-toolkit
     #   requests-oauthlib
     #   social-auth-core
 openedx-atlas==0.7.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 openedx-events==11.2.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 openedx-filters==3.9.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 packaging==26.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   build
     #   drf-yasg
     #   kombu
@@ -711,33 +710,33 @@ packaging==26.2
     #   wheel
 paramiko==5.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 path==16.11.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-i18n-tools
     #   path-py
 path-py==12.5.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 pgpy==0.6.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 pillow==12.3.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 pip-tools==7.6.1
-    # via -r requirements/dev.in
+    # via -r dev.in
 pkginfo==1.12.1.2
     # via twine
 platformdirs==4.11.3
@@ -747,8 +746,8 @@ platformdirs==4.11.3
     #   virtualenv
 pluggy==1.6.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test.txt
     #   diff-cover
     #   pytest
     #   pytest-cov
@@ -757,22 +756,22 @@ polib==1.2.0
     # via edx-i18n-tools
 prompt-toolkit==3.0.53
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   click-repl
 proto-plus==1.28.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   google-api-core
     #   google-cloud-firestore
 protobuf==7.35.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   google-api-core
     #   google-cloud-firestore
     #   googleapis-common-protos
@@ -780,41 +779,41 @@ protobuf==7.35.1
     #   proto-plus
 psutil==7.2.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-django-utils
 pyasn1==0.6.4
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   pgpy
     #   pyasn1-modules
 pyasn1-modules==0.4.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   google-auth
 pycodestyle==2.14.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 pycparser==3.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   cffi
 pydata-sphinx-theme==0.20.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   sphinx-book-theme
 pydocstyle==6.3.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 pygments==2.21.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test.txt
     #   accessible-pygments
     #   diff-cover
     #   doc8
@@ -824,9 +823,9 @@ pygments==2.21.0
     #   sphinx
 pyjwt[crypto]==2.13.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   drf-jwt
     #   edx-drf-extensions
     #   edx-rest-api-client
@@ -834,7 +833,7 @@ pyjwt[crypto]==2.13.0
     #   social-auth-core
 pylint==3.3.9
     # via
-    #   -c requirements/constraints.txt
+    #   -c constraints.txt
     #   edx-lint
     #   pylint-celery
     #   pylint-django
@@ -849,15 +848,15 @@ pylint-plugin-utils==0.9.0
     #   pylint-django
 pymongo==4.4.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-opaque-keys
 pynacl==1.6.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-django-utils
     #   paramiko
 pyproject-api==1.11.0
@@ -868,61 +867,61 @@ pyproject-hooks==1.2.0
     #   pip-tools
 pytest==9.1.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test.txt
     #   pytest-cov
     #   pytest-django
 pytest-cov==7.1.0
-    # via -r requirements/test.txt
+    # via -r test.txt
 pytest-django==4.14.0
-    # via -r requirements/test.txt
+    # via -r test.txt
 python-dateutil==2.9.0.post0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   celery
     #   edx-ace
     #   freezegun
-python-discovery==1.5.2
+python-discovery==1.6.1
     # via
     #   tox
     #   virtualenv
 python-ipware==3.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   django-ipware
 python-slugify==8.0.4
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   code-annotations
 python3-openid==3.2.0 ; python_version >= "3"
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   social-auth-core
 python3-saml==1.16.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 pytz==2026.3.post1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   drf-yasg
     #   tincan
 pyyaml==6.0.3
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   code-annotations
     #   drf-yasg
     #   edx-i18n-tools
@@ -931,12 +930,12 @@ pyyaml==6.0.3
     #   responses
     #   sphinxcontrib-mermaid
 readme-renderer==45.0
-    # via -r requirements/doc.txt
+    # via -r doc.txt
 requests==2.34.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   cachecontrol
     #   django-oauth-toolkit
     #   edx-braze-client
@@ -955,54 +954,54 @@ requests==2.34.2
     #   twine
 requests-oauthlib==2.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   social-auth-core
 requests-toolbelt==1.0.0
     # via twine
 responses==0.26.2
-    # via -r requirements/test.txt
+    # via -r test.txt
 restructuredtext-lint==2.0.2
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   doc8
 roman-numerals==4.1.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   roman-numerals-py
 roman-numerals-py==4.1.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   sphinx
 rules==3.5
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 sailthru-client==2.2.3
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-ace
 semantic-version==2.10.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-drf-extensions
 simplejson==4.1.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   sailthru-client
 six==1.17.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   edx-ace
     #   edx-ccx-keys
     #   edx-lint
@@ -1010,76 +1009,76 @@ six==1.17.0
     #   python-dateutil
 slumber==0.7.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 snowballstemmer==3.1.1
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   pydocstyle
     #   sphinx
 social-auth-app-django==5.4.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 social-auth-core==4.9.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   social-auth-app-django
 soupsieve==2.9.2
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   beautifulsoup4
 sphinx==8.2.3
     # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/doc.txt
+    #   -c constraints.txt
+    #   -r doc.txt
     #   myst-parser
     #   pydata-sphinx-theme
     #   sphinx-book-theme
     #   sphinxcontrib-mermaid
 sphinx-book-theme==1.4.0
-    # via -r requirements/doc.txt
+    # via -r doc.txt
 sphinxcontrib-applehelp==2.0.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   sphinx
 sphinxcontrib-devhelp==2.0.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   sphinx
 sphinxcontrib-htmlhelp==2.1.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   sphinx
 sphinxcontrib-jsmath==1.0.1
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   sphinx
 sphinxcontrib-mermaid==2.1.0
-    # via -r requirements/doc.txt
+    # via -r doc.txt
 sphinxcontrib-qthelp==2.0.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via
-    #   -r requirements/doc.txt
+    #   -r doc.txt
     #   sphinx
 sqlparse==0.5.5
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   django
 stevedore==5.9.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   code-annotations
     #   doc8
     #   edx-ace
@@ -1087,21 +1086,21 @@ stevedore==5.9.0
     #   edx-opaque-keys
 testfixtures==12.3.0
     # via
-    #   -r requirements/dev.in
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r dev.in
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 text-unidecode==1.3
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   python-slugify
 tincan==1.0.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 tomli-w==1.2.0
     # via tox
 tomlkit==0.15.1
@@ -1109,16 +1108,16 @@ tomlkit==0.15.1
     #   edx-lint
     #   pylint
 tox==4.60.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 tqdm==4.70.0
     # via twine
 twine==1.11.0
-    # via -r requirements/dev.in
+    # via -r dev.in
 typing-extensions==4.16.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   anyio
     #   beautifulsoup4
     #   django-countries
@@ -1129,65 +1128,65 @@ typing-extensions==4.16.0
     #   tox
 tzdata==2026.3
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   kombu
 tzlocal==5.4.4
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   celery
 unicodecsv==0.14.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
 uritemplate==4.2.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   drf-yasg
 urllib3==2.7.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   requests
     #   responses
 vine==5.1.0
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   amqp
     #   celery
     #   kombu
-virtualenv==21.7.4
+virtualenv==21.7.13
     # via tox
 wcwidth==0.8.2
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   prompt-toolkit
 webencodings==0.5.1
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   bleach
 wheel==0.48.0
     # via
-    #   -r requirements/dev.in
+    #   -r dev.in
     #   pip-tools
 xmlsec==1.3.14
     # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
+    #   -r doc.txt
+    #   -r test-master.txt
+    #   -r test.txt
     #   python3-saml
 
 # The following packages are considered to be unsafe in a requirements file:
