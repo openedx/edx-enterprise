@@ -1096,7 +1096,7 @@ scipy==1.17.1
     # via chem
 semantic-version==2.10.0
     # via edx-drf-extensions
-setuptools==81.0.0
+setuptools==83.0.0
     # via
     #   django-pipeline
     #   edx-api-doc-tools
