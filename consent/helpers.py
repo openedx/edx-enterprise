@@ -15,23 +15,13 @@ from django.urls import reverse
 from consent.models import ProxyDataSharingConsent
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.core_api import get_active_enterprise_customer_user
+from enterprise.platform_support.api import (
+    CONSENT_FAILED_PARAMETER,
+    ConsentApiClient,
+    enterprise_customer_uuid_for_request,
+)
+from enterprise.platform_support.utils import get_data_consent_share_cache_key
 from enterprise.utils import get_enterprise_customer
-
-# ENT-11576: CONSENT_FAILED_PARAMETER, ConsentApiClient, enterprise_customer_uuid_for_request,
-# and get_data_consent_share_cache_key will be migrated from the platform's enterprise_support
-# module into edx-enterprise, eliminating these cross-boundary imports.
-try:
-    from openedx.features.enterprise_support.api import (
-        CONSENT_FAILED_PARAMETER,
-        ConsentApiClient,
-        enterprise_customer_uuid_for_request,
-    )
-    from openedx.features.enterprise_support.utils import get_data_consent_share_cache_key
-except ImportError:
-    CONSENT_FAILED_PARAMETER = 'consent_failed'
-    ConsentApiClient = None
-    enterprise_customer_uuid_for_request = None
-    get_data_consent_share_cache_key = None
 
 LOGGER = logging.getLogger(__name__)
 

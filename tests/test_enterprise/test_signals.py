@@ -8,7 +8,11 @@ from datetime import datetime, timedelta
 from unittest import mock
 
 import ddt
+from edx_django_utils.cache import TieredCache
+from opaque_keys.edx.keys import CourseKey
 from pytest import mark
+from slumber.exceptions import HttpClientError, HttpServerError
+from testfixtures import LogCapture
 
 from django.db import transaction
 from django.test import TestCase, override_settings
@@ -26,13 +30,17 @@ from enterprise.models import (
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
+from enterprise.platform_support.utils import get_data_consent_share_cache_key
 from enterprise.signals import (
     _unlink_enterprise_user_from_idp,
     course_enrollment_changed_receiver,
     create_enterprise_enrollment_receiver,
     enterprise_unenrollment_receiver,
+    handle_enterprise_learner_passing_grade,
+    handle_enterprise_learner_subsection,
     handle_social_auth_disconnect,
     handle_user_post_save,
+    refund_order_voucher,
     retire_user_from_pending_enterprise_customer_user,
 )
 from integrated_channels.integrated_channel.models import OrphanedContentTransmissions
@@ -54,6 +62,11 @@ from test_utils.factories import (
     SystemWideEnterpriseUserRoleAssignmentFactory,
     UserFactory,
 )
+
+LOGGER_NAME = "enterprise.signals"
+TEST_EMAIL = "test@edx.org"
+TEST_ECOMMERCE_WORKER = 'ecommerce_worker'
+ORDER_NUMBER = 'EDX-000000001'
 
 
 @mark.django_db(transaction=True)
@@ -1365,3 +1378,234 @@ class TestHandleSocialAuthDisconnect(unittest.TestCase):
             saml_backend=saml_backend,
         )
         mock_unlink.assert_not_called()
+
+
+@ddt.ddt
+@override_settings(ENABLE_ENTERPRISE_INTEGRATION=True)
+@override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_ECOMMERCE_WORKER)
+class TestConsentCacheAndLearnerEventSignals(TestCase):
+    """
+    Tests for the data sharing consent cache, refund, and grade transmission signal handlers.
+
+    The two DSC-cache handlers fire off this app's own model signals and are exercised
+    end to end. The remaining three bind to openedx-platform signals whose senders --
+    the platform's ``CourseEnrollment`` and grading signals -- do not exist in this repo,
+    so each handler is invoked directly with the payload the platform would deliver.
+    Connecting them to those signals is covered separately by ``tests/test_apps.py``.
+    """
+
+    def setUp(self):
+        super().setUp()
+        # ``is_enterprise_learner`` memoises per user id. The database rolls back between
+        # tests but the cache does not, and rolled-back ids get reused, so a stale True
+        # from an earlier test would leak into the "not an enterprise learner" assertions.
+        TieredCache.dangerous_clear_all_tiers()
+        self.ecommerce_worker = UserFactory.create(username=TEST_ECOMMERCE_WORKER)
+        self.user = UserFactory.create(username='test', email=TEST_EMAIL)
+        self.course_id = 'course-v1:edX+DemoX+Demo_Course'
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        self.enterprise_customer_uuid = str(self.enterprise_customer.uuid)
+
+    @staticmethod
+    def _create_dsc_cache(user_id, course_id, enterprise_customer_uuid):
+        consent_cache_key = get_data_consent_share_cache_key(user_id, course_id, enterprise_customer_uuid)
+        TieredCache.set_all_tiers(consent_cache_key, 0)
+
+    @staticmethod
+    def _is_dsc_cache_found(user_id, course_id, enterprise_customer_uuid):
+        consent_cache_key = get_data_consent_share_cache_key(user_id, course_id, enterprise_customer_uuid)
+        data_sharing_consent_needed_cache = TieredCache.get_cached_response(consent_cache_key)
+        return data_sharing_consent_needed_cache.is_found
+
+    def _create_enterprise_enrollment(self, user_id, course_id):
+        """
+        Create enterprise user and enrollment
+        """
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=user_id,
+            enterprise_customer=self.enterprise_customer
+        )
+        EnterpriseCourseEnrollmentFactory(
+            course_id=course_id,
+            enterprise_customer_user=enterprise_customer_user,
+        )
+
+    def test_signal_update_dsc_cache_on_course_enrollment(self):
+        """
+        make sure update_dsc_cache_on_course_enrollment signal clears cache when Enterprise Course Enrollment
+        takes place
+        """
+
+        self._create_dsc_cache(self.user.id, self.course_id, self.enterprise_customer_uuid)
+        assert self._is_dsc_cache_found(self.user.id, self.course_id, self.enterprise_customer_uuid)
+
+        self._create_enterprise_enrollment(self.user.id, self.course_id)
+        assert not self._is_dsc_cache_found(self.user.id, self.course_id, self.enterprise_customer_uuid)
+
+    def test_signal_update_dsc_cache_on_enterprise_customer_update(self):
+        """
+        make sure update_dsc_cache_on_enterprise_customer_update signal clears data_sharing_consent_needed cache after
+         enable_data_sharing_consent flag is changed.
+        """
+
+        self._create_enterprise_enrollment(self.user.id, self.course_id)
+        self._create_dsc_cache(self.user.id, self.course_id, self.enterprise_customer_uuid)
+        assert self._is_dsc_cache_found(self.user.id, self.course_id, self.enterprise_customer_uuid)
+
+        # updating enable_data_sharing_consent flag
+        self.enterprise_customer.enable_data_sharing_consent = False
+        self.enterprise_customer.save()
+
+        assert not self._is_dsc_cache_found(self.user.id, self.course_id, self.enterprise_customer_uuid)
+
+    def _build_enrollment(self, refundable=True, order_voucher_refundable=True, order_number=ORDER_NUMBER):
+        """
+        Stand in for the platform's ``CourseEnrollment`` as ``refund_order_voucher`` sees it.
+        """
+        enrollment = mock.MagicMock()
+        enrollment.user_id = self.user.id
+        enrollment.user = self.user
+        enrollment.course.id = self.course_id
+        enrollment.refundable.return_value = refundable
+        enrollment.is_order_voucher_refundable.return_value = order_voucher_refundable
+        enrollment.get_order_attribute_value.return_value = order_number
+        return enrollment
+
+    @ddt.data(
+        {
+            'description': 'skip_refund short-circuits before anything else',
+            'skip_refund': True, 'enterprise_enrollment_exists': True,
+            'refundable': True, 'order_voucher_refundable': True, 'api_called': False,
+        },
+        {
+            'description': 'the refund window has passed',
+            'skip_refund': False, 'enterprise_enrollment_exists': True,
+            'refundable': False, 'order_voucher_refundable': True, 'api_called': False,
+        },
+        {
+            'description': 'the learner has no enterprise enrollment for this course',
+            'skip_refund': False, 'enterprise_enrollment_exists': False,
+            'refundable': True, 'order_voucher_refundable': True, 'api_called': False,
+        },
+        {
+            'description': 'the order voucher expiration date has already passed',
+            'skip_refund': False, 'enterprise_enrollment_exists': True,
+            'refundable': True, 'order_voucher_refundable': False, 'api_called': False,
+        },
+        {
+            'description': 'success: refundable enterprise enrollment inside the window',
+            'skip_refund': False, 'enterprise_enrollment_exists': True,
+            'refundable': True, 'order_voucher_refundable': True, 'api_called': True,
+        },
+    )
+    @ddt.unpack
+    def test_refund_order_voucher(
+        self,
+        description,
+        skip_refund,
+        enterprise_enrollment_exists,
+        refundable,
+        order_voucher_refundable,
+        api_called,
+    ):
+        """
+        Test refund_order_voucher signal
+        """
+        if enterprise_enrollment_exists:
+            self._create_enterprise_enrollment(self.user.id, self.course_id)
+        enrollment = self._build_enrollment(
+            refundable=refundable,
+            order_voucher_refundable=order_voucher_refundable,
+        )
+
+        with mock.patch('enterprise.signals.ecommerce_api_client') as mock_ecommerce_api_client:
+            refund_order_voucher(sender=None, course_enrollment=enrollment, skip_refund=skip_refund)
+            assert mock_ecommerce_api_client.called == api_called, description
+
+    def test_refund_order_voucher_without_order_number(self):
+        """
+        An enrollment carrying no order number reaches the client but posts nothing.
+        """
+        self._create_enterprise_enrollment(self.user.id, self.course_id)
+        enrollment = self._build_enrollment(order_number=None)
+
+        with mock.patch('enterprise.signals.ecommerce_api_client') as mock_ecommerce_api_client:
+            refund_order_voucher(sender=None, course_enrollment=enrollment)
+            client = mock_ecommerce_api_client.return_value
+            assert not client.enterprise.coupons.create_refunded_voucher.post.called
+
+    @ddt.data(
+        {'error': HttpClientError, 'log_level': 'INFO'},
+        {'error': HttpServerError, 'log_level': 'ERROR'},
+        {'error': Exception, 'log_level': 'ERROR'},
+    )
+    @ddt.unpack
+    def test_refund_order_voucher_with_client_errors(self, error, log_level):
+        """
+        Test refund_order_voucher signal client_error.
+        """
+        self._create_enterprise_enrollment(self.user.id, self.course_id)
+        enrollment = self._build_enrollment()
+
+        with mock.patch('enterprise.signals.ecommerce_api_client') as mock_ecommerce_api_client:
+            client_instance = mock_ecommerce_api_client.return_value
+            client_instance.enterprise.coupons.create_refunded_voucher.post.side_effect = error()
+            with LogCapture(LOGGER_NAME) as logger:
+                refund_order_voucher(sender=None, course_enrollment=enrollment)
+                assert mock_ecommerce_api_client.called is True
+                logger.check(
+                    (
+                        LOGGER_NAME,
+                        log_level,
+                        'Encountered {} from ecommerce while creating refund voucher. '
+                        'Order={}, enrollment={}, user={}'.format(
+                            error.__name__, ORDER_NUMBER, enrollment, enrollment.user
+                        ),
+                    )
+                )
+
+    def test_handle_enterprise_learner_passing_grade(self):
+        """
+        Test to assert transmit_single_learner_data is called when a learner passes a course
+        """
+        with mock.patch(
+            'enterprise.signals.transmit_single_learner_data.apply_async',
+            return_value=None
+        ) as mock_task_apply:
+            course_key = CourseKey.from_string(self.course_id)
+            handle_enterprise_learner_passing_grade(sender=None, user=self.user, course_id=course_key)
+            assert not mock_task_apply.called
+
+            self._create_enterprise_enrollment(self.user.id, self.course_id)
+            handle_enterprise_learner_passing_grade(sender=None, user=self.user, course_id=course_key)
+            mock_task_apply.assert_called_once_with(kwargs={
+                'username': self.user.username,
+                'course_run_id': self.course_id,
+            })
+
+    def test_handle_enterprise_learner_subsection(self):
+        """
+        Test to assert transmit_subsection_learner_data is called when a subsection grade changes.
+        """
+        with mock.patch(
+            'enterprise.signals.transmit_single_subsection_learner_data.apply_async',
+            return_value=None
+        ) as mock_task_apply:
+            kwargs = {
+                'sender': None,
+                'user': self.user,
+                'course_id': CourseKey.from_string(self.course_id),
+                'subsection_id': 'subsection_id',
+                'subsection_grade': 1.0,
+            }
+            handle_enterprise_learner_subsection(**kwargs)
+            assert not mock_task_apply.called
+
+            self._create_enterprise_enrollment(self.user.id, self.course_id)
+            handle_enterprise_learner_subsection(**kwargs)
+            mock_task_apply.assert_called_once_with(kwargs={
+                'username': self.user.username,
+                'course_run_id': self.course_id,
+                'subsection_id': 'subsection_id',
+                'grade': '1.0',
+            })

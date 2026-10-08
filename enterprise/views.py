@@ -47,7 +47,6 @@ from enterprise.forms import (
     ENTERPRISE_LOGIN_SUBTITLE,
     ENTERPRISE_LOGIN_TITLE,
     ENTERPRISE_SELECT_SUBTITLE,
-    ERROR_MESSAGE_FOR_SLUG_LOGIN,
     EnterpriseLoginForm,
     EnterpriseSelectionForm,
 )
@@ -58,6 +57,7 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     EnterpriseEnrollmentSource,
 )
+from enterprise.platform_support.utils import get_provider_login_url
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -98,11 +98,6 @@ try:
     from openedx.core.djangoapps.user_authn import cookies as user_authn_cookies
 except ImportError:
     user_authn_cookies = None
-
-try:
-    from openedx.features.enterprise_support.utils import get_provider_login_url
-except ImportError:
-    get_provider_login_url = None
 
 LOGGER = getEnterpriseLogger(__name__)
 # BASKET_URL removed due to ecommerce service decoupling
@@ -1000,10 +995,6 @@ class EnterpriseLoginView(FormView):
         """
         If the form is valid, redirect to the third party auth login page.
         """
-        # This case will only happened when we try to run the edx-enterprise independently.
-        if not get_provider_login_url:
-            return JsonResponse({'errors': [ERROR_MESSAGE_FOR_SLUG_LOGIN]}, status=400)
-
         return JsonResponse(
             {
                 "url": get_provider_login_url(
