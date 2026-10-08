@@ -10,12 +10,15 @@ from unittest import mock
 import ddt
 from pytest import mark
 
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.test import TestCase, override_settings
 
+from consent.helpers import IMPLIED_CONSENT_CHANGE_REASON
+from consent.models import DataSharingConsent
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
     EnterpriseCustomerAdmin,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
@@ -39,6 +42,7 @@ from integrated_channels.integrated_channel.models import OrphanedContentTransmi
 from test_utils import EmptyCacheMixin
 from test_utils.factories import (
     ContentMetadataItemTransmissionFactory,
+    DataSharingConsentFactory,
     EnterpriseCatalogQueryFactory,
     EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerCatalogFactory,
@@ -999,6 +1003,146 @@ class TestCourseEnrollmentSignals(TestCase):
             assert event_fulfillment.uuid == lc_fulfillment.uuid
         else:
             mock_send_revoked_event.assert_not_called()
+
+
+@mark.django_db
+@ddt.ddt
+class TestImpliedDataSharingConsentSignal(TestCase):
+    """
+    Tests for the `grant_implied_data_sharing_consent_receiver` signal handler.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = EnterpriseCustomerFactory(
+            enforce_data_sharing_consent=EnterpriseCustomer.EXTERNALLY_MANAGED,
+        )
+        self.enterprise_customer_user = EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.course_id = 'course-v1:edX+DemoX+Demo_Course'
+
+    def _get_consent_records(self):
+        return DataSharingConsent.objects.filter(
+            enterprise_customer=self.enterprise_customer,
+            username=self.enterprise_customer_user.username,
+            course_id=self.course_id,
+        )
+
+    def test_externally_managed_enrollment_grants_consent(self):
+        """
+        A new enrollment of a customer with externally managed consent gets a granted consent record.
+        """
+        EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        consent_records = self._get_consent_records()
+        assert consent_records.count() == 1
+        assert consent_records.first().granted is True
+        assert consent_records.first().history.first().history_change_reason == IMPLIED_CONSENT_CHANGE_REASON
+
+    @ddt.data(
+        # Consent is requested from the learner at enrollment, so it is not implied.
+        {'enable_data_sharing_consent': True, 'enforce_data_sharing_consent': EnterpriseCustomer.AT_ENROLLMENT},
+        # Data sharing consent is disabled, whatever the enforcement setting.
+        {'enable_data_sharing_consent': False, 'enforce_data_sharing_consent': EnterpriseCustomer.AT_ENROLLMENT},
+        {'enable_data_sharing_consent': False, 'enforce_data_sharing_consent': EnterpriseCustomer.EXTERNALLY_MANAGED},
+    )
+    @ddt.unpack
+    def test_consent_not_implied(self, enable_data_sharing_consent, enforce_data_sharing_consent):
+        """
+        No consent record is written unless the customer has enabled, externally managed consent.
+        """
+        self.enterprise_customer.enable_data_sharing_consent = enable_data_sharing_consent
+        self.enterprise_customer.enforce_data_sharing_consent = enforce_data_sharing_consent
+        self.enterprise_customer.save()
+        EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        assert not self._get_consent_records().exists()
+
+    @ddt.data(
+        # Revoked for the course run being enrolled in.
+        {'revoked_course_id': 'course-v1:edX+DemoX+Demo_Course'},
+        # Revoked for the course; a new course run record would take precedence over it in consent lookups.
+        {'revoked_course_id': 'edX+DemoX'},
+    )
+    @ddt.unpack
+    def test_revoked_consent_is_not_overridden(self, revoked_course_id):
+        """
+        A learner who explicitly revoked consent stays revoked, whether consent was revoked for the course run
+        or for the course.
+        """
+        DataSharingConsentFactory(
+            enterprise_customer=self.enterprise_customer,
+            username=self.enterprise_customer_user.username,
+            course_id=revoked_course_id,
+            granted=False,
+        )
+        EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        consent_records = DataSharingConsent.objects.filter(enterprise_customer=self.enterprise_customer)
+        assert consent_records.count() == 1
+        revoked_record = consent_records.get(course_id=revoked_course_id)
+        assert revoked_record.granted is False
+        assert revoked_record.history.first().history_change_reason is None
+
+    def test_updated_enrollment_does_not_grant_consent(self):
+        """
+        Only newly created enrollments get a consent record.
+        """
+        self.enterprise_customer.enforce_data_sharing_consent = EnterpriseCustomer.AT_ENROLLMENT
+        self.enterprise_customer.save()
+        enrollment = EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        self.enterprise_customer.enforce_data_sharing_consent = EnterpriseCustomer.EXTERNALLY_MANAGED
+        self.enterprise_customer.save()
+        enrollment.saved_for_later = True
+        enrollment.save()
+        assert not self._get_consent_records().exists()
+
+    @mock.patch('consent.helpers.update_change_reason', side_effect=DatabaseError('history write failed'))
+    def test_consent_failure_does_not_fail_enrollment(self, mock_update_change_reason):
+        """
+        A failure while recording implied consent rolls back the partial write and does not fail the enrollment.
+        """
+        with mock.patch('enterprise.signals.logger') as mock_logger:
+            enrollment = EnterpriseCourseEnrollmentFactory(
+                enterprise_customer_user=self.enterprise_customer_user,
+                course_id=self.course_id,
+            )
+        mock_update_change_reason.assert_called_once()
+        mock_logger.exception.assert_called_once()
+        assert EnterpriseCourseEnrollment.objects.filter(id=enrollment.id).exists()
+        assert not self._get_consent_records().exists()
+
+    @ddt.data(
+        # The enterprise learner's user no longer exists.
+        {'user_exists': False, 'linked': True},
+        # The learner is unlinked; learner progress reporting excludes unlinked learners.
+        {'user_exists': True, 'linked': False},
+    )
+    @ddt.unpack
+    def test_learner_not_eligible_does_not_grant_consent(self, user_exists, linked):
+        """
+        No consent record is written for a learner without a user, or for an unlinked learner.
+        """
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=UserFactory().id if user_exists else 999999,
+            linked=linked,
+        )
+        EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        assert not DataSharingConsent.objects.exists()
 
 
 @mark.django_db

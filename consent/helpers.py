@@ -6,13 +6,16 @@ import logging
 from urllib.parse import urlencode
 
 from edx_django_utils.cache import TieredCache
+from simple_history.utils import update_change_reason
 
 from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.db import transaction
 from django.urls import reverse
 
 from consent.models import ProxyDataSharingConsent
+from enterprise import models as enterprise_models
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.core_api import get_active_enterprise_customer_user
 from enterprise.utils import get_enterprise_customer
@@ -34,6 +37,8 @@ except ImportError:
     get_data_consent_share_cache_key = None
 
 LOGGER = logging.getLogger(__name__)
+
+IMPLIED_CONSENT_CHANGE_REASON = 'Implied consent: externally managed data sharing consent'
 
 
 def consent_needed_for_course(request, user, course_id, enrollment_exists=False):
@@ -196,6 +201,58 @@ def get_course_data_sharing_consent(username, course_id, enterprise_customer_uui
         course_id=course_id,
         enterprise_customer__uuid=enterprise_customer_uuid
     )
+
+
+def get_usernames_with_revoked_data_sharing_consent(
+    enterprise_customer: enterprise_models.EnterpriseCustomer,
+    usernames: list[str] | None = None,
+) -> set[str]:
+    """
+    Return the usernames of learners who revoked data sharing consent for any course of the enterprise customer.
+
+    :param enterprise_customer: The consent requester.
+    :param usernames: Optional usernames to limit the lookup to.
+    :return: A set of usernames.
+    """
+    DataSharingConsent = apps.get_model('consent', 'DataSharingConsent')
+    revoked_consents = DataSharingConsent.objects.filter(enterprise_customer=enterprise_customer, granted=False)
+    if usernames is not None:
+        revoked_consents = revoked_consents.filter(username__in=usernames)
+    return set(revoked_consents.values_list('username', flat=True))
+
+
+def grant_implied_data_sharing_consent(
+    username: str,
+    course_id: str,
+    enterprise_customer: enterprise_models.EnterpriseCustomer,
+) -> bool:
+    """
+    Record implied data sharing consent for a learner of a customer with externally managed consent.
+
+    An existing consent record is never modified, so a learner who explicitly revoked consent stays revoked.
+    Consent is also not implied for a learner who revoked consent for any course of the customer: consent can be
+    recorded per course as well as per course run, and a new course run record would take precedence over a
+    revoked course record. New records are marked with ``IMPLIED_CONSENT_CHANGE_REASON`` in their history, so
+    implied grants can be told apart from consent given by the learner.
+
+    :param username: The user for whom consent is implied.
+    :param course_id: The course run for which consent is implied.
+    :param enterprise_customer: The consent requester.
+    :return: True if a new consent record was created, False otherwise.
+    """
+    DataSharingConsent = apps.get_model('consent', 'DataSharingConsent')
+    with transaction.atomic():
+        if get_usernames_with_revoked_data_sharing_consent(enterprise_customer, usernames=[username]):
+            return False
+        consent, created = DataSharingConsent.objects.get_or_create(
+            username=username,
+            course_id=course_id,
+            enterprise_customer=enterprise_customer,
+            defaults={'granted': True},
+        )
+        if created:
+            update_change_reason(consent, IMPLIED_CONSENT_CHANGE_REASON)
+    return created
 
 
 def get_program_data_sharing_consent(username, program_uuid, enterprise_customer_uuid):

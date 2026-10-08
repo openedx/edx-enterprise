@@ -687,6 +687,16 @@ class EnterpriseCustomer(TimeStampedModel):
         return self.enable_data_sharing_consent and self.enforce_data_sharing_consent != self.EXTERNALLY_MANAGED
 
     @property
+    def implies_data_sharing_consent(self):
+        """
+        Determine whether data sharing consent is implied for this enterprise customer's learners.
+
+        Customers with externally managed data sharing consent collect consent outside of edX, so learners
+        are never prompted and consent should be treated as granted.
+        """
+        return self.enable_data_sharing_consent and self.enforce_data_sharing_consent == self.EXTERNALLY_MANAGED
+
+    @property
     def enables_audit_data_reporting(self):
         """
         Determine whether the enterprise customer has enabled the ability to report/pass-back audit track data.
