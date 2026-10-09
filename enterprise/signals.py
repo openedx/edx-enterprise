@@ -14,6 +14,7 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.http import HttpRequest
 
+from consent.helpers import grant_implied_data_sharing_consent
 from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
@@ -232,6 +233,56 @@ def update_learner_language_preference(sender, instance, created, **kwargs):    
     # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
     if created and instance.enterprise_customer.default_language:
         unset_enterprise_learner_language(instance)
+
+
+@receiver(post_save, sender=models.EnterpriseCourseEnrollment)
+@disable_for_loaddata
+def grant_implied_data_sharing_consent_receiver(sender, instance, created, **kwargs):  # pylint: disable=unused-argument
+    """
+    Grant data sharing consent for new enrollments of customers with externally managed consent.
+
+    These customers collect consent outside of edX, so learners are never prompted and no consent
+    record would otherwise be written, which excludes their enrollments from learner progress reporting.
+    """
+    if not created:
+        return
+
+    enterprise_customer_user = instance.enterprise_customer_user
+    enterprise_customer = enterprise_customer_user.enterprise_customer
+    # Unlinked learners are excluded from learner progress reporting, and from the backfill command.
+    if not enterprise_customer.implies_data_sharing_consent or not enterprise_customer_user.linked:
+        return
+
+    username = enterprise_customer_user.username
+    if not username:
+        return
+
+    # Failing to record consent must not fail the enrollment; missed records can be backfilled
+    # with the `backfill_implied_dsc_records` management command.
+    try:
+        consent_created = grant_implied_data_sharing_consent(
+            username=username,
+            course_id=instance.course_id,
+            enterprise_customer=enterprise_customer,
+        )
+    except Exception:  # pylint: disable=broad-except
+        logger.exception(
+            '[Implied DSC] Failed to grant externally managed data sharing consent. '
+            'EnterpriseCustomer: %s, Username: %s, CourseId: %s',
+            enterprise_customer.uuid,
+            username,
+            instance.course_id,
+        )
+        return
+
+    if consent_created:
+        logger.info(
+            '[Implied DSC] Granted externally managed data sharing consent. '
+            'EnterpriseCustomer: %s, Username: %s, CourseId: %s',
+            enterprise_customer.uuid,
+            username,
+            instance.course_id,
+        )
 
 
 @receiver(post_save, sender=models.PendingEnterpriseCustomerAdminUser)
