@@ -37,7 +37,9 @@ class TestEnterpriseLearnerGenericName(unittest.TestCase):
     The override takes no request argument; it reads the current one from crum, which is
     patched here because these are plain calls that never pass through middleware.
     ``prev_fn`` returns DELEGATED_NAME, so that is the expected result of any case which
-    must delegate to the platform.
+    must delegate to it. In production the previous implementation is usually the platform
+    default, which returns None -- a sentinel name is used here only so that delegating is
+    distinguishable from returning None directly.
     """
 
     @ddt.data(

@@ -30,14 +30,19 @@ class EnterpriseLearnerPortalLink(TypedDict):
     name: str
 
 
-def enterprise_learner_generic_name(prev_fn: Callable[..., str], user: AbstractBaseUser) -> str:
+def enterprise_learner_generic_name(
+    prev_fn: Callable[..., Optional[str]],
+    user: AbstractBaseUser,
+) -> Optional[str]:
     """
     Return the generic name configured by the learner's enterprise customer.
 
     An enterprise customer with ``replace_sensitive_sso_username`` enabled hides its SSO
     learners' real usernames behind a generic name. Every other learner -- and every page
-    where no generic name applies, such as 404 pages -- delegates to the platform, which
-    displays the learner's own username.
+    where no generic name applies, such as 404 pages -- delegates to the previous
+    implementation. The platform default returns None, leaving each caller to show its own
+    default: the platform's templates show the learner's username, and a theme may show
+    something else, such as the learner's full name.
 
     The hook takes no request: the current one comes from crum, which is populated by
     ``CurrentRequestUserMiddleware`` during a request cycle only. Outside one -- a
@@ -45,19 +50,21 @@ def enterprise_learner_generic_name(prev_fn: Callable[..., str], user: AbstractB
     than calling the platform helper with nothing.
 
     Pluggable override hook point:
-    - hook function: `get_learner_display_username()`
+    - hook function: `get_learner_display_name_override()`
     - platform path: `lms/djangoapps/branding/api.py`
 
     Arguments:
         prev_fn: the previous (default) implementation. Must be called, and its result
-            returned, whenever no enterprise generic name applies -- the platform's
-            callers render this result directly, with no fallback of their own.
+            returned, whenever no enterprise generic name applies, so that any other
+            override still gets a chance to supply a name and the caller's own default
+            applies otherwise.
         user: the Django User object whose name is being displayed. Not necessarily the
             user making the request: the progress page displays the student being viewed,
             and the user dropdowns display the real user behind a masquerade.
 
     Returns:
-        str: the enterprise generic name, or whatever the previous implementation returns.
+        Optional[str]: the enterprise generic name, or whatever the previous implementation
+        returns, which is None unless another override supplies a name.
     """
     request = get_current_request()
     if request is None:
