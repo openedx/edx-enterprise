@@ -44,6 +44,7 @@ from enterprise.admin.views import (
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.config.models import UpdateRoleAssignmentsWithCustomersConfig
 from enterprise.models import DefaultEnterpriseEnrollmentIntention
+from enterprise.platform_support.admin.views import EnrollmentAttributeOverrideView
 from enterprise.utils import (
     discovery_query_url,
     get_all_field_names,
@@ -57,10 +58,6 @@ try:
 except ImportError:
     EnterpriseCatalogApiClient = None
 
-try:
-    from openedx.features.enterprise_support.admin.views import EnrollmentAttributeOverrideView
-except ImportError:
-    EnrollmentAttributeOverrideView = None
 User = auth.get_user_model()
 
 
@@ -781,23 +778,21 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         """
-        Override to conditionally show the button.
+        Override to show the `Enrollment Attribute Override` button.
         """
         extra_context = extra_context or {}
-        extra_context['attr_override_button'] = bool(EnrollmentAttributeOverrideView)
+        extra_context['attr_override_button'] = True
         return super().changelist_view(request, extra_context=extra_context)
 
     def get_urls(self):
         """
         Append `Enrollment Attribute Override` view url with default urls
         """
-        custom_urls = []
-        if EnrollmentAttributeOverrideView:
-            custom_urls = [
-                path('override_attributes/', self.admin_site.admin_view(EnrollmentAttributeOverrideView.as_view()),
-                     name='enterprise_override_attributes'
-                     ),
-            ]
+        custom_urls = [
+            path('override_attributes/', self.admin_site.admin_view(EnrollmentAttributeOverrideView.as_view()),
+                 name='enterprise_override_attributes'
+                 ),
+        ]
 
         return custom_urls + super().get_urls()
 
