@@ -254,7 +254,7 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==40.40.0
+faker==40.41.0
     # via factory-boy
 fastavro==1.12.2
     # via
@@ -351,7 +351,7 @@ inflection==0.5.1
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
-iniconfig==2.3.0
+iniconfig==2.3.1
     # via pytest
 invoke==3.0.3
     # via
