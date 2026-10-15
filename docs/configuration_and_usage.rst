@@ -132,11 +132,19 @@ They must be run from the command line on a server with the Open edX environment
 
 .. note::
 
-   If data sharing consent is enabled for your ``EnterpriseCustomer``, then any Enterprise learners enrolled in the
-   associated courses must consent to data sharing, thus permitting their data to be sent back to SAP SuccessFactors.
+   If data sharing consent is enabled and enforced *at enrollment* for your ``EnterpriseCustomer``, then any
+   Enterprise learners enrolled in the associated courses must consent to data sharing, thus permitting their data
+   to be sent back to SAP SuccessFactors.
 
    If data sharing consent is *not* enabled for your ``EnterpriseCustomer``, then learner data may be sent to SAP
    SuccessFactors without their explicit consent, so use these settings with care.
+
+   If data sharing consent is enabled and *managed externally*, the customer collects consent outside of edX, and
+   consent is recorded as granted for each new enrollment, so learner data is sent without an edX prompt. After
+   switching a customer to *managed externally*, run
+   ``./manage.py lms backfill_implied_dsc_records --enterprise-customer-uuid <uuid>`` for its existing enrollments.
+   Switching back to *at enrollment* does not revoke consent recorded this way; these records are marked with the
+   history change reason ``Implied consent: externally managed data sharing consent``.
 
 
 Transmit Learner Data
