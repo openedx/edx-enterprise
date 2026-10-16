@@ -254,7 +254,7 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==40.41.0
+faker==40.43.0
     # via factory-boy
 fastavro==1.12.2
     # via
@@ -441,7 +441,7 @@ pgpy==0.6.0
     # via -r requirements/test-master.txt
 pillow==12.3.0
     # via -r requirements/test-master.txt
-pluggy==1.6.0
+pluggy==1.7.0
     # via pytest
 prompt-toolkit==3.0.53
     # via
@@ -597,7 +597,7 @@ social-auth-core==4.9.1
     # via
     #   -r requirements/test-master.txt
     #   social-auth-app-django
-soupsieve==2.10
+soupsieve==3.0.3
     # via beautifulsoup4
 sphinx==8.2.3
     # via
