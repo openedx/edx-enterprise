@@ -53,7 +53,7 @@ markupsafe==3.0.4
     # via jinja2
 mdurl==0.1.2
     # via markdown-it-py
-more-itertools==11.1.0
+more-itertools==11.2.1
     # via
     #   cheroot
     #   cherrypy
@@ -78,7 +78,7 @@ pyyaml==6.0.3
     # via jasmine
 rich==15.0.0
     # via typer
-selenium==4.50.0
+selenium==4.51.0
     # via jasmine
 shellingham==1.5.4
     # via typer
