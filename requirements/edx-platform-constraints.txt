@@ -10,7 +10,7 @@ acid-xblock==0.4.1
     # via openedx-platform
 aiohappyeyeballs==2.7.1
     # via aiohttp
-aiohttp==3.14.3
+aiohttp==3.14.4
     # via geoip2
 aiosignal==1.4.0
     # via aiohttp
