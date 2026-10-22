@@ -17,6 +17,12 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.18.0] - 2026-10-08
+----------------------
+* feat: grant implied data sharing consent for enterprise customers with externally managed consent,
+  so their enrollments are included in learner progress reporting. Adds the ``backfill_implied_dsc_records``
+  management command to create the missing consent records for existing enrollments (ENT-12258)
+
 [8.17.0] - 2026-09-29
 ----------------------
 * feat: Add ``enterprise_learner_generic_name`` and ``enterprise_learner_portal_link``
