@@ -126,9 +126,9 @@ The project has an extensive migration history (240+ migrations). When creating 
 ## Before opening a PR or pushing a branch
 
 Run a self-check on the diff before creating a PR or pushing:
-1. Compute effective LoC — exclude lockfiles, generated files, snapshots, and vendor code.
-2. Count effective touched files — exclude the above plus one-to-one test pairs.
-3. If effective LoC > 400 or effective files > 10, stop and propose a split before proceeding.
+1. Confirm the diff is one coherent change — a single purpose a reviewer can hold in their head.
+2. Look for logical seams: independently shippable or reviewable concerns bundled together (a refactor mixed with a feature, unrelated fixes, a schema migration plus unrelated UI work). If you find them, stop and propose a split along those seams before proceeding.
+3. Size alone is never a reason to split. Note effective LoC and touched files (excluding lockfiles, generated files, snapshots, vendor code, and one-to-one test pairs) so reviewers can plan time; for a large but cohesive diff, suggest a review order or commit-by-commit reading.
 4. Report the result inline before continuing.
 
 ## Key Principles
