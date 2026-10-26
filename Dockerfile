@@ -68,6 +68,7 @@ RUN python3.12 -m venv $VIRTUAL_ENV
 COPY requirements/ /edx/app/edx-enterprise/requirements/
 COPY package.json /edx/app/edx-enterprise/package.json
 COPY package-lock.json /edx/app/edx-enterprise/package-lock.json
+COPY .nvmrc /edx/app/edx-enterprise/.nvmrc
 
 # Fetch and install dependencies.
 RUN pip install -r requirements/dev.txt
@@ -76,5 +77,6 @@ RUN pip install nodeenv
 # Set up a Node environment and install Node requirements.
 # Must be done after Python requirements, since nodeenv is installed via pip.
 # The node environment is already 'activated' because its .../bin was put on $PATH.
-RUN nodeenv $NODE_ENV --node=18.15.0 --prebuilt
+# Node version comes from .nvmrc so the image matches CI.
+RUN nodeenv $NODE_ENV --node=$(cat .nvmrc) --prebuilt
 RUN npm ci
