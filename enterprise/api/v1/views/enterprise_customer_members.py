@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from django.core.exceptions import ValidationError
 from django.db import connection
+from django.db.utils import OperationalError
 
 from enterprise import models
 from enterprise.api.v1 import serializers
@@ -105,32 +106,69 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
                 FROM enterprise_enterprisecustomeruser ecu
                 INNER JOIN auth_user as au on ecu.user_id = au.id
                 LEFT JOIN auth_userprofile as aup on au.id = aup.user_id
+                INNER JOIN enterprise_systemwideenterpriseuserroleassignment swra
+                    on swra.user_id = au.id
+                    and swra.enterprise_customer_id = ecu.enterprise_customer_id
+                INNER JOIN enterprise_systemwideenterpriserole sr
+                    on sr.id = swra.role_id
                 WHERE
                     ecu.enterprise_customer_id = %s
                 AND
                     ecu.linked = 1
+                AND
+                    ecu.active = 1
+                AND
+                    sr.name = 'enterprise_learner'
+            ) SELECT * FROM users {user_query_filter} ORDER BY full_name;
+        """
+        query_without_profile = """
+            WITH users AS (
+                SELECT
+                    au.id,
+                    au.email,
+                    au.date_joined,
+                    au.username as full_name
+                FROM enterprise_enterprisecustomeruser ecu
+                INNER JOIN auth_user as au on ecu.user_id = au.id
+                INNER JOIN enterprise_systemwideenterpriseuserroleassignment swra
+                    on swra.user_id = au.id
+                    and swra.enterprise_customer_id = ecu.enterprise_customer_id
+                INNER JOIN enterprise_systemwideenterpriserole sr
+                    on sr.id = swra.role_id
+                WHERE
+                    ecu.enterprise_customer_id = %s
+                AND
+                    ecu.linked = 1
+                AND
+                    ecu.active = 1
+                AND
+                    sr.name = 'enterprise_learner'
             ) SELECT * FROM users {user_query_filter} ORDER BY full_name;
         """
         try:
             with connection.cursor() as cursor:
                 if user_query:
                     like_user_query = f"%{user_query}%"
-                    sql_to_execute = query.format(
-                        user_query_filter="WHERE full_name LIKE %s OR email LIKE %s"
-                    )
-                    cursor.execute(
-                        sql_to_execute,
-                        [uuid_no_dashes, like_user_query, like_user_query],
-                    )
+                    user_query_filter = "WHERE full_name LIKE %s OR email LIKE %s"
+                    sql_params = [uuid_no_dashes, like_user_query, like_user_query]
                 elif user_id:
-                    user_id_query = f"{user_id}"
-                    sql_to_execute = query.format(
-                        user_query_filter="WHERE id = %s"
-                    )
-                    cursor.execute(sql_to_execute, [uuid_no_dashes, user_id_query])
+                    user_query_filter = "WHERE id = %s"
+                    sql_params = [uuid_no_dashes, user_id]
                 else:
-                    sql_to_execute = query.format(user_query_filter="")
-                    cursor.execute(sql_to_execute, [uuid_no_dashes])
+                    user_query_filter = ""
+                    sql_params = [uuid_no_dashes]
+
+                def _execute(sql_template):
+                    sql_to_execute = sql_template.format(user_query_filter=user_query_filter)
+                    cursor.execute(sql_to_execute, sql_params)
+
+                try:
+                    _execute(query)
+                except OperationalError as exc:
+                    if 'no such table: auth_userprofile' not in str(exc):
+                        raise
+                    _execute(query_without_profile)
+
                 users.extend(cursor.fetchall())
 
         except ValidationError:

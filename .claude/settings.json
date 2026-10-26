@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(quality-tests)",
+      "Skill(unit-tests)",
+      "Bash(make :*)",
+      "Bash(docker compose :*)",
+      "Bash(tox)",
+      "Bash(tox :*)",
+      "Bash(pytest :*)",
+      "Bash(py.test :*)",
+      "Bash(python manage.py :*)",
+      "Bash(pylint :*)",
+      "Bash(pycodestyle :*)",
+      "Bash(isort :*)",
+      "Bash(pip install :*)",
+      "Bash(pip-compile :*)",
+      "Bash(pip-sync :*)",
+      "Bash(npm :*)",
+      "Bash(diff-cover :*)",
+      "Bash(coverage :*)",
+      "Bash(doc8 :*)",
+      "Bash(code_annotations :*)",
+      "Bash(jasmine)"
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "edx-enterprise-team-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "edx/ai-devtools-internal"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "pyright-lsp@claude-plugins-official": true,
+    "edx-enterprise-backend@edx-enterprise-team-marketplace": true
+  }
+}

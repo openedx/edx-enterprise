@@ -3,9 +3,9 @@ Enterprise Django application initialization.
 """
 
 from django.apps import AppConfig, apps
-from django.conf import settings
+from django.db.models.signals import post_save, pre_migrate
 
-from enterprise.constants import USER_POST_SAVE_DISPATCH_UID
+from enterprise.constants import SAML_ACCOUNT_DISCONNECTED_DISPATCH_UID, USER_POST_SAVE_DISPATCH_UID
 
 
 class EnterpriseConfig(AppConfig):
@@ -13,25 +13,21 @@ class EnterpriseConfig(AppConfig):
     Configuration for the enterprise Django application.
     """
 
+    plugin_app = {
+        "settings_config": {
+            "lms.djangoapp": {
+                "common": {
+                    "relative_path": "settings.common",
+                },
+                "production": {
+                    "relative_path": "settings.production",
+                },
+            },
+        },
+    }
+
     name = "enterprise"
     valid_image_extensions = [".png", ]
-    valid_max_image_size = getattr(settings, 'ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE', 512)  # Value in KB's
-    customer_success_email = getattr(settings, 'ENTERPRISE_CUSTOMER_SUCCESS_EMAIL', 'customersuccess@edx.org')
-    enterprise_integrations_email = getattr(
-        settings,
-        'ENTERPRISE_INTEGRATIONS_EMAIL',
-        'enterprise-integrations@edx.org'
-    )
-
-    backend_service_edx_oauth2_key = getattr(
-        settings, "ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_KEY", "enterprise-backend-service-key"
-    )
-    backend_service_edx_oauth2_secret = getattr(
-        settings, "ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_SECRET", "enterprise-backend-service-secret"
-    )
-    backend_service_edx_oauth2_provider_url = getattr(
-        settings, "ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_PROVIDER_URL", "http://127.0.0.1:8000/oauth2"
-    )
 
     @property
     def auth_user_model(self):
@@ -44,16 +40,27 @@ class EnterpriseConfig(AppConfig):
         """
         Perform other one-time initialization steps.
         """
-        from enterprise.signals import handle_user_post_save  # pylint: disable=import-outside-toplevel
-
-        from django.db.models.signals import post_save, pre_migrate  # pylint: disable=C0415, # isort:skip
+        from enterprise.signals import (  # pylint: disable=import-outside-toplevel
+            handle_social_auth_disconnect,
+            handle_user_post_save,
+        )
 
         post_save.connect(handle_user_post_save, sender=self.auth_user_model, dispatch_uid=USER_POST_SAVE_DISPATCH_UID)
         pre_migrate.connect(self._disconnect_user_post_save_for_migrations)
+
+        try:
+            # pylint: disable=import-outside-toplevel
+            from common.djangoapps.third_party_auth.signals import SAMLAccountDisconnected
+        except ImportError:
+            pass
+        else:
+            SAMLAccountDisconnected.connect(
+                handle_social_auth_disconnect,
+                dispatch_uid=SAML_ACCOUNT_DISCONNECTED_DISPATCH_UID,
+            )
 
     def _disconnect_user_post_save_for_migrations(self, sender, **kwargs):  # pylint: disable=unused-argument
         """
         Handle pre_migrate signal - disconnect User post_save handler.
         """
-        from django.db.models.signals import post_save  # pylint: disable=import-outside-toplevel
         post_save.disconnect(sender=self.auth_user_model, dispatch_uid=USER_POST_SAVE_DISPATCH_UID)

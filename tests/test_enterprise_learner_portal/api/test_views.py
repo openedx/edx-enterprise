@@ -185,7 +185,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
             )
         )
         assert resp.status_code == 404
-        assert resp.json() == {'detail': 'Not found.'}
+        assert resp.json() == {'detail': 'No EnterpriseCustomerUser matches the given query.'}
 
     @mock.patch('enterprise_learner_portal.api.v1.views.get_resume_urls_for_course_enrollments')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_certificate_for_user', mock.MagicMock())
@@ -358,7 +358,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
             )
         )
         assert resp.status_code == 404
-        assert resp.json() == {'detail': 'Not found.'}
+        assert resp.json() == {'detail': 'No EnterpriseCustomerUser matches the given query.'}
 
     @mock.patch('enterprise_learner_portal.api.v1.views.EnterpriseCourseEnrollmentSerializer')
     @mock.patch('enterprise_learner_portal.api.v1.views.get_course_overviews')
@@ -382,4 +382,4 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
             )
         )
         assert resp.status_code == 404
-        assert resp.json() == {'detail': 'Not found.'}
+        assert resp.json() == {'detail': 'No EnterpriseCourseEnrollment matches the given query.'}

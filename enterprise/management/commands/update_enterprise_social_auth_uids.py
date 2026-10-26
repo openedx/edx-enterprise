@@ -5,14 +5,11 @@ Django management command to update the social auth records UID
 import csv
 import logging
 
+from social_django.models import UserSocialAuth
+
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand
 from django.db import transaction
-
-try:
-    from social_django.models import UserSocialAuth
-except ImportError:
-    UserSocialAuth = None
 
 logger = logging.getLogger(__name__)
 

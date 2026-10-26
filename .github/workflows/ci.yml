@@ -15,18 +15,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11']
-        toxenv: [quality, docs, django42-celery53, django52-celery53, pii_check]
+        python-version: ['3.12']
+        toxenv: [quality, docs, django52, pii_check]
     env:
       RUNJSHINT: true
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: x64
     - name: Setup Nodejs
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
         node-version-file: '.nvmrc'
     - run: pip install -r requirements/ci.txt
@@ -35,14 +35,14 @@ jobs:
         TOXENV: ${{ matrix.toxenv }}
       run: tox
     - name: Run code coverage
-      if: matrix.python-version == '3.11' && matrix.toxenv == 'django42-celery53'
-      uses: codecov/codecov-action@v4
+      if: matrix.python-version == '3.12' && matrix.toxenv == 'django52' # Only run this once as part of tests
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       with:
         flags: unittests
         fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}
     - name: Run jshint
-      if: matrix.toxenv=='django42-celery53'     # Only run this once as part of tests
+      if: matrix.python-version == '3.12' && matrix.toxenv == 'django52' # Only run this once as part of tests
       run: |
         npm ci
         make jshint

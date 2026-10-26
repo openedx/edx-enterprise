@@ -7,6 +7,7 @@ from logging import getLogger
 from requests import RequestException
 
 from django.apps import apps
+from django.conf import settings
 
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.tpa_pipeline import get_user_from_social_auth
@@ -14,6 +15,7 @@ from integrated_channels.catalog_service_utils import get_course_id_for_enrollme
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
+from integrated_channels.sap_success_factors.exporters.utils import is_sso_enabled_via_tpa_service
 from integrated_channels.utils import generate_formatted_log, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
@@ -25,6 +27,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
     """
 
     INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK = False
+    remote_id_field_name = getattr(settings, 'SAP_THIRD_PARTY_AUTH_USER_ID_ATTRIBUTE', None)
 
     def get_learner_data_records(
             self,
@@ -45,9 +48,17 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
         if completed_date is not None:
             sap_completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
-        sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id(
-            self.enterprise_configuration.idp_id
-        )
+        if self.remote_id_field_name and \
+                is_sso_enabled_via_tpa_service(self.enterprise_configuration.enterprise_customer):
+            LOGGER.info('Using remote_id_field_name for SAPSF user ID retrieval')
+            sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id(
+                self.enterprise_configuration.idp_id,
+                self.remote_id_field_name
+            )
+        else:
+            sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id(
+                self.enterprise_configuration.idp_id,
+            )
 
         if sapsf_user_id is not None:
             SapSuccessFactorsLearnerDataTransmissionAudit = apps.get_model(

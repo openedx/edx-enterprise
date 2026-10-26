@@ -310,7 +310,9 @@ class CanvasLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     """
     The payload we send to canvas at a given point in time for an enterprise course enrollment.
 
-    .. no_pii:
+    .. pii: canvas_user_email contains PII. Declaring "retained" because I don't know if it's retired.
+    .. pii_types: email_address
+    .. pii_retirement: retained
     """
     canvas_user_email = models.CharField(
         max_length=255,

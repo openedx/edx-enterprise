@@ -311,18 +311,19 @@ class ThirdPartyAuthApiClient(UserAPIClient):
     API_BASE_URL = urljoin(f"{settings.LMS_INTERNAL_ROOT_URL}/", "api/third_party_auth/v0/")
 
     @UserAPIClient.refresh_token
-    def get_remote_id(self, identity_provider, username):
+    def get_remote_id(self, identity_provider, username, remote_id_field_name=None):
         """
         Retrieve the remote identifier for the given username.
 
         Args:
         * ``identity_provider`` (str): identifier slug for the third-party authentication service used during SSO.
         * ``username`` (str): The username ID identifying the user for which to retrieve the remote name.
+        * ``remote_id_field_name`` (str) (optional): The field name to use for the remote id lookup.
 
         Returns:
             string or None: the remote name of the given user.  None if not found.
         """
-        return self._get_results(identity_provider, 'username', username, 'remote_id')
+        return self._get_results(identity_provider, 'username', username, 'remote_id', remote_id_field_name)
 
     @UserAPIClient.refresh_token
     def get_username_from_remote_id(self, identity_provider, remote_id):
@@ -338,13 +339,15 @@ class ThirdPartyAuthApiClient(UserAPIClient):
         """
         return self._get_results(identity_provider, 'remote_id', remote_id, 'username')
 
-    def _get_results(self, identity_provider, param_name, param_value, result_field_name):
+    def _get_results(self, identity_provider, param_name, param_value, result_field_name, remote_id_field_name=None):
         """
         Calls the third party auth api endpoint to get the mapping between usernames and remote ids.
         """
         api_url = self.get_api_url(f"providers/{identity_provider}/users")
         try:
             kwargs = {param_name: param_value}
+            if remote_id_field_name:
+                kwargs.update({'remote_id_field_name': remote_id_field_name})
             response = self.client.get(api_url, params=kwargs)
             response.raise_for_status()
             results = response.json().get('results', [])

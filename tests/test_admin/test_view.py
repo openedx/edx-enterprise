@@ -3,6 +3,7 @@ Tests for the `edx-enterprise` admin forms module.
 """
 
 import json
+import logging
 from math import ceil
 from unittest import mock
 from unittest.mock import ANY
@@ -11,6 +12,7 @@ from urllib.parse import urlencode
 import ddt
 from pytest import mark
 from slumber.exceptions import HttpClientError
+from testfixtures import LogCapture
 
 from django.conf import settings
 from django.contrib import auth
@@ -1112,6 +1114,65 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             assert enrollment.source.slug == EnterpriseEnrollmentSource.MANUAL
             num_messages = len(mail.outbox)
             assert num_messages == enrollment_count
+
+    @mock.patch("enterprise.admin.views.EcommerceApiClient")
+    @mock.patch("enterprise.utils.track_enrollment")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    def test_post_enroll_user_ecommerce_exception(
+            self,
+            enterprise_catalog_client,
+            enrollment_client,
+            course_catalog_client,
+            track_enrollment,  # pylint: disable=unused-argument
+            ecommerce_api_client_mock
+    ):
+        """
+        Test that enrollment continues gracefully when EcommerceApiClient.create_manual_enrollment_orders
+        raises an exception (ecommerce service decoupling).
+        """
+        user = UserFactory()
+        course_id = "course-v1:HarvardX+CoolScience+2016"  # Use course ID that exists in fake_enrollment_api
+
+        # Mock the ecommerce client to raise an exception
+        ecommerce_api_client_instance = mock.Mock()
+        ecommerce_api_client_instance.create_manual_enrollment_orders.side_effect = Exception("Ecommerce service down")
+        ecommerce_api_client_mock.return_value = ecommerce_api_client_instance
+
+        # Setup other mocks for successful enrollment using the same pattern as existing tests
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+
+        catalog_instance = course_catalog_client.return_value
+        catalog_instance.get_course_run.return_value = {
+            "title": "Cool Science",
+            "start": "2017-01-01T12:00:00Z",
+            "marketing_url": "http://lms.example.com/courses/course-v1:HarvardX+CoolScience+2016"
+        }
+
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
+
+        # Make the enrollment request (verified mode to trigger ecommerce order creation)
+        with LogCapture(level=logging.WARNING) as log_capture:
+            response = self._enroll_user_request(user, 'verified', course_id=course_id)
+
+        # Verify the enrollment still succeeded despite ecommerce failure
+        assert response.status_code == 302
+
+        # Verify that a warning was logged about the ecommerce failure
+        log_messages = [record.getMessage() for record in log_capture.records]
+        expected_warning = 'Failed to create ecommerce orders for bulk enrollment'
+        assert any(expected_warning in log_msg for log_msg in log_messages), \
+            f"Expected warning about ecommerce failure not found in logs: {log_messages}"
+
+        # Verify enrollment was still created
+        enrollments = EnterpriseCourseEnrollment.objects.filter(course_id=course_id)
+        assert enrollments.count() == 1
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")

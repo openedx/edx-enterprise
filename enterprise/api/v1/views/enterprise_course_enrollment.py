@@ -13,6 +13,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 
+from consent.helpers import get_course_data_sharing_consent
 from enterprise import models
 from enterprise.api.filters import EnterpriseCourseEnrollmentFilterBackend
 from enterprise.api.utils import CourseRunProgressStatuses  # pylint: disable=cyclic-import
@@ -120,8 +121,12 @@ class EnterpriseCourseEnrollmentAdminViewSet(EnterpriseReadWriteModelViewSet):
     @action(detail=False, methods=['get'])
     def get_enterprise_course_enrollments(self, request):
         """
-        Endpoint to get enrollments for a learner by `lms_user_id` and `enterprise_uuid` viewed
-        by an admin of that enterprise.
+        Endpoint to get enrollments for a learner by `lms_user_id` and `enterprise_uuid`
+        viewed by an admin of that enterprise.
+
+        Returns an empty result set if the enterprise customer has `enable_data_sharing_consent`
+        set to False. Audit enrollments are included only when the enterprise customer has
+        `enable_audit_data_reporting` set to True; otherwise only non-audit enrollments are returned.
 
         Parameters:
         - `lms_user_id` (str): Filter results by the LMS user ID.
@@ -139,10 +144,26 @@ class EnterpriseCourseEnrollmentAdminViewSet(EnterpriseReadWriteModelViewSet):
             user_id=lms_user_id,
             enterprise_customer__uuid=enterprise_uuid
         )
+
+        enterprise_customer = enterprise_customer_user.enterprise_customer
+        if not enterprise_customer.enable_data_sharing_consent:
+            page = self.paginate_queryset([])
+            grouped_data = self._group_course_enrollments_by_status(page)
+            return self.get_paginated_response(grouped_data)
+
         enterprise_enrollments = models.EnterpriseCourseEnrollment.objects.filter(
             enterprise_customer_user=enterprise_customer_user
         )
-        filtered_enterprise_enrollments = [record for record in enterprise_enrollments if record.course_enrollment]
+        enable_audit_data_reporting = enterprise_customer.enable_audit_data_reporting
+        filtered_enterprise_enrollments = [
+            record for record in enterprise_enrollments
+            if record.course_enrollment
+            and (not record.is_audit_enrollment or enable_audit_data_reporting)
+            and not get_course_data_sharing_consent(
+                enterprise_customer_user.username, record.course_id, str(enterprise_customer.uuid)
+            ).consent_required()
+        ]
+
         course_overviews = get_course_overviews([record.course_id for record in filtered_enterprise_enrollments])
         serialized_data = serializers.EnterpriseCourseEnrollmentAdminViewSerializer(
             filtered_enterprise_enrollments,
@@ -172,6 +193,7 @@ class EnterpriseCourseEnrollmentAdminViewSet(EnterpriseReadWriteModelViewSet):
             CourseRunProgressStatuses.UPCOMING: [],
             CourseRunProgressStatuses.COMPLETED: [],
             CourseRunProgressStatuses.SAVED_FOR_LATER: [],
+            CourseRunProgressStatuses.UNENROLLED: [],
         }
         for enrollment in course_enrollments:
             status = enrollment.get('course_run_status')

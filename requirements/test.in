@@ -4,6 +4,7 @@
 -r test-master.txt
 
 ddt<1.4.0                 # data-driven tests
+django-mock-queries        # Queryset mocking for DRF viewset tests
 diff-cover
 django-model-utils        # Provides TimeStampedModel abstract base class
 factory_boy               # Test factory framework

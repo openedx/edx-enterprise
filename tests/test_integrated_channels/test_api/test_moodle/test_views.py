@@ -35,6 +35,65 @@ class MoodleConfigurationViewSetTests(APITest):
         )
 
     @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_create_with_token(self, mock_current_request):
+        """Test creating a new MoodleEnterpriseCustomerConfiguration with token authentication."""
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:moodle:configuration-list')
+        payload = {
+            'moodle_base_url': 'http://test-moodle.com',
+            'service_short_name': 'test_service',
+            'enterprise_customer': ENTERPRISE_ID,
+            'token': 'test_token',
+            'display_name': 'Test Moodle Config'
+        }
+        response = self.client.post(url, payload)
+        self.assertEqual(response.status_code, 201)
+
+        # Verify the configuration was created correctly
+        config = MoodleEnterpriseCustomerConfiguration.objects.get(
+            enterprise_customer__uuid=ENTERPRISE_ID,
+            moodle_base_url='http://test-moodle.com'
+        )
+        self.assertEqual(config.service_short_name, 'test_service')
+        self.assertEqual(config.decrypted_token, 'test_token')
+        self.assertIsNone(config.decrypted_username)
+        self.assertIsNone(config.decrypted_password)
+        self.assertEqual(config.display_name, 'Test Moodle Config')
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_create_with_username_password(self, mock_current_request):
+        """Test creating a new MoodleEnterpriseCustomerConfiguration with username/password authentication."""
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:moodle:configuration-list')
+        payload = {
+            'moodle_base_url': 'http://test-moodle2.com',
+            'service_short_name': 'test_service2',
+            'enterprise_customer': ENTERPRISE_ID,
+            'username': 'test_user',
+            'password': 'test_pass',
+            'display_name': 'Test Moodle Config 2'
+        }
+        response = self.client.post(url, payload)
+        self.assertEqual(response.status_code, 201)
+
+        # Verify the configuration was created correctly
+        config = MoodleEnterpriseCustomerConfiguration.objects.get(
+            enterprise_customer__uuid=ENTERPRISE_ID,
+            moodle_base_url='http://test-moodle2.com'
+        )
+        self.assertEqual(config.service_short_name, 'test_service2')
+        self.assertEqual(config.decrypted_username, 'test_user')
+        self.assertEqual(config.decrypted_password, 'test_pass')
+        self.assertIsNone(config.decrypted_token)
+        self.assertEqual(config.display_name, 'Test Moodle Config 2')
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
     def test_soft_deleted_content_in_lists(self, mock_current_request):
         factories.MoodleEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
@@ -72,7 +131,7 @@ class MoodleConfigurationViewSetTests(APITest):
                          str(self.moodle_config.enterprise_customer.uuid))
 
     @mock.patch('enterprise.rules.crum.get_current_request')
-    def test_update(self, mock_current_request):
+    def test_update_with_token(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
             context=self.enterprise_customer.uuid,
@@ -82,14 +141,81 @@ class MoodleConfigurationViewSetTests(APITest):
             'moodle_base_url': 'http://testing2',
             'service_short_name': 'test',
             'enterprise_customer': ENTERPRISE_ID,
-            'encrypted_token': 'testing'
+            'token': 'testing'
         }
         response = self.client.put(url, payload)
         self.moodle_config.refresh_from_db()
         self.assertEqual(self.moodle_config.moodle_base_url, 'http://testing2')
         self.assertEqual(self.moodle_config.service_short_name, 'test')
         self.assertEqual(self.moodle_config.decrypted_token, 'testing')
+        self.assertEqual(self.moodle_config.decrypted_username, None)
+        self.assertEqual(self.moodle_config.decrypted_password, None)
         self.assertEqual(response.status_code, 200)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_update_with_username_password(self, mock_current_request):
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:moodle:configuration-detail', args=[self.moodle_config.id])
+        payload = {
+            'moodle_base_url': 'http://testing2',
+            'service_short_name': 'test',
+            'enterprise_customer': ENTERPRISE_ID,
+            'username': 'test_user',
+            'password': 'test_pass'
+        }
+        response = self.client.put(url, payload)
+        self.moodle_config.refresh_from_db()
+        self.assertEqual(self.moodle_config.decrypted_username, 'test_user')
+        self.assertEqual(self.moodle_config.decrypted_password, 'test_pass')
+        self.assertEqual(self.moodle_config.decrypted_token, None)
+        self.assertEqual(response.status_code, 200)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_update_switch_from_token_to_username_password(self, mock_current_request):
+        # First set token
+        self.moodle_config.decrypted_token = 'initial_token'
+        self.moodle_config.save()
+
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:moodle:configuration-detail', args=[self.moodle_config.id])
+        payload = {
+            'username': 'new_user',
+            'password': 'new_pass'
+        }
+        response = self.client.patch(url, payload)
+        self.moodle_config.refresh_from_db()
+        self.assertEqual(self.moodle_config.decrypted_username, 'new_user')
+        self.assertEqual(self.moodle_config.decrypted_password, 'new_pass')
+        self.assertEqual(self.moodle_config.decrypted_token, None)
+        self.assertEqual(response.status_code, 200)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_credential_precedence_token_over_username_password(self, mock_current_request):
+        """Test that when both token and username/password are provided, token takes precedence."""
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:moodle:configuration-detail', args=[self.moodle_config.id])
+        payload = {
+            'token': 'test_token',
+            'username': 'test_user',
+            'password': 'test_pass'
+        }
+        response = self.client.patch(url, payload)
+        self.assertEqual(response.status_code, 200)
+
+        # Verify that token is saved and username/password are cleared
+        self.moodle_config.refresh_from_db()
+        self.assertEqual(self.moodle_config.decrypted_token, 'test_token')
+        self.assertIsNone(self.moodle_config.decrypted_username)
+        self.assertIsNone(self.moodle_config.decrypted_password)
 
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_patch(self, mock_current_request):
