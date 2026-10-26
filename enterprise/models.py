@@ -57,6 +57,7 @@ from enterprise.constants import (
     GROUP_TYPE_CHOICES,
     GROUP_TYPE_FLEX,
     MAX_INVITE_KEYS,
+    NON_PRODUCTION_CUSTOMER_TYPE,
     DefaultColors,
     FulfillmentTypes,
     json_serialized_course_modes,
@@ -296,6 +297,8 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # "username" substring match is a false positive: this is a boolean UI-masking flag, not username data.
     replace_sensitive_sso_username = models.BooleanField(
         verbose_name="Replace sensitive SSO username",
         default=False,
@@ -318,7 +321,11 @@ class EnterpriseCustomer(TimeStampedModel):
         EnterpriseCustomerType,
         verbose_name=_('Customer Type'),
         default=get_default_customer_type,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        help_text=_(
+            'Selecting the "Non-production" customer type displays a banner in the administrator and learner '
+            'portals indicating that this is not a production portal.'
+        )
     )
 
     disable_expiry_messaging_for_learner_credit = models.BooleanField(
@@ -416,6 +423,14 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_credit_and_industry_pathways = models.BooleanField(
+        verbose_name='Display credit and industry pathways',
+        default=True,
+        help_text=_(
+            "Controls the visibility of Credit and Industry Pathways in the learner portal."
+        ),
+    )
+
     enable_programs = models.BooleanField(
         verbose_name="Display programs screen",
         default=True,
@@ -426,7 +441,7 @@ class EnterpriseCustomer(TimeStampedModel):
 
     enable_academies = models.BooleanField(
         verbose_name="Display academies screen",
-        default=False,
+        default=True,
         help_text=_(
             "If checked, the learners will be able to see the academies on the learner portal dashboard."
         )
@@ -453,6 +468,13 @@ class EnterpriseCustomer(TimeStampedModel):
                     "which includes skill and labor market data.")
     )
 
+    enable_people_management = models.BooleanField(
+        verbose_name="Display people management",
+        default=True,
+        help_text=_("Automatically enabled. "
+                    "Displays organization learners and invite admins.")
+    )
+
     enable_portal_lms_configurations_screen = models.BooleanField(
         verbose_name="Display learning platform configuration screen",
         default=False,
@@ -474,9 +496,15 @@ class EnterpriseCustomer(TimeStampedModel):
     enable_demo_data_for_analytics_and_lpr = models.BooleanField(
         verbose_name="Enable demo data from analytics and lpr",
         default=False,
-        help_text=_("Display Demo data from analyitcs and learner progress report for demo customer.")
+        help_text=_(
+            "Display demo data from analytics and the learner progress report for demo customers. "
+            "Dummy data will only appear if the enterprise user is also registered as an admin on the "
+            "analytics demo portal. Contact the support team or use Django admin to set this up."
+        )
     )
 
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # TODO: contact_email is real PII; this model's .. no_pii: annotation needs a proper PII-retirement review.
     contact_email = models.EmailField(
         verbose_name="Customer admin contact email:",
         null=True,
@@ -659,11 +687,39 @@ class EnterpriseCustomer(TimeStampedModel):
         return self.enable_data_sharing_consent and self.enforce_data_sharing_consent != self.EXTERNALLY_MANAGED
 
     @property
+    def implies_data_sharing_consent(self):
+        """
+        Determine whether data sharing consent is implied for this enterprise customer's learners.
+
+        Customers with externally managed data sharing consent collect consent outside of edX, so learners
+        are never prompted and consent should be treated as granted.
+        """
+        return self.enable_data_sharing_consent and self.enforce_data_sharing_consent == self.EXTERNALLY_MANAGED
+
+    @property
     def enables_audit_data_reporting(self):
         """
         Determine whether the enterprise customer has enabled the ability to report/pass-back audit track data.
         """
         return self.enable_audit_enrollment and self.enable_audit_data_reporting
+
+    @property
+    def is_non_production_customer(self):
+        """
+        Determine whether this enterprise customer is configured as a non-production customer.
+        """
+        return self.customer_type is not None and self.customer_type.name == NON_PRODUCTION_CUSTOMER_TYPE
+
+    @property
+    def show_non_production_banner(self):
+        """
+        Determine whether the non-production portal banner should be displayed for this enterprise customer.
+
+        The customer type is the single source of truth: assigning the ``Non-production`` customer type
+        surfaces the banner, and switching back to a production type immediately hides it again. There is
+        no separate opt-in toggle.
+        """
+        return self.is_non_production_customer
 
     @property
     def serialized(self):
@@ -1238,7 +1294,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         return self.__str__()
 
-    def get_remote_id(self, idp_id=None):
+    def get_remote_id(self, idp_id=None, remote_id_field_name=None):
         """
         Retrieve the SSO provider's identifier for this user from the LMS Third Party API.
         In absence of idp_id, returns id from default idp
@@ -1246,6 +1302,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         Arguments:
             idp_id (str) (optional): If provided, idp resolution skipped and specified idp used
                 to locate remote id.
+            remote_id_field_name (str) (optional): The field name to use for the remote id lookup.
 
         Returns None if:
         * the user doesn't exist, or
@@ -1256,7 +1313,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         if idp_id:
             enterprise_worker = get_enterprise_worker_user()
             client = ThirdPartyAuthApiClient(enterprise_worker)
-            return client.get_remote_id(idp_id, user.username)
+            return client.get_remote_id(idp_id, user.username, remote_id_field_name)
         if user and self.enterprise_customer.has_identity_providers:
             identity_provider = None
             if self.enterprise_customer.has_multiple_idps:
@@ -1267,7 +1324,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
 
             enterprise_worker = get_enterprise_worker_user()
             client = ThirdPartyAuthApiClient(enterprise_worker)
-            return client.get_remote_id(identity_provider, user.username)
+            return client.get_remote_id(identity_provider, user.username, remote_id_field_name)
         return None
 
     def enroll(self, course_run_id, mode, cohort=None, source_slug=None, discount_percentage=0.0, sales_force_id=None):
@@ -1415,38 +1472,54 @@ class EnterpriseCustomerUser(TimeStampedModel):
     def create_order_for_enrollment(self, course_run_id, discount_percentage, mode, sales_force_id):
         """
         Create an order on the Ecommerce side for tracking the course enrollment of a enterprise customer user.
+
+        Note: Ecommerce service is being decoupled - order creation is now optional and will gracefully fail.
         """
-        LOGGER.info("Creating order for enterprise learner with id [%s] for enrollment in course with id: [%s], "
-                    "[percentage discount] [%s] and [sales_force_id] [%s]",
-                    self.user_id,
-                    course_run_id,
-                    discount_percentage,
-                    sales_force_id)
-        # get instance of the EcommerceApiClient and attempt to create order
-        ecommerce_service_worker = get_ecommerce_worker_user()
-        failure_log_msg = 'Could not create order for enterprise learner with id [%s] for enrollment in course with ' \
-                          'id [%s]. Reason: [%s]'
-        if ecommerce_service_worker is not None:
-            try:
-                ecommerce_api_client = EcommerceApiClient(ecommerce_service_worker)
-            except NotConnectedToOpenEdX as exc:
-                LOGGER.exception(failure_log_msg, self.user_id, course_run_id, str(exc))
+        LOGGER.info(
+            "Attempting to create order for enterprise learner with id [%s] for enrollment in course with id: [%s], "
+            "[percentage discount] [%s] and [sales_force_id] [%s]",
+            self.user_id,
+            course_run_id,
+            discount_percentage,
+            sales_force_id,
+        )
+
+        try:
+            # get instance of the EcommerceApiClient and attempt to create order
+            ecommerce_service_worker = get_ecommerce_worker_user()
+            failure_log_msg = (
+                'Could not create order for enterprise learner with id [%s] for enrollment in course with '
+                'id [%s]. Reason: [%s]'
+            )
+            if ecommerce_service_worker is not None:
+                try:
+                    ecommerce_api_client = EcommerceApiClient(ecommerce_service_worker)
+                    # pull data needed for creating the order
+                    course_enrollments = [{
+                        'lms_user_id': self.user_id,
+                        'username': self.username,
+                        'email': self.user_email,
+                        'course_run_key': course_run_id,
+                        'mode': mode,
+                        "enterprise_customer_name": self.enterprise_customer.name,
+                        "enterprise_customer_uuid": str(self.enterprise_customer.uuid),
+                        "discount_percentage": float(discount_percentage),
+                        "sales_force_id": sales_force_id,
+                    }]
+                    ecommerce_api_client.create_manual_enrollment_orders(course_enrollments)
+                    LOGGER.info("Successfully created ecommerce order for learner %s", self.user_id)
+                except NotConnectedToOpenEdX as exc:
+                    LOGGER.warning(failure_log_msg, self.user_id, course_run_id, str(exc))
             else:
-                # pull data needed for creating the order
-                course_enrollments = [{
-                    'lms_user_id': self.user_id,
-                    'username': self.username,
-                    'email': self.user_email,
-                    'course_run_key': course_run_id,
-                    'mode': mode,
-                    "enterprise_customer_name": self.enterprise_customer.name,
-                    "enterprise_customer_uuid": str(self.enterprise_customer.uuid),
-                    "discount_percentage": float(discount_percentage),
-                    "sales_force_id": sales_force_id,
-                }]
-                ecommerce_api_client.create_manual_enrollment_orders(course_enrollments)
-        else:
-            LOGGER.warning(failure_log_msg, self.user_id, course_run_id, 'Failed to retrieve a valid ecommerce worker.')
+                LOGGER.warning(
+                    failure_log_msg, self.user_id, course_run_id, 'Failed to retrieve a valid ecommerce worker.',
+                )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            # Catch any other ecommerce-related errors and continue gracefully
+            LOGGER.warning(
+                'Ecommerce order creation failed for learner %s in course %s: %s. Continuing enrollment without order.',
+                self.user_id, course_run_id, str(exc),
+            )
 
     @classmethod
     def inactivate_other_customers(cls, user_id, enterprise_customer):
@@ -3332,6 +3405,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         (FREQUENCY_TYPE_WEEKLY, FREQUENCY_TYPE_WEEKLY),
     )
 
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # "EMAIL" substring match is a false positive: this is a `choices` string constant, not a data field.
     DELIVERY_METHOD_EMAIL = 'email'
     DELIVERY_METHOD_SFTP = 'sftp'
     DELIVERY_METHOD_CHOICES = (
@@ -3428,6 +3503,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         verbose_name=_("Report Type"),
         help_text=_("The type this report should be sent as, e.g. CSV.")
     )
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # TODO: email is real PII; this model's .. no_pii: annotation needs a proper PII-retirement review.
     email = MultiEmailField(
         blank=True,
         verbose_name=_("Email"),
@@ -3484,6 +3561,9 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         help_text=_("If the delivery method is sftp, the port on the host to connect to."),
         default=22,
     )
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # TODO: sftp_username is a real credential/username value; this model's .. no_pii: annotation needs a
+    # proper PII-retirement review.
     sftp_username = models.CharField(
         max_length=256,
         blank=True,
@@ -3952,6 +4032,12 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
         on_delete=models.CASCADE,
     )
     user_email = models.EmailField(null=False, blank=False)
+    reminder_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text=_("The last time a reminder email was sent for this pending admin."),
+    )
     history = HistoricalRecords()
 
     class Meta:
@@ -4469,12 +4555,16 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         max_length=128,
     )
 
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # "email" substring match is a false positive: stores an IdP attribute key name, not an email value.
     email_attribute = models.CharField(
         blank=True,
         null=True,
         max_length=128,
     )
 
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # "username" substring match is a false positive: stores an IdP attribute key name, not a username value.
     username_attribute = models.CharField(
         blank=True,
         null=True,
@@ -4734,6 +4824,47 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         verbose_name_plural = _("Enterprise Groups")
         unique_together = (("name", "enterprise_customer"),)
         ordering = ['-modified']
+
+    def delete(self, *args, **kwargs):
+        """
+        Hard delete groups instead of the default soft delete, relying on
+        django-simple-history (``self.history``) for the audit trail.
+        """
+        # Always hard delete, even if a caller explicitly passes soft=True.
+        kwargs['soft'] = False
+        super().delete(*args, **kwargs)
+
+    @classmethod
+    def purge_legacy_soft_deleted(cls, name, enterprise_customer):
+        """
+        Hard delete any legacy soft-deleted group with the given name and
+        enterprise_customer, so it doesn't collide with the unique_together
+        constraint when a new group with the same name is created.
+
+        Groups used to be soft-deleted, leaving rows behind that can conflict
+        with this constraint even though they're not visible in the admin or
+        API by default. Used by both the group creation API and the Django
+        admin, since bulk queryset deletes and the admin "Add" form don't go
+        through the model-level hard delete on their own.
+
+        Silently no-ops on a malformed ``enterprise_customer`` (e.g. not a
+        valid UUID), leaving normal field validation to surface that error.
+        """
+        try:
+            existing = cls.all_objects.filter(
+                name=name,
+                enterprise_customer=enterprise_customer,
+                is_removed=True,
+            )
+            deleted_count, _ = existing.delete()
+            if deleted_count:
+                LOGGER.info(
+                    'Hard-deleted %d legacy soft-deleted EnterpriseGroup record(s) with name "%s" '
+                    'for enterprise_customer %s before creating a new one.',
+                    deleted_count, name, enterprise_customer,
+                )
+        except (ValidationError, ValueError):
+            pass
 
     def _get_filtered_ecu_ids(self, user_query):
         """
@@ -5023,9 +5154,15 @@ class EnterpriseCustomerSupportUsersView(models.Model):
             User) for retirement info.
     """
     enterprise_customer_id = models.UUIDField(primary_key=False)
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # Already explained above: this View surfaces PII pulled from PendingEnterpriseCustomerUser/User, which
+    # carry the real retirement annotations; it does not itself store or replicate the data.
     user_email = models.EmailField(primary_key=True, null=False, blank=False)
     is_pending = models.BooleanField(default=False)
     user_id = models.PositiveIntegerField(null=False, blank=False)
+    # pylint: disable=pii-invalid-no-pii-annotation
+    # Already explained above: this View surfaces PII pulled from PendingEnterpriseCustomerUser/User, which
+    # carry the real retirement annotations; it does not itself store or replicate the data.
     username = models.CharField(max_length=150)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)

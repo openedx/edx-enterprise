@@ -1,0 +1,194 @@
+"""
+Common plugin settings for the enterprise app.
+"""
+from typing import Any
+
+# Shape of an OPEN_EDX_FILTERS_CONFIG map: ``{filter_type: {'fail_silently': bool, 'pipeline': list[str]}}``.
+FiltersConfig = dict[str, dict[str, Any]]
+
+
+ENTERPRISE_FILTERS_CONFIG: FiltersConfig = {
+    "org.openedx.learning.account.settings.read_only_fields.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.accounts.AccountSettingsEnterpriseReadOnlyFieldsStep"],
+    },
+    "org.openedx.learning.dashboard.render.started.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.dashboard.DashboardContextEnricher"],
+    },
+    "org.openedx.learning.grade.context.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.grades.GradeEventContextEnricher"],
+    },
+    "org.openedx.learning.course.start_date.validation_failed.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.courseware.EnterpriseStartDateAccessFailureStep"],
+    },
+    "org.openedx.learning.course_mode.price.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.course_modes.CalculateEnterpriseDiscountedPrice"],
+    },
+    "org.openedx.learning.support.contact.context.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.support.SupportContactEnterpriseTagStep"],
+    },
+    "org.openedx.learning.support.enrollment.data.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.support.SupportEnterpriseEnrollmentDataInjector"],
+    },
+    # NOTE: Pipeline ordering matters here. ActiveEnterpriseCheckStep must run before
+    # consent's DataSharingConsentCourseAccessStep to match the original platform behavior
+    # (the incorrect-enterprise redirect took priority over the DSC redirect). This ordering
+    # is guaranteed because setup.py lists "enterprise" before "consent" in entry_points,
+    # stevedore preserves intra-distribution order, and consent's plugin_settings appends
+    # its step after enterprise's via _merge_filters_config.
+    "org.openedx.learning.courseware.access_checks.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.courseware.ActiveEnterpriseCheckStep"],
+    },
+    "org.openedx.learning.discount.eligibility.check.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.discounts.DiscountEligibilityEnterpriseStep"],
+    },
+    "org.openedx.authentication.logistration_view.context.generated.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.LogistrationViewEnterpriseContextEnricher"],
+    },
+    "org.openedx.authentication.mfe.context.generated.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.AuthnMFEEnterpriseContextEnricher"],
+    },
+    "org.openedx.authentication.logistration_view.render.completed.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.LogistrationViewEnterpriseCookieSetter"],
+    },
+    "org.openedx.authentication.login.form.generated.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.LoginFormEnterpriseOverrides"],
+    },
+    "org.openedx.authentication.registration.form.generated.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.RegistrationFormEnterpriseOverrides"],
+    },
+    "org.openedx.authentication.login.alt_redirect_url.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.PostLoginEnterpriseRedirect"],
+    },
+    "org.openedx.authentication.account_activation.email.context.generated.v1": {
+        "fail_silently": False,
+        "pipeline": ["enterprise.filters.logistration.ActivationEmailEnterpriseContextEnricher"],
+    },
+}
+
+
+def _merge_filters_config(existing: FiltersConfig, additions: FiltersConfig) -> None:
+    """
+    Merge ``additions`` into ``existing`` in place without overwriting operator-defined entries.
+
+    For each filter type in ``additions``:
+      - If the filter type is not already present, copy it in.
+      - If it is present, append the new pipeline steps after any existing steps and
+        only set ``fail_silently`` when the existing entry has not specified it.
+    """
+    for filter_type, filter_config in additions.items():
+        if filter_type in existing:
+            existing_pipeline = existing[filter_type].setdefault('pipeline', [])
+            for step in filter_config.get('pipeline', []):
+                if step not in existing_pipeline:
+                    existing_pipeline.append(step)
+            existing[filter_type].setdefault('fail_silently', filter_config.get('fail_silently', True))
+        else:
+            # Copy so subsequent merges/mutations don't leak back into the plugin default dict.
+            existing[filter_type] = {
+                'fail_silently': filter_config.get('fail_silently', True),
+                'pipeline': list(filter_config.get('pipeline', [])),
+            }
+
+
+def _append_override(settings, setting_name, override_path):
+    """
+    Append an override implementation to an OVERRIDE_* setting, preserving any existing ones.
+
+    An OVERRIDE_* setting accepts either a single dotted path or a list of them, each wrapped
+    around the previous one. Appending keeps whatever an operator (or another plugin) already
+    configured, and places ours last so it is the entry point of the chain.
+
+    Args:
+        settings: The Django settings module being configured.
+        setting_name (str): Name of the OVERRIDE_* setting.
+        override_path (str): Dotted path of the implementation to append.
+    """
+    existing = getattr(settings, setting_name, [])
+    if isinstance(existing, str):
+        existing = [existing]
+    if override_path in existing:
+        return
+    setattr(settings, setting_name, [*existing, override_path])
+
+
+def plugin_settings(settings):
+    """
+    Override platform settings for the enterprise app.
+
+    This is called by the Open edX plugin system during LMS/CMS startup. Add
+    any Django settings overrides here (e.g. ``settings.SOME_FLAG = True``).
+
+    Args:
+        settings: The Django settings module being configured.
+    """
+    # Skip injecting ANY default enterprise settings if the enterprise feature is entirely disabled.
+    if not getattr(settings, 'ENABLE_ENTERPRISE_INTEGRATION', False):
+        return
+
+    # Register pluggable overrides.
+    # These map override hook points within the platform to enterprise implementations.
+    settings.OVERRIDE_COURSE_HOME_PROGRESS_USERNAME = (
+        'enterprise.overrides.course_home_progress.enterprise_obfuscated_username'
+    )
+    settings.OVERRIDE_LEARNER_HOME_GET_ENTERPRISE_CUSTOMER = (
+        'enterprise.overrides.learner_home.enterprise_get_enterprise_customer'
+    )
+    settings.OVERRIDE_PROGRAMS_GET_ENTERPRISE_COURSE_IDS = (
+        'enterprise.overrides.programs.enterprise_get_enterprise_course_ids'
+    )
+    # These overrides are appended rather than assigned directly. The above
+    # should probably be migrated to append-style too eventually.
+    _append_override(
+        settings,
+        'OVERRIDE_PROGRAM_NUDGE_SUGGESTED_COURSE_URL',
+        'enterprise.overrides.program_nudge_email.enterprise_suggested_course_url',
+    )
+    _append_override(
+        settings,
+        'OVERRIDE_GET_LEARNER_DISPLAY_USERNAME',
+        'enterprise.overrides.branding.enterprise_learner_generic_name',
+    )
+    _append_override(
+        settings,
+        'OVERRIDE_GET_ENTERPRISE_LEARNER_PORTAL_LINK',
+        'enterprise.overrides.branding.enterprise_learner_portal_link',
+    )
+
+    pipeline = getattr(settings, 'SOCIAL_AUTH_PIPELINE', None)
+    if pipeline is not None:
+        email_step = 'enterprise.tpa_pipeline.enterprise_associate_by_email'
+        oauth_step = 'common.djangoapps.third_party_auth.pipeline.associate_by_email_if_oauth'
+        if email_step not in pipeline:
+            # pipeline.index() intentionally raises ValueError if the reference step is
+            # missing — this prevents Django from starting with a misconfigured pipeline.
+            pipeline.insert(pipeline.index(oauth_step), email_step)
+
+        logistration_step = 'enterprise.tpa_pipeline.handle_enterprise_logistration'
+        associate_step = 'social_core.pipeline.social_auth.associate_user'
+        if logistration_step not in pipeline:
+            # pipeline.index() intentionally raises ValueError if the reference step is
+            # missing — this prevents Django from starting with a misconfigured pipeline.
+            pipeline.insert(pipeline.index(associate_step) + 1, logistration_step)
+
+    # Merge enterprise filter pipeline steps into OPEN_EDX_FILTERS_CONFIG so we never clobber
+    # operator-defined entries (e.g. extra pipeline steps configured via YAML).
+    filters_config = getattr(settings, 'OPEN_EDX_FILTERS_CONFIG', None)
+    if filters_config is None:
+        filters_config = {}
+        settings.OPEN_EDX_FILTERS_CONFIG = filters_config
+    _merge_filters_config(filters_config, ENTERPRISE_FILTERS_CONFIG)

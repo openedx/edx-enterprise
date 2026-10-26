@@ -17,6 +17,7 @@ Contents:
    configuration_and_usage
    development
    testing
+   saml_testing
    internationalization
    segment_events
    modules

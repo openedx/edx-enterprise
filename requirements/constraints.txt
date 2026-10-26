@@ -8,27 +8,23 @@
 # pin when possible.  Writing an issue against the offending project and
 # linking to it here is good.
 
-# Common constraints for edx repos
--c common_constraints.txt
+# NOTE: We intentionally do NOT include the org-wide common_constraints.txt
+# from edx-lint. This repo tests against the exact package versions used in
+# production by openedx-platform (see edx-platform-constraints.txt).
 
-
-# mock has dropped support for python 3.5 after 3.0.5
-mock==3.0.5
- 
-# freezegun>0.3.14 requires python-dateutil>2.8.1 to pass the tests which is a dependency of edx-platform
-# and edx-drf-extensions.
-freezegun==0.3.14
-
-# version 0.10.16 is having version conflict in make upgrade
-responses<0.10.16
-
+# Pin factory-boy major version for stability purposes.
 factory-boy<4.0
 
-# pytest version 6.0 causing test failures
-pytest<7.0
+# pinning Sphinx 8.x version
+# Sphinx 9.x introduces significant changes and removals compared to Sphinx 8.x,
+# particularly in internal APIs and default behaviors, including a substantial rewrite of the autodoc extension.
+# https://github.com/openedx/edx-enterprise/issues/2494
+Sphinx>=8.0,<9.0
 
-# pinning it to latest release.
-celery>=5.2.2,<6.0.0
+# pylint 4 throws all sorts of errors and warnings at us
+pylint<4
 
-# upgrading django-simple-history
-django-simple-history<=3.1.1
+# pip 26.2+ is incompatible with pip-tools 7.6.0 (latest pip-tools release only
+# supports pip up to 26.1), which breaks `make upgrade`. Remove this once a
+# newer pip-tools release restores pip 26.2+ compatibility.
+pip<26.2

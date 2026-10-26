@@ -17,6 +17,405 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.18.0] - 2026-10-08
+----------------------
+* feat: grant implied data sharing consent for enterprise customers with externally managed consent,
+  so their enrollments are included in learner progress reporting. Adds the ``backfill_implied_dsc_records``
+  management command to create the missing consent records for existing enrollments (ENT-12258)
+
+[8.17.0] - 2026-09-29
+----------------------
+* feat: Add ``enterprise_learner_generic_name`` and ``enterprise_learner_portal_link``
+  pluggable override implementations for the platform's branding API, so the LMS header,
+  user dropdowns and progress page no longer import from ``enterprise_support`` (ENT-12353)
+
+[8.16.0] - 2026-09-28
+----------------------
+* feat: remove the ``EnterpriseEnrollmentViewProcessor`` pipeline step.
+  It was designed to replace platform logic which handled a code path that ONLY
+  served Enterprise Coupon fulfillment. Coupons, however, were sunsetted in
+  September 2025, so there was never any point in creating the pipeline step in
+  the first place. (ENT-12366)
+
+[8.15.0] - 2026-09-21
+----------------------
+* feat: Add ``enterprise_suggested_course_url`` pluggable override implementation for the
+  program nudge email's suggested course link, so the platform's
+  ``send_program_course_nudge_email`` command no longer imports from ``enterprise_support``
+  (ENT-12352)
+
+[8.14.0] - 2026-09-16
+----------------------
+* feat: Add ``ActivationEmailEnterpriseContextEnricher`` pipeline step for the
+  ``AccountActivationEmailContextGenerated`` filter (ENT-11816)
+
+[8.13.0] - 2026-09-14
+----------------------
+* Changed ``SupportEnterpriseEnrollmentDataInjector`` to accept/return the full enrollments list
+  and attach enterprise course enrollment data to each matching enrollment dict in place, instead
+  of returning a separate dict keyed by course_id that the platform had to zip back together itself
+
+[8.12.0] - 2026-09-08
+----------------------
+* feat: add SupportEnterpriseEnrollmentDataInjector pipeline step (ENT-11574)
+
+[8.11.0] - 2026-09-10
+----------------------
+* fix: change SupportContactEnterpriseTagStep to accept/return full context (ENT-11574)
+
+[8.10.0] - 2026-09-08
+----------------------
+* feat: add SupportContactEnterpriseTagStep pipeline step (ENT-11574)
+
+[8.9.4] - 2026-08-27
+---------------------
+* fix: add Django admin helper text for ``enable_demo_data_for_analytics_and_lpr`` explaining that
+  demo data only appears when the enterprise user is also registered as an admin on the analytics
+  demo portal
+
+[8.9.3] - 2026-08-24
+---------------------
+* feat: Implement ``OVERRIDE_PROGRAMS_GET_ENTERPRISE_COURSE_IDS`` pluggable override to enhance programs API
+
+  * Implement an override for the pluggable override ``OVERRIDE_PROGRAMS_GET_ENTERPRISE_COURSE_IDS``
+    so the programs listing endpoint can narrow a learner's enrollments to a single enterprise
+    customer without importing enterprise models. (ENT-11575)
+
+[8.9.2] - 2026-08-21
+---------------------
+* build: unpin pip-tools in constraints.txt
+* fix: configure pii-terms to unblock pylint after edx-lint 6.2.0 upgrade
+
+[8.9.1] - 2026-08-13
+---------------------
+* fix: filter non-consented enrollments from People Management [ENT-12136]
+
+[8.9.0] - 2026-08-10
+---------------------
+* feat: add non-production portal banner configuration
+
+[8.8.0] - 2026-08-07
+---------------------
+* feat: add pipeline steps for logistration filters
+
+[8.7.3] - 2026-07-27
+---------------------
+* feat: add multiple SSO tenants during devstack provisioning
+
+  * The real reason for the version bump: Added ``assign_system_wide_enterprise_role`` management command and updated other ones.
+
+[8.7.2] - 2026-07-27
+---------------------
+* chore: upgrade python requirements
+
+[8.7.1] - 2026-07-17
+---------------------
+* fix: hard delete EnterpriseGroup records instead of soft deleting them (ENT-12073)
+
+[8.7.0] - 2026-07-16
+---------------------
+* feat: add CalculateEnterpriseDiscountedPrice pipeline step
+
+[8.6.0] - 2026-07-16
+---------------------
+* feat: add ``enable_people_management`` flag to EnterpriseCustomer to display the people management page
+
+[8.5.0] - 2026-07-10
+---------------------
+* feat: add pluggable override for learner home enterprise customer lookup
+
+[8.4.0] - 2026-07-08
+---------------------
+* feat: add EnterpriseEnrollmentViewProcessor pipeline step for CourseEnrollmentViewStarted filter (ENT-11570)
+
+[8.3.0] - 2026-06-30
+---------------------
+* feat: add enterprise.use_algolia_index_v2 waffle flag and expose it in the enterprise_features API response
+
+[8.2.0] - 2026-06-22
+---------------------
+* feat: add DiscountEligibilityStep pipeline step
+
+[8.1.2] - 2026-06-23
+---------------------
+* fix: change enable_credit_and_industry_pathways default to true
+
+[8.1.1] - 2026-06-18
+---------------------
+* refactor: reorganize helper functions into model-dependent and model-independent to break an import cycle
+
+[8.1.0] - 2026-06-17
+---------------------
+* feat: add courseware-access pipeline steps
+
+[8.0.19] - 2026-06-16
+---------------------
+* feat: Add the ``enable_credit_and_industry_pathways`` field for EnterpriseCustomer
+
+[8.0.18] - 2026-06-12
+---------------------
+* fix: downgrade notification banner log level from error to debug for expected missing-request exceptions
+
+[8.0.17] - 2026-06-05
+---------------------
+* fix: format integration and SSO configuration created/modified datetimes as ISO-8601
+
+[8.0.16] - 2026-06-02
+---------------------
+* feat: remove enterprise_invite_admins_enabled feature flag and related conditional behavior (ENT-11269)
+
+[8.0.15] - 2026-05-15
+---------------------
+* feat: add GradeEventContextEnricher pipeline step for grade analytics (ENT-11563)
+
+[8.0.14] - 2026-05-14
+---------------------
+* feat: Add basic logging for all enterprise filter pipeline steps (ENT-11830)
+
+[8.0.13] - 2026-05-14
+---------------------
+* feat: own OPEN_EDX_FILTERS_CONFIG injection in enterprise and consent plugin_settings (ENT-11830)
+
+[8.0.12] - 2026-05-13
+---------------------
+* fix: dashboard filter step now fetches the live request via crum instead of expecting it in the filter context (ENT-11569)
+
+[8.0.11] - 2026-05-12
+---------------------
+* fix: populate name as blank in Invite Admin list view for pending customer admin (ENT-11811)
+
+[8.0.10] - 2026-05-11
+---------------------
+* feat: account for data sharing consent settings and mark unenrolled courses in admin enrollment viewset
+
+[8.0.9] - 2026-05-07
+---------------------
+* fix: populate name in Invite Admin list view (ENT-11811)
+
+[8.0.8] - 2026-05-06
+---------------------
+* feat: extra logging for enterprise email association pipeline step
+
+[8.0.7] - 2026-05-06
+---------------------
+* feat: add pluggable override for course home progress username obfuscation
+
+[8.0.6] - 2026-05-05
+---------------------
+* fix: gate plugin_settings on ENABLE_ENTERPRISE_INTEGRATION
+
+[8.0.5] - 2026-05-04
+---------------------
+* feat: add TPA pipeline step and social auth disconnect handler
+
+[8.0.4] - 2026-05-05
+---------------------
+* feat: extend manage enterprise customer admins permission to the enterprise_openedx_operator role
+
+[8.0.3] - 2026-04-29
+---------------------
+* feat: adding the missing consent_required_courses injection
+
+[8.0.2] - 2026-04-27
+---------------------
+* feat: add ai pathways operator waffle flag
+
+[8.0.1] - 2026-04-27
+---------------------
+* feat: add DashboardContextEnricher pipeline step for student dashboard filter
+
+[8.0.0] - 2026-04-22
+---------------------
+* feat!: Drop management commands that dependend on the snowflake-connector
+
+[7.0.7] - 2026-04-24
+---------------------
+* fix: update social media links for email compatibility
+
+[7.0.6] - 2026-04-22
+---------------------
+* fix: Block SSRF in SAML metadata URL fetching (GHSA-64cv-vxpr-j6vc)
+
+[7.0.5] - 2026-04-21
+---------------------
+* fix: restrict invite and delete enterprise admin endpoints to provisioning admin and enterprise admin roles only
+
+[7.0.4] - 2026-04-15
+---------------------
+* fix: [SAML Views] Accept an "enterprise_customer_uuid" query param (instead of "enterprise-id")
+
+[7.0.3] - 2026-04-15
+---------------------
+* feat: add migration for enable_academies default value change (ENT-11220)
+
+[7.0.2] - 2026-04-14
+---------------------
+* feat: enable academies by default for customers (ENT-11220)
+
+[7.0.1] - 2026-04-08
+---------------------
+* feat: add SAML provider admin API and migrate SAML utilities
+
+[7.0.0] - 2026-04-07
+---------------------
+* chore: drop Python 3.11 support
+
+[6.8.6] - 2026-04-07
+---------------------
+* fix: allow deletion of inactive enterprise admin users (ENT-11714)
+
+[6.8.5] - 2026-03-31
+---------------------
+* feat: add AccountSettingsEnterpriseReadOnlyFieldsStep pipeline step (ENT-11510)
+
+[6.8.4] - 2026-03-31
+--------------------
+* fix: hard delete customer admin records from API
+
+[6.8.3] - 2026-03-27
+---------------------
+* fix: Move settings reads out of AppConfig, into consumers
+
+[6.8.2] - 2026-03-26
+---------------------
+* feat: add admin invite reminder emails (ENT-11581)
+
+[6.8.1] - 2026-03-25
+---------------------
+* fix: also register enterprise and consent as CMS plugins (ENT-11663)
+
+[6.8.0] - 2026-03-24
+---------------------
+* feat: register enterprise and consent as openedx LMS plugins (ENT-11663)
+
+[6.7.0] - 2026-03-10
+---------------------
+* feat: Invite admin endpoints with validation  (ENT-11238)
+
+[6.6.9] - 2026-03-10
+---------------------
+* fix: handle duplicate enterprise group name validation error (ENT-11506)
+
+[6.6.8] - 2026-03-05
+---------------------
+* feat: moving retirement code to edx-enterprise
+
+[6.6.7] - 2026-03-04
+---------------------
+* feat: expose admin list endpoint with search and pagination
+
+[6.6.6] - 2026-02-20
+---------------------
+* feat: Implement soft delete for admins
+
+[6.6.5] - 2026-02-24
+---------------------
+* build: remove pinned pip now that pip-tools supports pip 26.0
+* chore: upgrade python requirements
+
+[6.6.4] - 2026-02-04
+---------------------
+* build: upgrade python deps, pin pylint<4
+
+[6.6.3] - 2026-02-03
+---------------------
+* feat: filter organization members API to return only learners
+
+[6.6.2] - 2026-01-15
+---------------------
+* feat: add a waffle flag for invite admins
+
+[6.6.1] - 2026-01-09
+---------------------
+* fix: issue regarding the gettext package in atlas translations flow
+
+[6.6.0] - 2026-01-08
+---------------------
+* feat: added atlas translations flow in enterprise app
+
+[6.5.7] - 2025-11-28
+---------------------
+* feat: fetch SAP user id by remote_id_field_name
+
+[6.5.6] - 2025-11-26
+---------------------
+* chore: upgrade python requirements
+
+[6.5.5] - 2025-11-24
+---------------------
+* feat: Add ability to load integrations from new channel integrations app
+
+[6.5.4] - 2025-11-13
+---------------------
+* fix: pin `pip<25.3` to resolve make upgrade build failure
+* See issue https://github.com/openedx/public-engineering/issues/440 for details.
+
+[6.5.3]
+-------
+* chore: upgrade python requirements
+
+[6.5.2]
+-------
+* chore: upgrades python requirements
+
+[6.5.1]
+--------
+* chore: Added a toggle to disable legacy integrated channels endpoints in Enterprise.
+
+[6.5.0]
+--------
+* feat: add endpoint to provision a customer admin
+
+[6.4.5]
+--------
+* chore: upgrades python requirements
+
+[6.4.4]
+--------
+* chore: upgrades python requirements
+
+[6.4.3]
+--------
+* fix: changes enterprise customer user dropdown to raw id to not break admin page
+
+[6.4.2]
+--------
+* chore: upgrades python requirements
+
+[6.4.1]
+--------
+* fix: Moodle configuration updates were not being saved correctly
+
+[6.4.0]
+-------
+* feat: decouple ecommerce dependencies with graceful fallback
+
+  * Add error handling for ecommerce API calls in admin enrollment flow
+  * Disable ecommerce heartbeat checks in service monitoring
+  * Make order creation optional with warning logs instead of failures
+  * Redirect program enrollment to dashboard instead of basket page
+  * Update tests to reflect ecommerce service decoupling changes
+
+[6.3.4]
+--------
+* fix: add migration for Django 5.2 support in edx-platform
+
+[6.3.3]
+--------
+* chore: upgrades python requirements
+
+[6.3.2]
+--------
+* fix: upgrade djangorestframework and skip automatic validators
+
+[6.3.1]
+--------
+* feat: Add django admin interface for EnterpriseCustomerAdmin
+
+[6.3.0]
+--------
+* fix: Remove django-simple-history package constraint.
+
 [6.2.18]
 --------
 * fix: Logged response received from XAPI in logs to debug the XAPI transmission issues.

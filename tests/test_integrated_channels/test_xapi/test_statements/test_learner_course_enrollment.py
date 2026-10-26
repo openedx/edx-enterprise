@@ -101,14 +101,14 @@ class TestLearnerCourseEnrollmentStatement(unittest.TestCase):
 
         self.expected_course = {
             'verb': self.verb,
-            'version': '1.0.1',
+            'version': '1.0.3',
             'actor': self.actor,
             'object': self.object_course
         }
 
         self.expected_courserun = {
             'verb': self.verb,
-            'version': '1.0.1',
+            'version': '1.0.3',
             'actor': self.actor,
             'object': self.object_courserun
         }

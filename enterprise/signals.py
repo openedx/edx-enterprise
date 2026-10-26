@@ -3,12 +3,18 @@ Django signal handlers.
 """
 
 from logging import getLogger
+from typing import Any
+
+from social_core.backends.saml import SAMLAuth
 
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
+from django.http import HttpRequest
 
+from consent.helpers import grant_implied_data_sharing_consent
 from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
@@ -31,12 +37,24 @@ from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnte
 
 try:
     from common.djangoapps.student.models import CourseEnrollment
+    from openedx.core.djangoapps.user_api.accounts.signals import USER_RETIRE_LMS_CRITICAL
     from openedx_events.learning.signals import COURSE_ENROLLMENT_CHANGED, COURSE_UNENROLLMENT_COMPLETED
 
 except ImportError:
     CourseEnrollment = None
     COURSE_ENROLLMENT_CHANGED = None
     COURSE_UNENROLLMENT_COMPLETED = None
+    USER_RETIRE_LMS_CRITICAL = None
+
+try:
+    from common.djangoapps.third_party_auth.provider import Registry
+except ImportError:
+    Registry = None
+
+try:
+    from openedx.features.enterprise_support.api import enterprise_customer_for_request
+except ImportError:
+    enterprise_customer_for_request = None
 
 logger = getLogger(__name__)
 _UNSAVED_FILEFIELD = 'unsaved_filefield'
@@ -215,6 +233,56 @@ def update_learner_language_preference(sender, instance, created, **kwargs):    
     # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
     if created and instance.enterprise_customer.default_language:
         unset_enterprise_learner_language(instance)
+
+
+@receiver(post_save, sender=models.EnterpriseCourseEnrollment)
+@disable_for_loaddata
+def grant_implied_data_sharing_consent_receiver(sender, instance, created, **kwargs):  # pylint: disable=unused-argument
+    """
+    Grant data sharing consent for new enrollments of customers with externally managed consent.
+
+    These customers collect consent outside of edX, so learners are never prompted and no consent
+    record would otherwise be written, which excludes their enrollments from learner progress reporting.
+    """
+    if not created:
+        return
+
+    enterprise_customer_user = instance.enterprise_customer_user
+    enterprise_customer = enterprise_customer_user.enterprise_customer
+    # Unlinked learners are excluded from learner progress reporting, and from the backfill command.
+    if not enterprise_customer.implies_data_sharing_consent or not enterprise_customer_user.linked:
+        return
+
+    username = enterprise_customer_user.username
+    if not username:
+        return
+
+    # Failing to record consent must not fail the enrollment; missed records can be backfilled
+    # with the `backfill_implied_dsc_records` management command.
+    try:
+        consent_created = grant_implied_data_sharing_consent(
+            username=username,
+            course_id=instance.course_id,
+            enterprise_customer=enterprise_customer,
+        )
+    except Exception:  # pylint: disable=broad-except
+        logger.exception(
+            '[Implied DSC] Failed to grant externally managed data sharing consent. '
+            'EnterpriseCustomer: %s, Username: %s, CourseId: %s',
+            enterprise_customer.uuid,
+            username,
+            instance.course_id,
+        )
+        return
+
+    if consent_created:
+        logger.info(
+            '[Implied DSC] Granted externally managed data sharing consent. '
+            'EnterpriseCustomer: %s, Username: %s, CourseId: %s',
+            enterprise_customer.uuid,
+            username,
+            instance.course_id,
+        )
 
 
 @receiver(post_save, sender=models.PendingEnterpriseCustomerAdminUser)
@@ -451,3 +519,90 @@ if COURSE_UNENROLLMENT_COMPLETED is not None:
 
 if COURSE_ENROLLMENT_CHANGED is not None:
     COURSE_ENROLLMENT_CHANGED.connect(course_enrollment_changed_receiver)
+
+
+def retire_user_from_pending_enterprise_customer_user(sender, user, retired_email, **kwargs):  # pylint: disable=unused-argument
+    """
+    Handle USER_RETIRE_LMS_CRITICAL signal: retire PendingEnterpriseCustomerUser email address.
+
+    Idempotent: only updates records where user_email hasn't already been changed to the retired value.
+    """
+    if user.email != retired_email:
+        logger.info(
+            "Updating PendingEnterpriseCustomerUser email record from %s to retired email %s",
+            user.email,
+            retired_email,
+        )
+    models.PendingEnterpriseCustomerUser.objects.filter(
+        user_email=user.email,
+    ).exclude(
+        user_email=retired_email,
+    ).update(user_email=retired_email)
+
+
+if USER_RETIRE_LMS_CRITICAL is not None:
+    USER_RETIRE_LMS_CRITICAL.connect(retire_user_from_pending_enterprise_customer_user)
+
+
+def _unlink_enterprise_user_from_idp(request: HttpRequest, user: AbstractUser, idp_backend_name: str) -> None:
+    """
+    Un-links learner from their enterprise identity provider.
+
+    Note: despite the name, this also flips ``EnterpriseCustomerUser.linked``
+    to ``False``, severing the learner's enterprise membership entirely -- not
+    just their IdP association.  Re-linking is not learner-self-service and
+    requires admin intervention via the enterprise customer API or Django
+    admin. This is legacy behavior preserved during a refactor; whether it was
+    a conscious product decision is unclear.
+
+    Args:
+        request: The current HTTP request.
+        user (User): User who initiated disconnect request.
+        idp_backend_name (str): Name of identity provider's backend.
+    """
+    logger.info(
+        '[ENTERPRISE] _unlink_enterprise_user_from_idp called for user_id=%s, backend=%s',
+        user.id, idp_backend_name,
+    )
+    enterprise_customer = enterprise_customer_for_request(request)
+    if enterprise_customer:
+        enabled_providers = Registry.get_enabled_by_backend_name(idp_backend_name)
+        provider_ids = [enabled_provider.provider_id for enabled_provider in enabled_providers]
+        enterprise_customer_idps = models.EnterpriseCustomerIdentityProvider.objects.filter(
+            enterprise_customer__uuid=enterprise_customer['uuid'],
+            provider_id__in=provider_ids
+        )
+
+        if enterprise_customer_idps:
+            try:
+                # Unlink user email from each Enterprise Customer.
+                for enterprise_customer_idp in enterprise_customer_idps:
+                    models.EnterpriseCustomerUser.objects.unlink_user(
+                        enterprise_customer=enterprise_customer_idp.enterprise_customer,
+                        user_email=user.email,
+                    )
+            except (models.EnterpriseCustomerUser.DoesNotExist, models.PendingEnterpriseCustomerUser.DoesNotExist):
+                pass
+
+
+def handle_social_auth_disconnect(
+    sender: type,  # pylint: disable=unused-argument
+    *,  # Force everything that follows to be a keyword argument.
+    request: HttpRequest,
+    user: AbstractUser,
+    saml_backend: SAMLAuth,
+    **kwargs: Any,
+) -> None:
+    """
+    Handle SAMLAccountDisconnected signal to unlink enterprise user from IdP.
+
+    Arguments:
+        sender: the class that sent the signal (unused).
+        request: the HTTP request during which the disconnect occurred.
+        user: the Django User disconnecting the social auth account.
+        saml_backend: the SAML auth backend instance.
+        **kwargs: forward-compatible catch-all.
+    """
+    if not getattr(settings, 'ENABLE_ENTERPRISE_INTEGRATION', False):
+        return
+    _unlink_enterprise_user_from_idp(request, user, saml_backend.name)

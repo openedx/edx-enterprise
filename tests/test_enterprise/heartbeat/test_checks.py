@@ -16,13 +16,8 @@ from requests.exceptions import (  # pylint: disable=redefined-builtin
 
 from django.conf import settings
 
-from enterprise.heartbeat.checks import check_discovery, check_ecommerce, check_enterprise_catalog, check_lms
-from enterprise.heartbeat.exceptions import (
-    DiscoveryNotAvailable,
-    EcommerceNotAvailable,
-    EnterpriseCatalogNotAvailable,
-    LMSNotAvailable,
-)
+from enterprise.heartbeat.checks import check_discovery, check_enterprise_catalog, check_lms
+from enterprise.heartbeat.exceptions import DiscoveryNotAvailable, EnterpriseCatalogNotAvailable, LMSNotAvailable
 from test_utils.decorators import mock_api_response, mock_api_response_with_callback
 from test_utils.fake_heartbeat_responses import fake_health, fake_lms_heartbeat
 
@@ -73,45 +68,7 @@ class TestChecks(unittest.TestCase):
         # Run the tests
         _test_check_lms_error()
 
-    @mock_api_response(
-        responses.GET,
-        Path(settings.ECOMMERCE_PUBLIC_URL_ROOT) / 'health',
-        json=fake_lms_heartbeat(),
-    )
-    def test_check_ecommerce(self):
-        """
-        Validate that `check_ecommerce` function works as expected.
-        """
-        service, message = check_ecommerce()
-
-        assert service == 'E-Commerce'
-        assert message == 'Service is up and running.'
-
-    @ddt.unpack
-    @ddt.data(
-        (HTTPError, 'Service is down'),
-        (RequestException, 'An error occurred while checking service status.'),
-        (Timeout, 'Service is not accessible.'),
-        (ConnectionError, 'Service is not accessible.'),
-    )
-    def test_check_ecommerce_error(self, exception, expected_error_message):
-        """
-        Validate that `check_ecommerce` function works as expected.
-        """
-        @mock_api_response_with_callback(
-            responses.GET,
-            Path(settings.ECOMMERCE_PUBLIC_URL_ROOT) / 'health',
-            callback=exception,
-            content_type='application/json'
-        )
-        def _test_check_ecommerce_error():
-
-            with raises(EcommerceNotAvailable) as error:
-                check_ecommerce()
-                assert error.message == expected_error_message
-
-        # Run the tests
-        _test_check_ecommerce_error()
+    # Ecommerce health check tests removed due to service decoupling
 
     @mock_api_response(
         responses.GET,

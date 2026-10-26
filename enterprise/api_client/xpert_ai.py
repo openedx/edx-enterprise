@@ -28,7 +28,7 @@ def chat_completion(prompt, role):
     }
 
     body = {
-        'messages': [{'role': role, 'content': prompt},],
+        'messages': [{'role': role, 'content': prompt}],
         'client_id': settings.ENTERPRISE_ANALYSIS_CLIENT_ID,
         'system_message': settings.ENTERPRISE_ANALYSIS_SYSTEM_PROMPT
     }

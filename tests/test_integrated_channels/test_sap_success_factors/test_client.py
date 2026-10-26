@@ -5,6 +5,7 @@ Tests for the SAPSF API Client.
 import datetime
 import json
 import unittest
+from unittest import mock
 from unittest.mock import MagicMock
 from urllib.parse import urljoin
 
@@ -383,7 +384,8 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         assert len(responses.calls) == 2
 
     @responses.activate
-    def test_sync_content_metadata_too_many_requests(self):
+    @mock.patch('integrated_channels.sap_success_factors.client.time.sleep')  # skip real backoff delay
+    def test_sync_content_metadata_too_many_requests(self, _mock_sleep):
         """
         Test that the sync content metadata method retries when it gets a 429 response.
         """
@@ -432,7 +434,8 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         assert len(responses.calls) == 2
 
     @responses.activate
-    def test_sync_content_metadata_retry_logic(self):
+    @mock.patch('integrated_channels.sap_success_factors.client.time.sleep')  # skip real backoff delay
+    def test_sync_content_metadata_retry_logic(self, _mock_sleep):
         """
         Test that the sync content metadata method retries when it gets a 429 response and then succeeds.
         """

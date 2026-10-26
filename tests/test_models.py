@@ -42,6 +42,7 @@ from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
+    NON_PRODUCTION_CUSTOMER_TYPE,
 )
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.models import (
@@ -55,6 +56,7 @@ from enterprise.models import (
     EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerSsoConfiguration,
+    EnterpriseCustomerType,
     EnterpriseCustomerUser,
     EnterpriseGroup,
     EnterpriseGroupMembership,
@@ -372,6 +374,36 @@ class TestEnterpriseCustomer(unittest.TestCase):
         ent_idp_two = factories.EnterpriseCustomerIdentityProviderFactory(enterprise_customer=customer)
         assert customer.identity_providers[0] == ent_idp_one
         assert customer.identity_providers[1] == ent_idp_two
+
+    @ddt.data(
+        # (customer type name, is_non_production_customer / show_non_production_banner)
+        (NON_PRODUCTION_CUSTOMER_TYPE, True),
+        ('Enterprise', False),
+        ('Bulk Purchase', False),
+    )
+    @ddt.unpack
+    def test_non_production_banner_properties(self, customer_type_name, expected_non_production):
+        """
+        The banner is shown exactly when the customer type is ``Non-production``.
+        """
+        customer_type, __ = EnterpriseCustomerType.objects.get_or_create(name=customer_type_name)
+        customer = factories.EnterpriseCustomerFactory(customer_type=customer_type)
+        assert customer.is_non_production_customer == expected_non_production
+        assert customer.show_non_production_banner == expected_non_production
+
+    def test_non_production_banner_hidden_after_switching_customer_type(self):
+        """
+        Switching a non-production customer back to a production type immediately hides the banner.
+        """
+        non_production_type, __ = EnterpriseCustomerType.objects.get_or_create(name=NON_PRODUCTION_CUSTOMER_TYPE)
+        production_type, __ = EnterpriseCustomerType.objects.get_or_create(name='Enterprise')
+        customer = factories.EnterpriseCustomerFactory(customer_type=non_production_type)
+        assert customer.show_non_production_banner
+
+        customer.customer_type = production_type
+        customer.save()
+
+        assert not customer.show_non_production_banner
 
     def test_tpa_hint_with_no_identity_provider_attached(self):
         """
@@ -776,8 +808,10 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME, is_staff=True, is_active=True
         )
         self.user = factories.UserFactory(username='Batman')
-        self.order_create_log_message = 'Creating order for enterprise learner with id [{}] for enrollment in course ' \
-                                        'with id: [{}], [percentage discount] [{}] and [sales_force_id] [{}]'
+        self.order_create_log_message = (
+            'Attempting to create order for enterprise learner with id [{}] for enrollment in course '
+            'with id: [{}], [percentage discount] [{}] and [sales_force_id] [{}]'
+        )
 
     @ddt.data(str, repr)
     def test_string_conversion(self, method):
@@ -871,7 +905,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         actual_value = enterprise_customer_user.get_remote_id()
         assert actual_value == expected_value
         if remote_id_called:
-            mock_third_party_api.return_value.get_remote_id.assert_called_once_with(provider_id, "hi")
+            mock_third_party_api.return_value.get_remote_id.assert_called_once_with(provider_id, "hi", None)
         else:
             assert mock_third_party_api.return_value.get_remote_id.call_count == 0
 
@@ -896,7 +930,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         mock_third_party_api.return_value.get_remote_id.return_value = 'saml-user-id'
         mock_social_auth_from_idp.return_value = True
         _ = enterprise_customer_user.get_remote_id()
-        mock_third_party_api.return_value.get_remote_id.assert_called_once_with(default_idp, "hello")
+        mock_third_party_api.return_value.get_remote_id.assert_called_once_with(default_idp, "hello", None)
 
     @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
     def test_get_remote_id_specific_idp(self, mock_third_party_api):
@@ -923,7 +957,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         remote_id = enterprise_customer_user.get_remote_id(idp_id=non_default_idp_id)
 
         assert remote_id == 'specified-user-id'
-        mock_third_party_api.return_value.get_remote_id.assert_called_once_with(non_default_idp_id, "hello")
+        mock_third_party_api.return_value.get_remote_id.assert_called_once_with(non_default_idp_id, "hello", None)
 
     @mock.patch('enterprise.utils.segment')
     @mock.patch('enterprise.models.EnrollmentApiClient')
@@ -1015,8 +1049,10 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
     @mock.patch('enterprise.models.get_ecommerce_worker_user')
     @mock.patch('enterprise.api_client.ecommerce.get_ecommerce_api_client')
     @mock.patch('enterprise.api_client.ecommerce.EcommerceApiClient.create_manual_enrollment_orders')
-    def test_create_order_for_enrollment(self, utils_mock, ecommerce_api_client_init_mock,  # pylint: disable=unused-argument
-                                         ecommerce_api_client_call_mock):  # pylint: disable=unused-argument
+    def test_create_order_for_enrollment(
+        self, utils_mock, ecommerce_api_client_init_mock,  # pylint: disable=unused-argument
+        ecommerce_api_client_call_mock  # pylint: disable=unused-argument
+    ):
         """
         Test that expected logs appear when we try to create an order for a course while enrolling an enterprise user.
         """
@@ -2863,17 +2899,29 @@ class TestEnterpriseGroup(unittest.TestCase):
         with raises(Exception):
             factories.EnterpriseGroupFactory(name="foobar", enterprise_customer=group_1.enterprise_customer)
 
-    def test_enterprise_group_soft_delete(self):
+    def test_enterprise_group_hard_delete(self):
         """
-        Test ``EnterpriseGroup`` soft deletion property.
+        Test ``EnterpriseGroup`` deletion is a hard delete, not a soft delete.
         """
         group = factories.EnterpriseGroupFactory()
 
         assert EnterpriseGroup.all_objects.count() == 1
         assert EnterpriseGroup.available_objects.count() == 1
         group.delete()
-        assert EnterpriseGroup.all_objects.count() == 1
+        assert EnterpriseGroup.all_objects.count() == 0
         assert EnterpriseGroup.available_objects.count() == 0
+
+    def test_enterprise_group_hard_delete_preserves_history(self):
+        """
+        Test that hard deleting an ``EnterpriseGroup`` still records the deletion
+        in its django-simple-history audit trail.
+        """
+        group = factories.EnterpriseGroupFactory()
+        group_uuid = group.uuid
+        group.delete()
+
+        history_records = EnterpriseGroup.history.filter(uuid=group_uuid).order_by('history_date')
+        assert history_records.last().history_type == '-'
 
 
 @mark.django_db

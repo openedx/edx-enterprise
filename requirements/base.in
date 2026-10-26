@@ -26,25 +26,28 @@ edx-drf-extensions
 edx-opaque-keys[django]
 edx-rest-api-client
 edx-rbac
-edx-tincan-py35
+tincan
 edx-toggles
 jsondiff
 jsonfield
+lxml
+openedx-atlas
 openedx-events
+openedx-filters
 paramiko
 path.py
 pillow
 python-dateutil
+python3-saml
 pytz
 requests
 rules
 slumber
-snowflake-connector-python
+social-auth-app-django
 stevedore
 testfixtures
 unicodecsv
 PGPy
-openai
 django-oauth-toolkit
 
 # Explicitly pinned packages. Anything pinned here must match edx-platform's pinned packages.

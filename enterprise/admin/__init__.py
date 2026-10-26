@@ -161,7 +161,7 @@ class PendingEnterpriseCustomerAdminUserInline(admin.TabularInline):
         """
         Formats the ``admin_registration_url`` model property as an HTML link.
         """
-        return format_html('<a href="{0}">{0}</a>'.format(obj.admin_registration_url))
+        return format_html('<a href="{0}">{0}</a>', obj.admin_registration_url)
 
 
 @admin.register(models.EnterpriseCustomerType)
@@ -238,12 +238,13 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         ('Recommended default settings for all enterprise customers', {
             'fields': ('site', 'customer_type', 'enable_learner_portal',
                        'enable_integrated_customer_learner_portal_search',
-                       'enable_analytics_screen', 'enable_audit_enrollment',
+                       'enable_analytics_screen', 'enable_people_management', 'enable_audit_enrollment',
                        'enable_audit_data_reporting', 'enable_learner_portal_offers',
                        'disable_expiry_messaging_for_learner_credit',
                        'enable_executive_education_2U_fulfillment',
                        'enable_learner_portal_sidebar_message',
-                       'learner_portal_sidebar_content', 'enable_pathways', 'enable_programs',
+                       'learner_portal_sidebar_content', 'enable_pathways', 'enable_credit_and_industry_pathways',
+                       'enable_programs',
                        'enable_demo_data_for_analytics_and_lpr', 'enable_academies', 'enable_one_academy',
                        'enable_learner_credit_message_box'),
             'description': ('The following default settings should be the same for '
@@ -673,7 +674,7 @@ class PendingEnterpriseCustomerAdminUserAdmin(admin.ModelAdmin):
         """
         Formats the ``admin_registration_url`` model property as an HTML link.
         """
-        return format_html('<a href="{0}">{0}</a>'.format(obj.admin_registration_url))
+        return format_html('<a href="{0}">{0}</a>', obj.admin_registration_url)
 
 
 @admin.register(models.EnrollmentNotificationEmailTemplate)
@@ -776,8 +777,7 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         """
         Disable deletion for EnterpriseCourseEnrollment.
         """
-        features = getattr(settings, 'FEATURES', {})
-        return features.get(constants.ALLOW_ADMIN_ENTERPRISE_COURSE_ENROLLMENT_DELETION, False)
+        return getattr(settings, constants.ALLOW_ADMIN_ENTERPRISE_COURSE_ENROLLMENT_DELETION, False)
 
     def changelist_view(self, request, extra_context=None):
         """
@@ -953,7 +953,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         """
         Inject html for disabling wrap for uuid
         """
-        return format_html('<span style="white-space: nowrap;">{uuid}</span>'.format(uuid=obj.uuid))
+        return format_html('<span style="white-space: nowrap;">{uuid}</span>', uuid=obj.uuid)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, change, **kwargs)
@@ -1263,6 +1263,28 @@ class EnterpriseGroupAdmin(admin.ModelAdmin):
 
     autocomplete_fields = ['enterprise_customer']
 
+    def delete_queryset(self, request, queryset):
+        """
+        Hard delete each selected group individually via the model's overridden
+        ``delete()``. Bulk queryset deletes bypass instance-level overrides and
+        would otherwise soft-delete via ``SoftDeletableQuerySet.delete()``.
+        """
+        for group in queryset:
+            group.delete()
+
+    def save_model(self, request, obj, form, change):
+        """
+        Purge any legacy soft-deleted group with this name/customer before saving,
+        so groups created via the Django admin self-heal the same way the group
+        creation API does, instead of hitting a raw unique-constraint IntegrityError.
+        """
+        if not change:
+            models.EnterpriseGroup.purge_legacy_soft_deleted(
+                name=obj.name,
+                enterprise_customer=obj.enterprise_customer_id,
+            )
+        super().save_model(request, obj, form, change)
+
     def members(self, obj):
         """
         Return the non-deleted members of a group
@@ -1424,3 +1446,17 @@ class OnboardingFlowAdmin(admin.ModelAdmin):
     class Meta:
         fields = '__all__'
         model = models.OnboardingFlow
+
+
+@admin.register(models.EnterpriseCustomerAdmin)
+class EnterpriseCustomerAdminAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseCustomerAdmin.
+    """
+
+    list_display = ('uuid',)
+    raw_id_fields = ('enterprise_customer_user',)
+
+    class Meta:
+        fields = '__all__'
+        model = models.EnterpriseCustomerAdmin

@@ -32,7 +32,14 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
+    'sphinxcontrib.mermaid',
+    'myst_parser',
 ]
+
+# Render fenced ```mermaid code blocks in Markdown (MyST) sources through the
+# sphinxcontrib.mermaid directive, so the same fences render both on GitHub and
+# in the Sphinx-built docs.
+myst_fence_as_directive = ["mermaid"]
 
 import enterprise
 
@@ -65,8 +72,8 @@ templates_path = ['_templates']
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+# Markdown sources (e.g. docs/decisions/*.md) are parsed by myst_parser.
+source_suffix = ['.rst', '.md']
 
 # The encoding of source files.
 #
