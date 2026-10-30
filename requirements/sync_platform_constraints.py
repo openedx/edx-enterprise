@@ -33,6 +33,9 @@ SKIP_PACKAGES = {
     # jasmine (js_test dependency-group) hard-pins pyyaml==3.10; the platform's
     # newer pin would make the whole lock unsatisfiable.
     "pyyaml",
+    # jasmine 3.x (js_test) needs jinja2<3, which needs markupsafe<2.1.
+    "jinja2",
+    "markupsafe",
 }
 
 
