@@ -7,8 +7,8 @@ on:
   workflow_call:
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   run_tests:
@@ -31,11 +31,11 @@ jobs:
       with:
         enable-cache: true
         python-version: ${{ matrix.python-version }}
-    - run: uv sync --group ci
+    - run: uv sync --locked --group ci
     - name: Run tox
       env:
         TOXENV: ${{ matrix.toxenv }}
-      run: uv run tox
+      run: uv run --locked tox
     - name: Run code coverage
       if: matrix.python-version == '3.12' && matrix.toxenv == 'django52' # Only run this once as part of tests
       uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1

@@ -50,7 +50,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          uv sync --group dev --group postgresql
+          uv sync --locked --group dev --group postgresql
 
       - name: Run migrations
         env:
@@ -62,5 +62,5 @@ jobs:
           DB_PORT: 5432
         run: |
           echo "Running the migrations."
-          uv run python manage.py migrate --settings=enterprise.settings.test
+          uv run --locked python manage.py migrate --settings=enterprise.settings.test
 

@@ -572,9 +572,3 @@ omit = [
     "*/tests/*",
     "test_*",
 ]
-
-[tool.coverage.html]
-directory = "build/coverage/html"
-
-[tool.coverage.xml]
-output = "build/coverage/coverage.xml"

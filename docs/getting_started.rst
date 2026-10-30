@@ -23,15 +23,15 @@ perform database migrations.
 Local development
 -----------------
 
-If you have not already done so, create/activate a `virtualenv`_.
+Dependencies are managed with `uv`_. The command below creates a ``.venv`` directory in the repository and
+installs them there; activate it before running the other ``make`` targets.
 
-.. _virtualenv: https://virtualenvwrapper.readthedocs.org/en/latest/
-
-Dependencies can be installed via the command below.
+.. _uv: https://docs.astral.sh/uv/getting-started/installation/
 
 .. code-block:: bash
 
     $ make requirements
+    $ source .venv/bin/activate
 
 Than you might want to run tests to make sure the setup went fine and there are no pre-existing problems (i.e. failed
 tests or quality checks)

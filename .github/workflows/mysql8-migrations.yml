@@ -44,7 +44,7 @@ jobs:
         mysql -V
     - name: Install Python dependencies
       run: |
-        uv sync --group dev --no-binary-package mysqlclient --no-binary-package xmlsec
+        uv sync --locked --group dev --no-binary-package mysqlclient --no-binary-package xmlsec
     - name: Initiate Services
       run: |
         sudo /etc/init.d/mysql start
@@ -65,5 +65,5 @@ jobs:
       run: |
         echo "CREATE DATABASE IF NOT EXISTS enterprise;" | sudo mysql -u root
         echo "Running the migrations."
-        uv run python manage.py migrate --settings=enterprise.settings.test
+        uv run --locked python manage.py migrate --settings=enterprise.settings.test
         echo "use mysql; select * from user;" | sudo mysql -u root
