@@ -1152,7 +1152,7 @@ social-auth-app-django==5.4.1
     #   edx-auth-backends
     #   edx-enterprise
     #   openedx-platform
-social-auth-core==4.9.1
+social-auth-core==6.2.0
     # via
     #   edx-auth-backends
     #   openedx-platform
