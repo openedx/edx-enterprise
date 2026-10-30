@@ -13,12 +13,7 @@ from django.http import HttpRequest
 
 from enterprise.logging import getEnterpriseLogger
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
-
-# In ENT-11576, enterprise_customer_from_session_or_learner_data will be migrated into this repo.
-try:
-    from openedx.features.enterprise_support.api import enterprise_customer_from_session_or_learner_data
-except ImportError:
-    enterprise_customer_from_session_or_learner_data = None
+from enterprise.platform_support.api import enterprise_customer_from_session_or_learner_data
 
 LOGGER = getEnterpriseLogger(__name__)
 

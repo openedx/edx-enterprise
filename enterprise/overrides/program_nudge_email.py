@@ -7,11 +7,7 @@ from urllib.parse import urljoin
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 
-# Will be replaced with an internal path in ENT-11576.
-try:
-    from openedx.features.enterprise_support.api import get_enterprise_learner_data_from_db
-except ImportError:
-    get_enterprise_learner_data_from_db = None
+from enterprise.platform_support.api import get_enterprise_learner_data_from_db
 
 
 def enterprise_suggested_course_url(
@@ -42,7 +38,7 @@ def enterprise_suggested_course_url(
         str: the learner portal course landing page fully-qualified URL.
     """
     learner_data = get_enterprise_learner_data_from_db(user)
-    enterprise_customer = learner_data[0]['enterprise_customer'] if learner_data else None
+    enterprise_customer = learner_data[0]['enterprise_customer'] if learner_data else {}
     if not (enterprise_customer and enterprise_customer['enable_learner_portal']):
         return prev_fn(
             user=user,

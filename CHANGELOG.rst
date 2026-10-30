@@ -17,6 +17,12 @@ Unreleased
 ----------
 * nothing unreleased
 
+[9.0.0] - 2026-10-30
+---------------------
+* feat!: Moves openedx-platform's ``openedx.features.enterprise_support`` module into this
+  repo as ``enterprise.platform_support``, so the platform copy can be deleted and
+  edx-enterprise is closer to being an optional platform dependency (ENT-11576)
+
 [8.18.0] - 2026-10-08
 ----------------------
 * feat: grant implied data sharing consent for enterprise customers with externally managed consent,
