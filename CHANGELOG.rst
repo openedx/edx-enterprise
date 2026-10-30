@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.2.1] - 2026-11-17
+-----------------------
+* fix: Check SAML metadata redirects and resolved hostnames (GHSA-qm89-wj8j-vgw5)
+
 [8.0.2] - 2026-04-27
 ---------------------
 * feat: add ai pathways operator waffle flag
