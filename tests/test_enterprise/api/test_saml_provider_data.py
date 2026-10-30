@@ -11,6 +11,7 @@ from rest_framework.reverse import reverse
 
 from django.conf import settings
 
+from enterprise.api.v1.views.saml_utils import SAMLMetadataURLError
 from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_ADMIN_ROLE
 from test_utils import APITest
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory
@@ -244,6 +245,9 @@ class TestSAMLProviderDataViewSet(APITest):
 
     def test_sync_provider_data_fetch_http_error(self):
         self._test_sync_fetch_error(HTTPError)  # pylint: disable=no-value-for-parameter
+
+    def test_sync_provider_data_fetch_unsafe_url(self):
+        self._test_sync_fetch_error(SAMLMetadataURLError)  # pylint: disable=no-value-for-parameter
 
     @patch('enterprise.api.v1.views.saml_provider_data.fetch_metadata_xml')
     @patch('enterprise.api.v1.views.saml_provider_data.parse_metadata_xml')

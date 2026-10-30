@@ -15,7 +15,7 @@ Change Log
 
 Unreleased
 ----------
-* nothing unreleased
+* fix: Check SAML metadata redirects and resolved hostnames (GHSA-qm89-wj8j-vgw5)
 
 [9.2.1] - 2026-11-17
 ---------------------
