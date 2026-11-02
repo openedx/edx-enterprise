@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import ddt
 
+from django.core.cache import cache
 from django.test import RequestFactory, TestCase
 
 from enterprise.filters.logistration import (
@@ -16,7 +17,6 @@ from enterprise.filters.logistration import (
     PostLoginEnterpriseRedirect,
     RegistrationFormEnterpriseOverrides,
 )
-from enterprise.models import EnterpriseCustomerUser
 from test_utils.factories import EnterpriseCustomerUserFactory, UserFactory
 
 
@@ -515,32 +515,23 @@ class TestPostLoginEnterpriseRedirect(TestCase):
             step.run_filter(redirect_url='/dashboard', user=self._make_user())
 
 
-def _is_enterprise_learner_via_db(user):
-    """
-    Stand-in for the platform's ``is_enterprise_learner``: a real DB lookup against
-    ``EnterpriseCustomerUser`` rather than a canned boolean. The real function lives in
-    ``openedx.features.enterprise_support.utils`` (ENT-11576 tracks migrating it into
-    edx-enterprise) and isn't importable outside a full LMS install, so it must still be
-    patched here — but the patched behavior is driven by real factory-created rows.
-    """
-    return EnterpriseCustomerUser.objects.filter(user_id=user.id).exists()
-
-
-_IS_ENTERPRISE_LEARNER_PATH = 'enterprise.filters.logistration.is_enterprise_learner'
-
-
 class TestActivationEmailEnterpriseContextEnricher(TestCase):
     """
     Tests for ActivationEmailEnterpriseContextEnricher pipeline step.
     """
+
+    def setUp(self):
+        super().setUp()
+        # is_enterprise_learner caches positive results per user id, and user ids can be
+        # reused across tests once each test's transaction rolls back.
+        cache.clear()
 
     def _make_step(self):
         return ActivationEmailEnterpriseContextEnricher(
             'org.openedx.authentication.account_activation.email.context.generated.v1', [],
         )
 
-    @patch(_IS_ENTERPRISE_LEARNER_PATH, side_effect=_is_enterprise_learner_via_db)
-    def test_flags_enterprise_linked_user(self, _mock_is_enterprise_learner):
+    def test_flags_enterprise_linked_user(self):
         """
         A user linked to an enterprise customer gets is_enterprise_learner=True in the
         message context.
@@ -555,8 +546,7 @@ class TestActivationEmailEnterpriseContextEnricher(TestCase):
         assert result['message_context']['is_enterprise_learner'] is True
         assert result['user'] is user
 
-    @patch(_IS_ENTERPRISE_LEARNER_PATH, side_effect=_is_enterprise_learner_via_db)
-    def test_does_not_flag_unlinked_user(self, _mock_is_enterprise_learner):
+    def test_does_not_flag_unlinked_user(self):
         """
         A user with no enterprise link gets is_enterprise_learner=False in the message context.
         """

@@ -13,12 +13,7 @@ try:
 except ImportError:
     DiscountEligibilityCheckRequested = None
 
-# This import will be replaced with an internal path in ENT-11576 when
-# enterprise_support is migrated into edx-enterprise.
-try:
-    from openedx.features.enterprise_support.utils import is_enterprise_learner
-except ImportError:
-    is_enterprise_learner = None
+from enterprise.platform_support.utils import is_enterprise_learner
 
 log = logging.getLogger(__name__)
 

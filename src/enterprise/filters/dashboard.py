@@ -7,18 +7,8 @@ from typing import Any
 from crum import get_current_request
 from openedx_filters.filters import PipelineStep
 
-# ENT-11576: These functions will be migrated from the platform's enterprise_support module
-# into edx-enterprise, eliminating these cross-boundary imports.
-try:
-    from openedx.features.enterprise_support.api import (
-        get_dashboard_consent_notification,
-        get_enterprise_learner_portal_context,
-    )
-    from openedx.features.enterprise_support.utils import is_enterprise_learner
-except ImportError:
-    get_dashboard_consent_notification = None
-    get_enterprise_learner_portal_context = None
-    is_enterprise_learner = None
+from enterprise.platform_support.api import get_dashboard_consent_notification, get_enterprise_learner_portal_context
+from enterprise.platform_support.utils import is_enterprise_learner
 
 log = logging.getLogger(__name__)
 

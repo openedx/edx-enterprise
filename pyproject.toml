@@ -57,6 +57,7 @@ dependencies = [
     "jsondiff",
     "jsonfield",
     "lxml",
+    "markupsafe",
     "openedx-atlas",
     "openedx-events",
     "openedx-filters",
@@ -549,6 +550,7 @@ known_djangoapp = ["model_utils"]
 known_first_party = ["consent", "enterprise", "enterprise_learner_portal", "integrated_channels"]
 include_trailing_comma = true
 multi_line_output = 3
+use_parentheses = true
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "DJANGOAPP", "EDX", "FIRSTPARTY", "LOCALFOLDER"]
 
 [tool.pytest.ini_options]
