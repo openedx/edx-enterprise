@@ -17,6 +17,12 @@ Unreleased
 ----------
 * nothing unreleased
 
+[9.0.1] - 2026-11-03
+---------------------
+* fix: "Mark as Configured" on the Enterprise Customer SSO Configuration admin now clears ``errored_at``
+  and confirms the action, and a successful SSO orchestration callback now clears an error left by a
+  previous attempt, so working SSO integrations no longer show as failed (ENT-12468)
+
 [9.0.0] - 2026-10-30
 ---------------------
 * feat!: Moves openedx-platform's ``openedx.features.enterprise_support`` module into this
