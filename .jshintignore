@@ -1,3 +1,3 @@
 # TODO: Switch away to ESLint.
-enterprise/assets/
-enterprise/static/enterprise/bundles/
+src/enterprise/assets/
+src/enterprise/static/enterprise/bundles/
