@@ -470,4 +470,44 @@ ENTERPRISE_INTEGRATIONS_EMAIL = 'enterprise-integrations@edx.org'
 # blocked regardless of this setting.
 SAML_METADATA_URL_ALLOW_PRIVATE_IPS = False
 
+##### PLATFORM SUPPORT SETTINGS #####
+# ``enterprise.platform_support`` moved here from ``openedx.features.enterprise_support``
+# (ENT-11576), but the settings it reads still live in openedx-platform's
+# ``lms/envs/common.py``; migrating them into ``plugin_settings()`` is ENT-11577's job.
+# Until then these test-only copies mirror the platform's values so the package can be
+# exercised by this repo's standalone suite. Keep them in sync with ``lms/envs/common.py``.
+
+ENTERPRISE_API_URL = LMS_INTERNAL_ROOT_URL + '/enterprise/api/v1/'
+ENTERPRISE_CONSENT_API_URL = LMS_INTERNAL_ROOT_URL + '/consent/api/v1/'
+ENTERPRISE_CUSTOMER_COOKIE_NAME = 'enterprise_customer_uuid'
+BASE_COOKIE_DOMAIN = 'localhost'
+SUPPORT_SITE_LINK = 'https://example.support.edx.org'
+
+ENTERPRISE_PLATFORM_WELCOME_TEMPLATE = 'Welcome to {platform_name}.'
+ENTERPRISE_SPECIFIC_BRANDED_WELCOME_TEMPLATE = (
+    'You have left the {start_bold}{enterprise_name}{end_bold} website and are now on the {platform_name} site. '
+    '{enterprise_name} has partnered with {platform_name} to offer you high-quality, always available learning '
+    'programs to help you advance your knowledge and career. '
+    '{line_break}Please note that {platform_name} has a different {privacy_policy_link_start}Privacy Policy'
+    '{privacy_policy_link_end} from {enterprise_name}.'
+)
+ENTERPRISE_PROXY_LOGIN_WELCOME_TEMPLATE = (
+    '{start_bold}{enterprise_name}{end_bold} has partnered with {start_bold}{platform_name}{end_bold} '
+    "to offer you high-quality learning opportunities from the world's best institutions and universities."
+)
+ENTERPRISE_EXCLUDED_REGISTRATION_FIELDS = {
+    'age',
+    'level_of_education',
+    'gender',
+    'goals',
+    'year_of_birth',
+    'mailing_address',
+}
+ENTERPRISE_READONLY_ACCOUNT_FIELDS = [
+    'username',
+    'name',
+    'email',
+    'country',
+]
+
 ##### END ENTERPRISE-SPECIFIC TEST OVERRIDES #####

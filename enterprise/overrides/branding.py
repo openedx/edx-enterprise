@@ -8,15 +8,7 @@ from crum import get_current_request
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
 
-# Will be replaced with an internal path in ENT-11576.
-try:
-    from openedx.features.enterprise_support.utils import (
-        get_enterprise_learner_generic_name,
-        get_enterprise_learner_portal,
-    )
-except ImportError:
-    get_enterprise_learner_generic_name = None
-    get_enterprise_learner_portal = None
+from enterprise.platform_support.utils import get_enterprise_learner_generic_name, get_enterprise_learner_portal
 
 
 class EnterpriseLearnerPortalLink(TypedDict):

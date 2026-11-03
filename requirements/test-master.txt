@@ -415,6 +415,7 @@ lxml==5.3.2
 markupsafe==3.0.4
     # via
     #   -c requirements/edx-platform-constraints.txt
+    #   -r requirements/base.in
     #   jinja2
 msgpack==1.2.4
     # via

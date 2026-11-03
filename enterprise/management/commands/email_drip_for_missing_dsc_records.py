@@ -15,12 +15,8 @@ from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.models import EnterpriseCourseEnrollment
+from enterprise.platform_support.utils import is_course_accessed
 from enterprise.utils import get_configuration_value, parse_lms_api_datetime
-
-try:
-    from openedx.features.enterprise_support.utils import is_course_accessed
-except ImportError:
-    is_course_accessed = None
 
 LOGGER = logging.getLogger(__name__)
 
@@ -182,7 +178,7 @@ class Command(BaseCommand):
             if isinstance(consent, ProxyDataSharingConsent):
                 course_accessed = False
                 try:
-                    if is_course_accessed and is_course_accessed(ec_user.user, course_id):
+                    if is_course_accessed(ec_user.user, course_id):
                         course_accessed = True
                 except Exception as exc:  # pylint: disable=broad-except
                     LOGGER.exception('[Absent DSC Email] Error in {course} for user {user}. Error detail: {exc}'.format(

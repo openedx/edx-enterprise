@@ -1,11 +1,7 @@
 """
 Pluggable override implementation for the course home progress view.
 """
-# Will be replaced with an internal path in ENT-11576.
-try:
-    from openedx.features.enterprise_support.utils import get_enterprise_learner_generic_name
-except ImportError:
-    get_enterprise_learner_generic_name = None
+from enterprise.platform_support.utils import get_enterprise_learner_generic_name
 
 
 def enterprise_obfuscated_username(

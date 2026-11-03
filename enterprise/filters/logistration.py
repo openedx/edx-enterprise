@@ -18,32 +18,19 @@ try:
 except ImportError:
     accounts = None
 
-# ENT-11576: These functions will be migrated from the platform's enterprise_support module
-# into edx-enterprise, eliminating these cross-boundary imports.
-try:
-    from openedx.features.enterprise_support.api import (
-        activate_learner_enterprise,
-        enterprise_customer_for_request,
-        enterprise_enabled,
-        get_enterprise_learner_data_from_api,
-    )
-    from openedx.features.enterprise_support.utils import (
-        build_enterprise_branding_for_authn_mfe,
-        get_enterprise_slug_login_url,
-        handle_enterprise_cookies_for_logistration,
-        is_enterprise_learner,
-        update_logistration_context_for_enterprise,
-    )
-except ImportError:
-    activate_learner_enterprise = None
-    enterprise_customer_for_request = None
-    enterprise_enabled = None
-    get_enterprise_learner_data_from_api = None
-    build_enterprise_branding_for_authn_mfe = None
-    get_enterprise_slug_login_url = None
-    handle_enterprise_cookies_for_logistration = None
-    is_enterprise_learner = None
-    update_logistration_context_for_enterprise = None
+from enterprise.platform_support.api import (
+    activate_learner_enterprise,
+    enterprise_customer_for_request,
+    enterprise_enabled,
+    get_enterprise_learner_data_from_api,
+)
+from enterprise.platform_support.utils import (
+    build_enterprise_branding_for_authn_mfe,
+    get_enterprise_slug_login_url,
+    handle_enterprise_cookies_for_logistration,
+    is_enterprise_learner,
+    update_logistration_context_for_enterprise,
+)
 
 log = logging.getLogger(__name__)
 
