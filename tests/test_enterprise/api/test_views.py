@@ -9571,6 +9571,28 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         assert enterprise_sso_orchestration_config.is_pending_configuration() is False
         assert response.status_code == status.HTTP_200_OK
 
+    @mock.patch("enterprise.api_client.braze.BrazeAPIClient")
+    def test_sso_configuration_oauth_orchestration_complete_clears_previous_error(self, mock_braze_client):
+        """
+        Verify that a successful completion callback clears an error recorded by a previous configuration attempt.
+        """
+        mock_braze_client.return_value.get_braze_client.return_value = mock.MagicMock()
+        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
+        config_pk = uuid.uuid4()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+            configured_at=None,
+            errored_at=localized_utcnow() - timedelta(minutes=5),
+            submitted_at=localized_utcnow(),
+        )
+        response = self.post_sso_configuration_complete(config_pk)
+        enterprise_sso_orchestration_config.refresh_from_db()
+        assert enterprise_sso_orchestration_config.configured_at is not None
+        assert enterprise_sso_orchestration_config.errored_at is None
+        assert enterprise_sso_orchestration_config.active is True
+        assert response.status_code == status.HTTP_200_OK
+
     def test_sso_configuration_retrieve(self):
         """
         Test expected response when successfully retrieving an existing sso configuration.
