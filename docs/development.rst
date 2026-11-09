@@ -38,10 +38,11 @@ Local setup
 Although ``edx-enterprise`` can't be used outside edx-platform, some development process steps are intended to be
 performed in a standalone virtual environment.
 
-If you have not already done so, create/activate a `virtualenv`_. Unless otherwise stated, assume all terminal code
-below is executed within the virtualenv.
+`uv`_ manages the development environment. ``make requirements`` creates a ``.venv`` directory in the
+repository and installs the dependencies there; activate it with ``source .venv/bin/activate``. Unless
+otherwise stated, assume all terminal code below is executed within that environment.
 
-.. _virtualenv: https://virtualenvwrapper.readthedocs.org/en/latest/
+.. _uv: https://docs.astral.sh/uv/getting-started/installation/
 
 
 Install dependencies
@@ -61,8 +62,8 @@ The `edx-enterprise` Makefile provides multiple shortcuts to running tests. The 
 
 .. code-block:: bash
 
-    $ make test                     # run all python tests in current virtualenv
-    $ make diff_cover               # run all tests in current virtualenv and report diff coverage
+    $ make test                     # run all python tests in .venv
+    $ make diff_cover               # run all tests in .venv and report diff coverage
     $ make validate                 # run all tests, quality checks, and build static assets
 
 More info about running tests is available in :ref:`tests-section` section.
