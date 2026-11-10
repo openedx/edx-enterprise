@@ -14,7 +14,11 @@ concurrency:
 jobs:
   check_migrations:
     name: check migrations
-    runs-on: ${{ matrix.os }}
+    # Pinned to ubuntu-24.04: the ubuntu-26.04 image has no /etc/init.d/mysql, so the
+    # "Initiate Services" step fails. ubuntu-latest is migrating to 26.04 by 2026-11-19.
+    # See https://github.com/actions/runner-images/issues/14748
+    # matrix.os stays ubuntu-latest so the job name (and any required check) is unchanged.
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         os: [ ubuntu-latest ]
