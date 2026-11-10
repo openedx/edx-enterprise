@@ -168,6 +168,8 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
             sso_configuration_record.active = True
 
         sso_configuration_record.configured_at = localized_utcnow()
+        # A successful configuration supersedes any error from a previous attempt.
+        sso_configuration_record.errored_at = None
         # Completing the orchestration process for the first time means the configuration record is now configured and
         # can be considered active. However, subsequent configurations to update the record should not be reactivated,
         # nor should the admins be renotified via email.
