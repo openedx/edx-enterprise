@@ -47,7 +47,7 @@ jobs:
         uv sync --locked --group dev --no-binary-package mysqlclient --no-binary-package xmlsec
     - name: Initiate Services
       run: |
-        sudo /etc/init.d/mysql start
+        sudo systemctl start mysql.service
     - name: Reset mysql password
       run: |
         cat <<EOF | mysql -h 127.0.0.1 -u root --password=root
