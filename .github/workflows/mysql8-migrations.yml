@@ -14,11 +14,7 @@ concurrency:
 jobs:
   check_migrations:
     name: check migrations
-    # Pinned to ubuntu-24.04: the ubuntu-26.04 image has no /etc/init.d/mysql, so the
-    # "Initiate Services" step fails. ubuntu-latest is migrating to 26.04 by 2026-11-19.
-    # See https://github.com/actions/runner-images/issues/14748
-    # matrix.os stays ubuntu-latest so the job name (and any required check) is unchanged.
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ ubuntu-latest ]
@@ -51,7 +47,7 @@ jobs:
         uv sync --locked --group dev --no-binary-package mysqlclient --no-binary-package xmlsec
     - name: Initiate Services
       run: |
-        sudo /etc/init.d/mysql start
+        sudo systemctl start mysql.service
     - name: Reset mysql password
       run: |
         cat <<EOF | mysql -h 127.0.0.1 -u root --password=root
