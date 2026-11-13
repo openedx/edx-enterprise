@@ -128,6 +128,19 @@ USE_ALGOLIA_INDEX_V2 = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.personalized_search_enabled
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Shows the Personalized Search (chat) tab in the enterprise learner portal for the
+#   learners it is enabled for. The enterprise-access endpoints behind the tab have their own flag.
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2026-11-03
+PERSONALIZED_SEARCH_ENABLED = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.personalized_search_enabled',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -199,6 +212,13 @@ def use_algolia_index_v2():
     return USE_ALGOLIA_INDEX_V2.is_enabled()
 
 
+def enterprise_personalized_search_enabled():
+    """
+    Returns whether the Personalized Search feature flag is enabled.
+    """
+    return PERSONALIZED_SEARCH_ENABLED.is_enabled()
+
+
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -214,4 +234,5 @@ def enterprise_features():
         'enterprise_edit_highlights_enabled': enterprise_edit_highlights_enabled(),
         'enterprise_ai_pathways_operator_enabled': enterprise_ai_pathways_operator_enabled(),
         'use_algolia_index_v2': use_algolia_index_v2(),
+        'enterprise_personalized_search_enabled': enterprise_personalized_search_enabled(),
     }
