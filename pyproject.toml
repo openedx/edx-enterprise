@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "edx-enterprise"
 description = "Enterprise features for the Open edX platform"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 license = "AGPL-3.0-or-later"
 authors = [
     {name = "Open edX Project", email = "oscm@openedx.org"},
@@ -21,6 +21,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
 readme = "README.rst"
@@ -192,6 +193,10 @@ package = true
 # dev/test/quality/ci superset into every target, defeating the point of
 # having separate groups.
 default-groups = []
+# requires-python allows 3.11 so the package is installable there, but the dev
+# lock (tests, quality, CI) only resolves for 3.12+, since some pinned dev
+# tools (e.g. code-annotations 3.x) require 3.12.
+environments = ["python_full_version >= '3.12'"]
 # js_test (Jasmine JS-test runner) depends on an old jasmine package that
 # hard-pins pyyaml far below what test-master/test/doc/dev need (transitively,
 # via edx-api-doc-tools -> drf-yasg). Those requirement sets are mutually
