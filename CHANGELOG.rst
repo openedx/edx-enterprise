@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[9.0.1] - 2026-11-13
+---------------------
+* feat: add the ``enterprise.personalized_search_enabled`` waffle flag and expose it in ``enterprise_features``
+  (backport of the master change for installs that stay on the 9.0.x line, e.g. Python 3.11)
+
 [9.0.0] - 2026-10-30
 ---------------------
 * feat!: Moves openedx-platform's ``openedx.features.enterprise_support`` module into this
