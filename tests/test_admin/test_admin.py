@@ -1,13 +1,21 @@
 """
 Tests for the IntegratedChannelAPIRequest admin module in `edx-enterprise`.
 """
+from unittest import mock
+
+from django.contrib import messages
 from django.contrib.admin.sites import AdminSite
 from django.db import connection
 from django.test import RequestFactory, TestCase
 from django.test.utils import CaptureQueriesContext
 
-from enterprise.admin import EnterpriseGroupAdmin, EnterpriseGroupMembershipAdmin
-from enterprise.models import EnterpriseGroup, EnterpriseGroupMembership
+from enterprise.admin import (
+    EnterpriseCustomerSsoConfigurationAdmin,
+    EnterpriseGroupAdmin,
+    EnterpriseGroupMembershipAdmin,
+)
+from enterprise.models import EnterpriseCustomerSsoConfiguration, EnterpriseGroup, EnterpriseGroupMembership
+from enterprise.utils import localized_utcnow
 from integrated_channels.integrated_channel.admin import IntegratedChannelAPIRequestLogAdmin
 from integrated_channels.integrated_channel.models import IntegratedChannelAPIRequestLogs
 from test_utils import factories
@@ -179,3 +187,42 @@ class EnterpriseGroupAdminTest(TestCase):
         self.admin.save_model(RequestFactory().get("/"), existing_group, form=None, change=True)
 
         self.assertEqual(EnterpriseGroup.all_objects.filter(name='foobar', is_removed=True).count(), 1)
+
+
+class EnterpriseCustomerSsoConfigurationAdminTest(TestCase):
+    """
+    Test the admin functionality for the EnterpriseCustomerSsoConfiguration model.
+    """
+
+    def setUp(self):
+        """
+        Set up the test environment by creating a test admin instance.
+        """
+        self.site = AdminSite()
+        self.admin = EnterpriseCustomerSsoConfigurationAdmin(EnterpriseCustomerSsoConfiguration, self.site)
+
+    def test_mark_configured_clears_error(self):
+        """
+        Test that marking an errored config as configured clears the error, sets configured_at and notifies
+        the admin user, without changing whether the config is active.
+        """
+        config = factories.EnterpriseCustomerSsoConfigurationFactory(
+            active=False,
+            submitted_at=localized_utcnow(),
+            configured_at=None,
+            errored_at=localized_utcnow(),
+        )
+        request = RequestFactory().get("/")
+
+        with mock.patch.object(self.admin, 'message_user') as mock_message_user:
+            self.admin.mark_configured(request, config)
+
+        config.refresh_from_db()
+        self.assertIsNone(config.errored_at)
+        self.assertIsNotNone(config.configured_at)
+        self.assertFalse(config.active)
+        mock_message_user.assert_called_once_with(
+            request,
+            f"SSO configuration {config.uuid} has been marked as configured.",
+            level=messages.SUCCESS,
+        )

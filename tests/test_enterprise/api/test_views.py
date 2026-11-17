@@ -9582,6 +9582,51 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         assert enterprise_sso_orchestration_config.is_pending_configuration() is False
         assert response.status_code == status.HTTP_200_OK
 
+    @ddt.data(
+        # First-time configuration that succeeds after a failed attempt: the record becomes active.
+        {'updating_existing_record': False, 'previously_configured': False, 'active': False, 'expected_active': True},
+        # Retrying an update to an existing record after a failed attempt: ``active`` is left unchanged.
+        {'updating_existing_record': True, 'previously_configured': True, 'active': False, 'expected_active': False},
+        {'updating_existing_record': True, 'previously_configured': True, 'active': True, 'expected_active': True},
+    )
+    @ddt.unpack
+    @mock.patch("enterprise.api_client.braze.BrazeAPIClient")
+    def test_sso_configuration_oauth_orchestration_complete_clears_previous_error(
+        self,
+        mock_braze_client,
+        updating_existing_record,
+        previously_configured,
+        active,
+        expected_active,
+    ):
+        """
+        Verify that a successful completion callback clears an error recorded by a previous configuration attempt,
+        both for first-time configurations and for updates to an existing record.
+        """
+        mock_braze_client.return_value.get_braze_client.return_value = mock.MagicMock()
+        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
+        config_pk = uuid.uuid4()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+            active=active,
+            configured_at=localized_utcnow() - timedelta(days=1) if previously_configured else None,
+            errored_at=localized_utcnow() - timedelta(minutes=5),
+            submitted_at=localized_utcnow(),
+        )
+        url = settings.TEST_SERVER + reverse(
+            self.SSO_CONFIGURATION_COMPLETE_ENDPOINT,
+            kwargs={'configuration_uuid': config_pk}
+        )
+        if updating_existing_record:
+            url += '?updating_existing_record=true'
+        response = self.client.post(url)
+        enterprise_sso_orchestration_config.refresh_from_db()
+        assert response.status_code == status.HTTP_200_OK
+        assert enterprise_sso_orchestration_config.configured_at is not None
+        assert enterprise_sso_orchestration_config.errored_at is None
+        assert enterprise_sso_orchestration_config.active is expected_active
+
     def test_sso_configuration_retrieve(self):
         """
         Test expected response when successfully retrieving an existing sso configuration.

@@ -1227,15 +1227,21 @@ class EnterpriseCustomerSsoConfigurationAdmin(DjangoObjectActions, admin.ModelAd
     change_actions = ['mark_configured']
 
     @admin.action(
-        description="Allows for marking a config as configured. This is useful for testing while the SSO"
-        "orchestrator is under constructions.",
+        description="Mark as configured and clear any orchestration error (use after support fixes a config manually).",
     )
     def mark_configured(self, request, obj):
         """
-        Object tool handler method - marks the config as configured.
+        Object tool handler method - marks the config as configured, clearing any prior orchestration error so the
+        admin portal no longer reports the config as failed.
         """
         obj.configured_at = localized_utcnow()
+        obj.errored_at = None
         obj.save()
+        self.message_user(
+            request,
+            f"SSO configuration {obj.uuid} has been marked as configured.",
+            level=messages.SUCCESS,
+        )
 
     mark_configured.label = "Mark as Configured"
 

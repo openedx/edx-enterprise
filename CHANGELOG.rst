@@ -17,6 +17,23 @@ Unreleased
 ----------
 * nothing unreleased
 
+[9.2.1] - 2026-11-17
+---------------------
+* fix: The SSO configuration admin's "Mark as Configured" action and a successful
+  orchestration callback now clear ``errored_at``, so the admin portal stops showing
+  manually fixed SSO configurations as failed (ENT-12468)
+
+[9.2.0] - 2026-11-16
+---------------------
+* feat: Add the ``enterprise.personalized_search_enabled`` waffle flag (#2737)
+* chore: Allow installation on Python 3.11; ``requires-python`` is now ``>=3.11`` (#2743)
+
+[9.1.0] - 2026-11-03
+---------------------
+* feat: Modernize packaging: metadata moves into ``pyproject.toml``, dependencies are
+  managed with uv, releases are published by python-semantic-release, and the code
+  moves to a ``src/`` layout (#2654). This release requires Python >=3.12.
+
 [9.0.0] - 2026-10-30
 ---------------------
 * feat!: Moves openedx-platform's ``openedx.features.enterprise_support`` module into this
