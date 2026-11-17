@@ -1227,8 +1227,7 @@ class EnterpriseCustomerSsoConfigurationAdmin(DjangoObjectActions, admin.ModelAd
     change_actions = ['mark_configured']
 
     @admin.action(
-        description="Allows for marking a config as configured. This is useful for testing while the SSO"
-        "orchestrator is under constructions.",
+        description="Mark as configured and clear any orchestration error (use after support fixes a config manually).",
     )
     def mark_configured(self, request, obj):
         """
