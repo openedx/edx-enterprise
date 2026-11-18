@@ -974,7 +974,8 @@ class ContentMetadataItemTransmissionFactory(factory.django.DjangoModelFactory):
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     integrated_channel_code = 'GENERIC'
     plugin_configuration_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
-    content_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    # content_id is in a unique_together constraint, so a sequence suffix stops two random slugs colliding
+    content_id = factory.Sequence(lambda n: f'{FAKER.slug()}-{n}')
     content_title = 'edX Demonstration Course'
     content_last_changed = localized_utcnow()
     api_response_status_code = None
