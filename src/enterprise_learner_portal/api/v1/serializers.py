@@ -11,7 +11,11 @@ from django.utils.translation import gettext as _
 from enterprise.constants import EXEC_ED_COURSE_TYPE, PRODUCT_SOURCE_2U
 from enterprise.models import EnterpriseCustomerUser
 from enterprise.utils import NotConnectedToOpenEdX
-from enterprise_learner_portal.utils import get_course_run_status, get_exec_ed_course_run_status
+from enterprise_learner_portal.utils import (
+    get_course_run_status,
+    get_exec_ed_course_run_status,
+    get_failed_course_run_check,
+)
 
 try:
     from lms.djangoapps.bulk_email.api import get_emails_enabled
@@ -61,11 +65,14 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         if emails_enabled is not None:
             representation['emails_enabled'] = emails_enabled
 
+        # read once: each read of the enrollment mode queries the course enrollment
+        mode = instance.mode
         representation['course_run_id'] = course_run_id
         representation['course_run_status'] = get_course_run_status(
             course_overview,
             certificate_info,
-            instance
+            instance,
+            is_failed_run=get_failed_course_run_check(user, course_run_id, course_overview, mode),
         )
         representation['created'] = instance.created.isoformat()
         representation['start_date'] = course_overview['start']
@@ -77,7 +84,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['org_name'] = course_overview['display_org_with_default']
         representation['is_revoked'] = instance.license.is_revoked if instance.license else False
         representation['is_enrollment_active'] = instance.is_active
-        representation['mode'] = instance.mode
+        representation['mode'] = mode
         representation['resume_course_run_url'] = self._get_resume_course_run_url(course_run_id, request)
 
         if CourseDetails:
