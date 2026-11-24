@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 * fix: Check SAML metadata redirects and resolved hostnames (GHSA-qm89-wj8j-vgw5)
+* fix: The MariaDB UUID conversions in ``blackboard`` 0025, ``canvas`` 0041 and
+  ``integrated_channel`` 0037 now alter this package's own tables instead of the
+  enterprise-integrated-channels ones, so ``migrate`` no longer fails on a fresh MariaDB
+  database. New migrations ``blackboard`` 0026, ``canvas`` 0042 and ``integrated_channel``
+  0038 convert those tables on databases that already applied the old versions (#2703)
 
 [9.2.1] - 2026-11-17
 ---------------------
