@@ -40,6 +40,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
     @ddt.unpack
     @patch.object(HttpRequest, 'get_host', return_value='courses.edx.org')
     @mock.patch('enterprise.models.CourseEnrollment')
+    @mock.patch('enterprise_learner_portal.api.v1.serializers.get_failed_course_run_check')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_status')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_emails_enabled')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_url')
@@ -52,6 +53,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             mock_get_course_run_url,
             mock_get_emails_enabled,
             mock_get_course_run_status,
+            mock_get_failed_course_run_check,
             mock_course_enrollment_class,
             _,
     ):
@@ -127,6 +129,15 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
         ])
         actual = serializer.data[0]
         self.assertDictEqual(actual, expected)
+        mock_get_failed_course_run_check.assert_called_once_with(
+            self.user, course_run_id, course_overviews[0], 'verified'
+        )
+        mock_get_course_run_status.assert_called_once_with(
+            course_overviews[0],
+            mock_get_cert.return_value,
+            enterprise_enrollment,
+            is_failed_run=mock_get_failed_course_run_check.return_value,
+        )
 
     def test_view_requires_openedx_installation(self):
         """

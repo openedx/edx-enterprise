@@ -15,6 +15,16 @@ Change Log
 
 Unreleased
 ----------
+* nothing unreleased
+
+[9.3.0] - 2026-11-18
+---------------------
+* feat: With the new ``enterprise.show_failed_self_paced_runs_as_completed`` waffle flag on (off by default), the
+  learner portal dashboard shows a self-paced course run as Completed once a learner in a certificate mode has
+  submitted every graded problem, no content is left to release, and their grade is below passing (ENT-12540)
+
+[9.2.2] - 2026-11-17
+---------------------
 * fix: Check SAML metadata redirects and resolved hostnames (GHSA-qm89-wj8j-vgw5)
 
 [9.2.1] - 2026-11-17

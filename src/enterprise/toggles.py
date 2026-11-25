@@ -141,6 +141,21 @@ PERSONALIZED_SEARCH_ENABLED = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.show_failed_self_paced_runs_as_completed
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: On the enterprise learner portal dashboard, shows an open self-paced course run as Completed
+#   once a learner in a certificate mode has submitted every graded problem, no content is left to release, and
+#   their grade is below passing. Turning it off shows these runs as In Progress again on the next dashboard load.
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2026-11-18
+# .. toggle_tickets: ENT-12540
+SHOW_FAILED_SELF_PACED_RUNS_AS_COMPLETED = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.show_failed_self_paced_runs_as_completed',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -217,6 +232,13 @@ def enterprise_personalized_search_enabled():
     Returns whether the Personalized Search feature flag is enabled.
     """
     return PERSONALIZED_SEARCH_ENABLED.is_enabled()
+
+
+def show_failed_self_paced_runs_as_completed():
+    """
+    Returns whether the learner portal shows a failed, still open self-paced course run as Completed.
+    """
+    return SHOW_FAILED_SELF_PACED_RUNS_AS_COMPLETED.is_enabled()
 
 
 def enterprise_features():
