@@ -9,6 +9,7 @@ from unittest import mock
 
 import ddt
 from edx_django_utils.cache import TieredCache
+from edx_toggles.toggles.testutils import override_waffle_flag
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark
 from slumber.exceptions import HttpClientError, HttpServerError
@@ -46,6 +47,7 @@ from enterprise.signals import (
     refund_order_voucher,
     retire_user_from_pending_enterprise_customer_user,
 )
+from enterprise.toggles import RETIREMENT_RECEIVERS_V2
 from integrated_channels.integrated_channel.models import OrphanedContentTransmissions
 from test_utils import EmptyCacheMixin
 from test_utils.factories import (
@@ -1380,6 +1382,73 @@ class TestRetireUserFromPendingEnterpriseCustomerUser(unittest.TestCase):
 
         self.pending_enterprise_user.refresh_from_db()
         assert self.pending_enterprise_user.user_email == self.retired_email
+
+
+@mark.django_db
+@override_waffle_flag(RETIREMENT_RECEIVERS_V2, active=True)
+class TestRetirePendingInvitesWithRetirementReceiversV2(unittest.TestCase):
+    """
+    Tests for retire_user_from_pending_enterprise_customer_user with the enterprise.retirement_receivers_v2 flag on.
+
+    The LMS replaces ``auth_user.email`` with the retired email when the learner deactivates their account (Day 0),
+    before USER_RETIRE_LMS_CRITICAL is sent, so ``setUp`` does the same.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.original_email = 'learner.to.retire@example.com'
+        self.user = UserFactory(email=self.original_email)
+        self.learner_invite = PendingEnterpriseCustomerUserFactory(user_email=self.original_email)
+        self.admin_invite = PendingEnterpriseCustomerAdminUserFactory(user_email=self.original_email.upper())
+        self.other_invite = PendingEnterpriseCustomerUserFactory(user_email='other.learner@example.com')
+        self.retired_email = 'retired__user_abc123@retired.invalid'
+        self.user.email = self.retired_email  # Day 0
+        self.user.save()
+
+    def _send_signal(self, **extra_kwargs):
+        retire_user_from_pending_enterprise_customer_user(
+            sender=None,
+            user=self.user,
+            retired_username='retired__user_def456',
+            retired_email=self.retired_email,
+            **extra_kwargs,
+        )
+
+    def test_deletes_invites_matched_on_original_email(self):
+        with LogCapture('enterprise.signals') as logs:
+            self._send_signal(original_email=self.original_email, original_username='learner')
+
+        assert not PendingEnterpriseCustomerUser.objects.filter(user_email__iexact=self.original_email).exists()
+        assert not PendingEnterpriseCustomerAdminUser.objects.filter(user_email__iexact=self.original_email).exists()
+        assert not PendingEnterpriseCustomerUser.objects.filter(user_email=self.retired_email).exists()
+        assert PendingEnterpriseCustomerUser.objects.filter(pk=self.other_invite.pk).exists()
+        assert not PendingEnterpriseCustomerUser.history.filter(user_email__iexact=self.original_email).exists()
+        message = logs.records[-1].getMessage()
+        assert f'lms_user_id={self.user.id}' in message
+        assert self.original_email not in message
+
+    def test_idempotent(self):
+        self._send_signal(original_email=self.original_email)
+        self._send_signal(original_email=self.original_email)
+
+        assert not PendingEnterpriseCustomerUser.objects.filter(user_email__iexact=self.original_email).exists()
+
+    def test_missing_original_email_leaves_invites_and_logs_warning(self):
+        """
+        LMS versions that don't send original_email: nothing is changed, and no retired email is written.
+        """
+        with LogCapture('enterprise.signals') as logs:
+            self._send_signal()
+
+        self.learner_invite.refresh_from_db()
+        assert self.learner_invite.user_email == self.original_email
+        assert not PendingEnterpriseCustomerUser.objects.filter(user_email=self.retired_email).exists()
+        logs.check_present((
+            'enterprise.signals',
+            'WARNING',
+            '[Learner Retirement] USER_RETIRE_LMS_CRITICAL did not include original_email for '
+            f'lms_user_id={self.user.id}; pending enterprise invites were not retired.',
+        ))
 
 
 @mark.django_db

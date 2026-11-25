@@ -1555,7 +1555,7 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
         enterprise_customer (ForeignKey[:class:`.EnterpriseCustomer`]): enterprise customer
         user_email (:class:`django.db.models.EmailField`): user email
 
-    .. pii: The user_email field contains PII, but locally deleted via enterprise.signals.handle_user_post_save when the learner registers a new account.  As an additional safety measure, we also delete this row (if found) during user retirement.
+    .. pii: The user_email field contains PII, but locally deleted via enterprise.signals.handle_user_post_save when the learner registers a new account. During user retirement, the row and its history are blanked and deleted (enterprise.retirement).
     .. pii_types: email_address
     .. pii_retirement: local_api, consumer_api
     """
@@ -4020,7 +4020,8 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
 
     .. pii: The user_email field contains PII, but locally deleted via
         enterprise.signals.assign_or_delete_enterprise_admin_role when the
-        admin registers a new account.
+        admin registers a new account. During user retirement, the row and its
+        history are blanked and deleted (enterprise.retirement).
     .. pii_types: email_address
     .. pii_retirement: local_api, consumer_api
     """

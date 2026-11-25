@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 * fix: Check SAML metadata redirects and resolved hostnames (GHSA-qm89-wj8j-vgw5)
+* feat: Behind the new ``enterprise.retirement_receivers_v2`` waffle flag, learner retirement blanks and deletes
+  the learner's pending learner and admin invites with their pending group memberships and history, and redacts
+  their Django admin log entries, matched on the ``original_email`` that ``USER_RETIRE_LMS_CRITICAL`` now sends
+  (ENT-12474)
 
 [9.2.1] - 2026-11-17
 ---------------------
