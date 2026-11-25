@@ -33,6 +33,10 @@ try:
 except ImportError:
     CourseGradeFactory = None
 try:
+    from lms.djangoapps.grades.api import SubsectionGradeFactory
+except ImportError:
+    SubsectionGradeFactory = None
+try:
     from openedx.core.djangoapps.content.block_structure.api import get_course_in_cache
 except ImportError:
     get_course_in_cache = None
@@ -115,10 +119,11 @@ def has_failed_course_run(user, course_run_id, course_modified=None):
     Return whether the user has failed the course run before it ends, with no waiting period.
 
     That is: the course grade is below passing, no content is scheduled for release, and every graded subsection the
-    LMS grader counts (``graded_subsections_by_format``) is attempted and completed: every graded problem in it is
-    submitted. Only a learner below passing loads the course structure, and that answer is cached until the grade or
-    the course (``course_modified``: each publish updates the course overview's ``modified``) changes, or the next
-    release. A check that fails is logged as a warning and returns False, so the dashboard still loads.
+    LMS grader counts (``graded_subsections_by_format``) is attempted and completed: every graded problem in it, in the
+    course as it is now, is submitted. Only a learner below passing loads the course structure, and that answer is
+    cached until the grade or the course (``course_modified``: each publish updates the course overview's ``modified``)
+    changes, or the next release. A check that fails is logged as a warning and returns False, so the dashboard still
+    loads.
     """
     if not _lms_apis_available():
         return False
@@ -149,7 +154,10 @@ def _lms_apis_available():
     """
     return all(
         api is not None
-        for api in (CourseGradeFactory, get_course_blocks, get_course_in_cache, StartDateTransformer, adjust_start_date)
+        for api in (
+            CourseGradeFactory, SubsectionGradeFactory, get_course_blocks, get_course_in_cache, StartDateTransformer,
+            adjust_start_date,
+        )
     )
 
 
@@ -157,6 +165,13 @@ def _check_graded_subsections(user, course_key):
     """
     Return whether the user has attempted and completed every graded subsection (submitted every graded problem in it),
     with no content left to release, and for how long.
+
+    The LMS saves each subsection grade with the list of problems it counted then, and reads that list back for as long
+    as the grade is not recalculated: a publish does not recalculate it. A graded problem published after the learner's
+    last submission in its subsection would be missing from that list, although the learner can still submit it. So
+    each graded subsection is graded again from the learner's current course structure, without saving the grade, as
+    the LMS grades it at the next submission (``SubsectionGradeFactory.update`` with ``persist_grade=False``). The
+    learner's scores are read once for all subsections, as reading the saved lists did, so this adds no queries.
 
     A course structure that cannot be loaded is logged as a warning and answered False for an hour.
     """
@@ -173,8 +188,12 @@ def _check_graded_subsections(user, course_key):
         subsection_grades = [
             grade for grades in course_grade.graded_subsections_by_format().values() for grade in grades.values()
         ]
+        subsection_grade_factory = SubsectionGradeFactory(user, course_structure=course_blocks)
         has_completed_every_subsection = bool(subsection_grades) and all(
-            _is_graded_subsection_completed(grade) for grade in subsection_grades
+            _is_graded_subsection_completed(
+                subsection_grade_factory.update(course_blocks[grade.location], persist_grade=False)
+            )
+            for grade in subsection_grades
         )
         return has_completed_every_subsection, FAILED_COURSE_RUN_CACHE_TIMEOUT
     except Exception:  # pylint: disable=broad-except

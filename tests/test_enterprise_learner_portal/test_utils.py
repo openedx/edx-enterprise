@@ -138,6 +138,14 @@ class TestHasFailedCourseRun(TestCase):
         self.mock_get_course_blocks.return_value.get_xblock_field.return_value = False
         self.mock_start_date_transformer = self._patch('StartDateTransformer')
         self.mock_adjust_start_date = self._patch('adjust_start_date')
+        # the learner's course structure returns each subsection's block by its location, and the mocked
+        # SubsectionGradeFactory grades a block from current_subsection_grades, which _set_course_grade fills
+        self.mock_get_course_blocks.return_value.__getitem__.side_effect = lambda location: mock.Mock(location=location)
+        self.current_subsection_grades = {}
+        self.mock_subsection_grade_factory = self._patch('SubsectionGradeFactory')
+        self.mock_subsection_grade_factory.return_value.update.side_effect = (
+            lambda subsection, persist_grade: self.current_subsection_grades[subsection.location]
+        )
 
     def _patch(self, name, **kwargs):
         """Patch ``name`` in enterprise_learner_portal.utils for the test."""
@@ -157,26 +165,37 @@ class TestHasFailedCourseRun(TestCase):
             first_attempted=datetime.now(utc) if problem is True else None,
         )
 
-    def _set_course_grade(self, subsections=((True,),), attempted=True, passed=False):
+    def _subsection_grade(self, problems, **kwargs):
         """
-        Make the mocked CourseGradeFactory read a grade updated now, below passing by default, whose graded subsections
-        hold the problems in ``subsections`` (one tuple of ``_problem_score`` values per subsection).
+        A subsection grade holding the problems in ``problems`` (``_problem_score`` values).
+        """
+        return mock.Mock(
+            # the LMS counts a subsection as attempted once one of its problems is submitted
+            attempted_graded=any(problem is True for problem in problems),
+            problem_scores={position: self._problem_score(problem) for position, problem in enumerate(problems)},
+            **kwargs,
+        )
+
+    def _set_course_grade(self, subsections=((True,),), attempted=True, passed=False, saved_subsections=None):
+        """
+        Make the mocked CourseGradeFactory read a grade updated now, below passing by default, with one graded
+        subsection per tuple of ``_problem_score`` values in ``subsections``: the problems in the learner's course as
+        it is now, which the mocked SubsectionGradeFactory grades. ``saved_subsections`` holds the problem lists the
+        LMS saved with the subsection grades, by default the same.
         """
         course_grade = self.mock_factory.return_value.read.return_value
         course_grade.attempted, course_grade.passed = attempted, passed
         course_grade.last_updated = datetime.now(utc)
+        saved_subsections = subsections if saved_subsections is None else saved_subsections
         course_grade.graded_subsections_by_format.return_value = {
             'Homework': {
-                index: mock.Mock(
-                    # the LMS counts a subsection as attempted once one of its problems is submitted
-                    attempted_graded=any(problem is True for problem in problems),
-                    problem_scores={
-                        position: self._problem_score(problem) for position, problem in enumerate(problems)
-                    },
-                )
-                for index, problems in enumerate(subsections)
+                index: self._subsection_grade(problems, location=f'subsection-{index}')
+                for index, problems in enumerate(saved_subsections)
             }
         }
+        self.current_subsection_grades.update({
+            f'subsection-{index}': self._subsection_grade(problems) for index, problems in enumerate(subsections)
+        })
         return course_grade
 
     @ddt.data(
@@ -254,10 +273,35 @@ class TestHasFailedCourseRun(TestCase):
         """
         A graded subsection the LMS does not count as attempted is not completed, even with its problems scored.
         """
-        course_grade = self._set_course_grade(subsections=((True,), (True,)))
-        course_grade.graded_subsections_by_format.return_value['Homework'][1].attempted_graded = False
+        self._set_course_grade(subsections=((True,), (True,)))
+        self.current_subsection_grades['subsection-1'].attempted_graded = False
 
         assert has_failed_course_run(self.user, self.course_run_id) is False
+
+    @ddt.data(
+        # a graded problem published after the learner's last submission in its subsection is missing from the problem
+        # list saved with that subsection grade, but the learner can still submit it
+        {'saved_subsections': ((True,), (True,)), 'subsections': ((True,), (True, False)), 'expected': False},
+        # a problem removed from the course since is left out, as the LMS leaves it out
+        {'saved_subsections': ((True,), (True, False)), 'subsections': ((True,), (True,)), 'expected': True},
+    )
+    @ddt.unpack
+    def test_graded_from_the_current_course(self, saved_subsections, subsections, expected):
+        """
+        Each graded subsection is graded again from the learner's current course structure, without saving the grade,
+        because the problem list the LMS saved with the subsection grade is not updated when the course is published.
+        """
+        self._set_course_grade(subsections=subsections, saved_subsections=saved_subsections)
+        course_blocks = self.mock_get_course_blocks.return_value
+
+        assert has_failed_course_run(self.user, self.course_run_id) is expected
+
+        self.mock_subsection_grade_factory.assert_called_once_with(self.user, course_structure=course_blocks)
+        update_calls = self.mock_subsection_grade_factory.return_value.update.call_args_list
+        assert [(call.args[0].location, call.kwargs) for call in update_calls] == [
+            ('subsection-0', {'persist_grade': False}),
+            ('subsection-1', {'persist_grade': False}),
+        ]
 
     @ddt.data(
         # no stored grade: nothing attempted
@@ -289,9 +333,10 @@ class TestHasFailedCourseRun(TestCase):
         assert self.mock_get_course_blocks.call_count == 2
 
         # a graded subsection the learner has not attempted is published, which leaves their stored grade unchanged
-        course_grade.graded_subsections_by_format.return_value['Homework'][1] = mock.Mock(
-            attempted_graded=False, problem_scores={0: self._problem_score(False)}
+        course_grade.graded_subsections_by_format.return_value['Homework'][1] = self._subsection_grade(
+            (False,), location='subsection-1'
         )
+        self.current_subsection_grades['subsection-1'] = self._subsection_grade((False,))
         assert has_failed_course_run(self.user, self.course_run_id, 'published-2') is False
         assert self.mock_get_course_blocks.call_count == 3
 
@@ -335,8 +380,8 @@ class TestHasFailedCourseRun(TestCase):
         assert has_failed_at(beta_release + timedelta(minutes=1)) is True
         assert self.mock_get_course_blocks.call_count == 2
 
-    @ddt.data('CourseGradeFactory', 'get_course_blocks', 'get_course_in_cache', 'StartDateTransformer',
-              'adjust_start_date')
+    @ddt.data('CourseGradeFactory', 'SubsectionGradeFactory', 'get_course_blocks', 'get_course_in_cache',
+              'StartDateTransformer', 'adjust_start_date')
     def test_not_connected_to_openedx(self, lms_api):
         """
         Outside the LMS, or when any LMS function the check needs cannot be imported, no run has failed.
