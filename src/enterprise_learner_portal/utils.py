@@ -115,10 +115,10 @@ def has_failed_course_run(user, course_run_id, course_modified=None):
     Return whether the user has failed the course run before it ends, with no waiting period.
 
     That is: the course grade is below passing, no content is scheduled for release, and every graded subsection the
-    LMS grader counts (``graded_subsections_by_format``) is attempted. Only a learner below passing loads the course
-    structure, and that answer is cached until the grade or the course (``course_modified``: each publish updates the
-    course overview's ``modified``) changes, or the next release. A check that fails is logged as a warning and returns
-    False, so the dashboard still loads.
+    LMS grader counts (``graded_subsections_by_format``) is attempted and completed: every graded problem in it is
+    submitted. Only a learner below passing loads the course structure, and that answer is cached until the grade or
+    the course (``course_modified``: each publish updates the course overview's ``modified``) changes, or the next
+    release. A check that fails is logged as a warning and returns False, so the dashboard still loads.
     """
     if not _lms_apis_available():
         return False
@@ -155,7 +155,8 @@ def _lms_apis_available():
 
 def _check_graded_subsections(user, course_key):
     """
-    Return whether the user has attempted every graded subsection, with no content left to release, and for how long.
+    Return whether the user has attempted and completed every graded subsection (submitted every graded problem in it),
+    with no content left to release, and for how long.
 
     A course structure that cannot be loaded is logged as a warning and answered False for an hour.
     """
@@ -169,15 +170,33 @@ def _check_graded_subsections(user, course_key):
         if course_blocks.get_xblock_field(course_blocks.root_block_usage_key, 'has_scheduled_content'):
             return False, _seconds_until_next_release(user, course_key, collected_blocks)
         course_grade = CourseGradeFactory().read(user, course_structure=course_blocks)
-        attempted = [
-            grade.attempted_graded
-            for grades in course_grade.graded_subsections_by_format().values() for grade in grades.values()
+        subsection_grades = [
+            grade for grades in course_grade.graded_subsections_by_format().values() for grade in grades.values()
         ]
-        return bool(attempted) and all(attempted), FAILED_COURSE_RUN_CACHE_TIMEOUT
+        has_completed_every_subsection = bool(subsection_grades) and all(
+            _is_graded_subsection_completed(grade) for grade in subsection_grades
+        )
+        return has_completed_every_subsection, FAILED_COURSE_RUN_CACHE_TIMEOUT
     except Exception:  # pylint: disable=broad-except
         # an old run's content can be gone from the modulestore
         LOGGER.warning('Could not check the graded subsections of user %s in %s', user.id, course_key, exc_info=True)
         return False, FAILED_COURSE_RUN_ERROR_CACHE_TIMEOUT
+
+
+def _is_graded_subsection_completed(subsection_grade):
+    """
+    Return whether the user has attempted the graded subsection and completed it: submitted every graded problem in it
+    that is worth points.
+
+    One submitted problem counts a subsection as attempted (``attempted_graded``), so a learner with graded problems
+    left, who can still raise the grade, has not completed it. A problem never submitted has no first attempt.
+    """
+    problem_scores = [score for score in subsection_grade.problem_scores.values() if score.graded and score.possible]
+    return (
+        bool(subsection_grade.attempted_graded)
+        and bool(problem_scores)
+        and all(score.first_attempted for score in problem_scores)
+    )
 
 
 def _seconds_until_next_release(user, course_key, blocks):

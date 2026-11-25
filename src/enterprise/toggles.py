@@ -145,7 +145,7 @@ PERSONALIZED_SEARCH_ENABLED = WaffleFlag(
 # .. toggle_implementation: WaffleFlag
 # .. toggle_default: False
 # .. toggle_description: On the enterprise learner portal dashboard, shows an open self-paced course run as Completed
-#   once a learner in a certificate mode has attempted every graded subsection, no content is left to release, and
+#   once a learner in a certificate mode has submitted every graded problem, no content is left to release, and
 #   their grade is below passing. Turning it off shows these runs as In Progress again on the next dashboard load.
 # .. toggle_use_cases: open_edx
 # .. toggle_creation_date: 2026-11-18

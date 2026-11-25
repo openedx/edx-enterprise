@@ -21,7 +21,7 @@ Unreleased
 ---------------------
 * feat: With the new ``enterprise.show_failed_self_paced_runs_as_completed`` waffle flag on (off by default), the
   learner portal dashboard shows a self-paced course run as Completed once a learner in a certificate mode has
-  attempted every graded subsection, no content is left to release, and their grade is below passing (ENT-12540)
+  submitted every graded problem, no content is left to release, and their grade is below passing (ENT-12540)
 
 [9.2.2] - 2026-11-17
 ---------------------

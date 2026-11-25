@@ -145,16 +145,37 @@ class TestHasFailedCourseRun(TestCase):
         self.addCleanup(patcher.stop)
         return patcher.start()
 
-    def _set_course_grade(self, subsections=(True,), attempted=True, passed=False):
+    @staticmethod
+    def _problem_score(problem):
+        """
+        A problem score for ``problem``: True (submitted) or False (not submitted) for a graded problem worth a point,
+        or 'ungraded' or 'no points' for one left unsubmitted that the grade does not count.
+        """
+        return mock.Mock(
+            graded=problem != 'ungraded',
+            possible=0.0 if problem == 'no points' else 1.0,
+            first_attempted=datetime.now(utc) if problem is True else None,
+        )
+
+    def _set_course_grade(self, subsections=((True,),), attempted=True, passed=False):
         """
         Make the mocked CourseGradeFactory read a grade updated now, below passing by default, whose graded subsections
-        have the ``attempted_graded`` values in ``subsections``.
+        hold the problems in ``subsections`` (one tuple of ``_problem_score`` values per subsection).
         """
         course_grade = self.mock_factory.return_value.read.return_value
         course_grade.attempted, course_grade.passed = attempted, passed
         course_grade.last_updated = datetime.now(utc)
         course_grade.graded_subsections_by_format.return_value = {
-            'Homework': {index: mock.Mock(attempted_graded=attempted) for index, attempted in enumerate(subsections)}
+            'Homework': {
+                index: mock.Mock(
+                    # the LMS counts a subsection as attempted once one of its problems is submitted
+                    attempted_graded=any(problem is True for problem in problems),
+                    problem_scores={
+                        position: self._problem_score(problem) for position, problem in enumerate(problems)
+                    },
+                )
+                for index, problems in enumerate(subsections)
+            }
         }
         return course_grade
 
@@ -190,11 +211,16 @@ class TestHasFailedCourseRun(TestCase):
             assert check is None
 
     @ddt.data(
-        # every graded subsection attempted and below passing: failed straight away
-        {'subsections': (True, True), 'expected': True},
-        # a graded subsection never attempted, or nothing graded to attempt
-        {'subsections': (True, False), 'expected': False},
+        # every graded problem submitted and below passing: failed straight away
+        {'subsections': ((True,), (True, True)), 'expected': True},
+        # a graded subsection attempted with a graded problem left: the learner can still raise the grade
+        {'subsections': ((True,), (True, False)), 'expected': False},
+        # a graded subsection never attempted, or nothing graded to submit
+        {'subsections': ((True,), (False, False)), 'expected': False},
         {'subsections': (), 'expected': False},
+        {'subsections': (('ungraded', 'no points'),), 'expected': False},
+        # a problem the grade does not count (ungraded, or worth no points) may be left
+        {'subsections': ((True, 'ungraded', 'no points'),), 'expected': True},
         # content still to be released: the LMS shows the run in progress
         {'has_scheduled_content': True, 'expected': False},
         # a course with no pass mark computes passed as None, which is not a pass
@@ -203,8 +229,8 @@ class TestHasFailedCourseRun(TestCase):
     @ddt.unpack
     def test_graded_subsections(self, expected, has_scheduled_content=False, **grade_values):
         """
-        A learner below passing has failed once they have attempted every graded subsection and no content is
-        left to release.
+        A learner below passing has failed once they have submitted every graded problem and no content is left to
+        release.
         """
         self._set_course_grade(**grade_values)
         course_blocks = self.mock_get_course_blocks.return_value
@@ -223,6 +249,15 @@ class TestHasFailedCourseRun(TestCase):
         )
         structure_read = mock.call(self.user, course_structure=course_blocks)
         assert structure_reads == ([] if has_scheduled_content else [structure_read])
+
+    def test_graded_subsection_must_be_attempted(self):
+        """
+        A graded subsection the LMS does not count as attempted is not completed, even with its problems scored.
+        """
+        course_grade = self._set_course_grade(subsections=((True,), (True,)))
+        course_grade.graded_subsections_by_format.return_value['Homework'][1].attempted_graded = False
+
+        assert has_failed_course_run(self.user, self.course_run_id) is False
 
     @ddt.data(
         # no stored grade: nothing attempted
@@ -254,7 +289,9 @@ class TestHasFailedCourseRun(TestCase):
         assert self.mock_get_course_blocks.call_count == 2
 
         # a graded subsection the learner has not attempted is published, which leaves their stored grade unchanged
-        course_grade.graded_subsections_by_format.return_value['Homework'][1] = mock.Mock(attempted_graded=False)
+        course_grade.graded_subsections_by_format.return_value['Homework'][1] = mock.Mock(
+            attempted_graded=False, problem_scores={0: self._problem_score(False)}
+        )
         assert has_failed_course_run(self.user, self.course_run_id, 'published-2') is False
         assert self.mock_get_course_blocks.call_count == 3
 
