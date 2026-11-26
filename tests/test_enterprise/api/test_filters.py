@@ -311,6 +311,7 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
                     'enterprise_ai_pathways_operator_enabled': False,
                     'use_algolia_index_v2': False,
                     'enterprise_personalized_search_enabled': False,
+                    'enterprise_multi_plan_funding_enabled': False,
                 }
             }
             assert response == mock_empty_200_success_response

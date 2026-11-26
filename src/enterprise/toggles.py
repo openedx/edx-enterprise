@@ -141,6 +141,21 @@ PERSONALIZED_SEARCH_ENABLED = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.multi_plan_funding_enabled
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Shows the multi-plan learner credit funding UI in the enterprise admin portal (the Spent
+#   table's "Funded From" column and the Settings > Multi-plan funding tab). Backend multi-plan funding has its own
+#   gates in enterprise-access: the enterprise_access.multi_plan_funding switch and each customer's
+#   enable_multi_plan_funding setting.
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2026-11-24
+MULTI_PLAN_FUNDING_ENABLED = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.multi_plan_funding_enabled',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -219,6 +234,13 @@ def enterprise_personalized_search_enabled():
     return PERSONALIZED_SEARCH_ENABLED.is_enabled()
 
 
+def enterprise_multi_plan_funding_enabled():
+    """
+    Returns whether the multi-plan learner credit funding admin portal UI feature flag is enabled.
+    """
+    return MULTI_PLAN_FUNDING_ENABLED.is_enabled()
+
+
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -235,4 +257,5 @@ def enterprise_features():
         'enterprise_ai_pathways_operator_enabled': enterprise_ai_pathways_operator_enabled(),
         'use_algolia_index_v2': use_algolia_index_v2(),
         'enterprise_personalized_search_enabled': enterprise_personalized_search_enabled(),
+        'enterprise_multi_plan_funding_enabled': enterprise_multi_plan_funding_enabled(),
     }
