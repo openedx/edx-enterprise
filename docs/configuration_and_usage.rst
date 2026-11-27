@@ -187,6 +187,23 @@ Usage
    # Transmit learner data only to SAP SuccessFactors
    $ ./manage.py lms transmit_learner_data --api_user staff --channel SAP --settings=$EDX_PLATFORM_SETTINGS
 
+Learner retirement
+------------------
+
+When a learner is retired, the LMS sends ``USER_RETIRE_LMS_CRITICAL``. By then the learner's email in the LMS is
+already the retired value, so receivers match records stored under the learner's email with the ``original_email``
+the signal also sends.
+
+With the ``enterprise.retirement_receivers_v2`` waffle flag on, the receiver removes the learner's pending learner
+and admin invites (``PendingEnterpriseCustomerUser`` and ``PendingEnterpriseCustomerAdminUser``) and their history.
+Each row is first overwritten with a per-row placeholder email and then deleted, so the data warehouse, which keeps
+the last values of deleted rows, never keeps the email. The placeholder is never the LMS retired email, because a
+pending invite whose email matches a user is linked to that user. The invites' pending group memberships are deleted
+with them. Django admin log entries for the invites and those memberships are kept, with the email removed from their
+``object_repr``. History rows holding the email that belong to other invites (deleted earlier, or since changed to
+another email) are removed too, along with admin log entries of those invites that show the email. With the flag off,
+the previous behaviour is kept.
+
 
 .. rubric:: Footnotes
 

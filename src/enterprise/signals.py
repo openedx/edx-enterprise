@@ -24,7 +24,9 @@ from enterprise.decorators import disable_for_loaddata
 from enterprise.platform_support.api import enterprise_customer_for_request
 from enterprise.platform_support.tasks import clear_enterprise_customer_data_consent_share_cache
 from enterprise.platform_support.utils import clear_data_consent_share_cache, is_enterprise_learner
+from enterprise.retirement import retire_pending_invites_for_email
 from enterprise.tasks import create_enterprise_enrollment
+from enterprise.toggles import RETIREMENT_RECEIVERS_V2
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_default_catalog_content_filter,
@@ -520,10 +522,30 @@ def generate_default_orchestration_record_display_name(sender, instance, **kwarg
 
 def retire_user_from_pending_enterprise_customer_user(sender, user, retired_email, **kwargs):  # pylint: disable=unused-argument
     """
-    Handle USER_RETIRE_LMS_CRITICAL signal: retire PendingEnterpriseCustomerUser email address.
+    Handle USER_RETIRE_LMS_CRITICAL signal: retire the learner's pending learner and admin invites.
 
-    Idempotent: only updates records where user_email hasn't already been changed to the retired value.
+    With the ``enterprise.retirement_receivers_v2`` flag on, every pending invite (and its history) for the
+    ``original_email`` the LMS sends is blanked and deleted, see ``enterprise.retirement``. The learner's
+    ``user.email`` is already the retired value when this signal is sent, so it cannot be used to match invites.
+    LMS versions that don't send ``original_email`` are left untouched and a warning is logged.
+
+    With the flag off, the previous behaviour is kept: records matching ``user.email`` get the retired email.
+
+    Idempotent: a second call finds nothing to change.
     """
+    if RETIREMENT_RECEIVERS_V2.is_enabled():
+        original_email = kwargs.get('original_email')
+        if not original_email:
+            logger.warning(
+                '[Learner Retirement] USER_RETIRE_LMS_CRITICAL did not include original_email for lms_user_id=%s; '
+                'pending enterprise invites were not retired.',
+                user.id,
+            )
+            return
+        counts = retire_pending_invites_for_email(original_email)
+        logger.info('[Learner Retirement] Retired pending enterprise invites for lms_user_id=%s: %s', user.id, counts)
+        return
+
     if user.email != retired_email:
         logger.info(
             "Updating PendingEnterpriseCustomerUser email record from %s to retired email %s",

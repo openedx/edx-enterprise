@@ -141,6 +141,21 @@ PERSONALIZED_SEARCH_ENABLED = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.retirement_receivers_v2
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: When on, the USER_RETIRE_LMS_CRITICAL receivers delete the retiring learner's pending
+#   learner and admin invites (and their history), matched on the ``original_email`` the LMS sends. When off,
+#   the previous behaviour is kept. Acts as the kill switch for the learner retirement changes.
+# .. toggle_use_cases: temporary
+# .. toggle_creation_date: 2026-11-25
+# .. toggle_target_removal_date: 2027-03-01
+RETIREMENT_RECEIVERS_V2 = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.retirement_receivers_v2',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
